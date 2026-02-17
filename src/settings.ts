@@ -116,7 +116,7 @@ export class TILSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("MCP 포트")
-			.setDesc("WebSocket 서버 포트 (변경 후 플러그인 재시작 필요)")
+			.setDesc("MCP 서버 포트 (변경 후 플러그인 재시작 필요)")
 			.addText((text) =>
 				text
 					.setPlaceholder("22360")

@@ -1,42 +1,37 @@
 import { App, Notice } from "obsidian";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { WebSocketServer, type WebSocket } from "ws";
-import { WebSocketTransport } from "./transport";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import * as http from "http";
 import { registerTools } from "./tools";
 
 /**
  * MCP 서버 라이프사이클을 관리한다.
- * WebSocket 서버를 시작하고, 클라이언트 연결 시 MCP 프로토콜을 처리한다.
+ * HTTP 서버 + Streamable HTTP 트랜스포트로 Claude Code와 통신한다.
  */
 export class TILMcpServer {
 	private app: App;
 	private port: number;
 	private tilPath: string;
-	private wss: WebSocketServer | null = null;
-	private mcpServer: McpServer;
-	private currentTransport: WebSocketTransport | null = null;
+	private httpServer: http.Server | null = null;
 
 	constructor(app: App, port: number, tilPath: string) {
 		this.app = app;
 		this.port = port;
 		this.tilPath = tilPath;
-		this.mcpServer = new McpServer({
-			name: "claude-til",
-			version: "0.1.0",
-		});
-		registerTools(this.mcpServer, this.app, this.tilPath);
 	}
 
 	async start(): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
-			this.wss = new WebSocketServer({ port: this.port });
+			this.httpServer = http.createServer(async (req, res) => {
+				await this.handleRequest(req, res);
+			});
 
-			this.wss.on("listening", () => {
-				console.log(`Claude TIL: MCP 서버 시작 (ws://localhost:${this.port})`);
+			this.httpServer.on("listening", () => {
+				console.log(`Claude TIL: MCP 서버 시작 (http://localhost:${this.port})`);
 				resolve();
 			});
 
-			this.wss.on("error", (err: NodeJS.ErrnoException) => {
+			this.httpServer.on("error", (err: NodeJS.ErrnoException) => {
 				if (err.code === "EADDRINUSE") {
 					new Notice(`Claude TIL: 포트 ${this.port}이 이미 사용 중입니다. 설정에서 MCP 포트를 변경해주세요.`);
 				} else {
@@ -46,47 +41,52 @@ export class TILMcpServer {
 				reject(err);
 			});
 
-			this.wss.on("connection", (ws: WebSocket) => {
-				this.handleConnection(ws);
-			});
+			this.httpServer.listen(this.port);
 		});
 	}
 
-	private async handleConnection(ws: WebSocket): Promise<void> {
-		// 기존 연결이 있으면 정리
-		if (this.currentTransport) {
-			await this.mcpServer.close();
-			this.currentTransport = null;
+	private async handleRequest(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
+		res.setHeader("Access-Control-Allow-Origin", "*");
+		res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+		res.setHeader("Access-Control-Allow-Headers", "Content-Type, mcp-session-id");
+		res.setHeader("Access-Control-Expose-Headers", "mcp-session-id");
+
+		if (req.method === "OPTIONS") {
+			res.writeHead(204);
+			res.end();
+			return;
 		}
 
-		// 새 McpServer 인스턴스 생성 (도구 재등록)
-		this.mcpServer = new McpServer({
-			name: "claude-til",
-			version: "0.1.0",
-		});
-		registerTools(this.mcpServer, this.app, this.tilPath);
-
-		this.currentTransport = new WebSocketTransport(ws);
-
-		try {
-			await this.mcpServer.connect(this.currentTransport);
-			console.log("Claude TIL: MCP 클라이언트 연결됨");
-		} catch (err) {
-			console.error("Claude TIL: MCP 연결 실패", err);
-			this.currentTransport = null;
+		if (req.url === "/mcp" || req.url?.startsWith("/mcp?")) {
+			try {
+				const mcpServer = new McpServer({
+					name: "claude-til",
+					version: "0.1.0",
+				});
+				registerTools(mcpServer, this.app, this.tilPath);
+				const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
+				await mcpServer.connect(transport);
+				await transport.handleRequest(req, res);
+			} catch (err) {
+				console.error("Claude TIL: MCP 요청 처리 실패", err);
+				if (!res.headersSent) {
+					res.writeHead(500, { "Content-Type": "application/json" });
+					res.end(JSON.stringify({ error: "Internal error" }));
+				}
+			}
+			return;
 		}
+
+		res.writeHead(404);
+		res.end("Not found");
 	}
 
 	async stop(): Promise<void> {
-		if (this.currentTransport) {
-			await this.mcpServer.close();
-			this.currentTransport = null;
-		}
-		if (this.wss) {
+		if (this.httpServer) {
 			return new Promise<void>((resolve) => {
-				this.wss!.close(() => {
+				this.httpServer!.close(() => {
 					console.log("Claude TIL: MCP 서버 종료");
-					this.wss = null;
+					this.httpServer = null;
 					resolve();
 				});
 			});
