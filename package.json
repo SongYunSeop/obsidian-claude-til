@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-claude-til",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Obsidian plugin with embedded Claude Code terminal for TIL learning workflow",
 	"main": "main.js",
 	"scripts": {
@@ -13,12 +13,16 @@
 	"author": "SongYunSeop",
 	"license": "MIT",
 	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.26.0",
 		"@xterm/addon-fit": "^0.10.0",
-		"@xterm/xterm": "^5.5.0"
+		"@xterm/xterm": "^5.5.0",
+		"ws": "^8.19.0",
+		"zod": "^4.3.6"
 	},
 	"devDependencies": {
 		"@electron/rebuild": "^3.6.0",
 		"@types/node": "^20.0.0",
+		"@types/ws": "^8.18.1",
 		"builtin-modules": "^3.3.0",
 		"esbuild": "^0.20.0",
 		"node-pty": "^1.0.0",

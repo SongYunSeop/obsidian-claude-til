@@ -6,6 +6,8 @@ export interface TILSettings {
 	fontSize: number;
 	tilPath: string;
 	autoOpenNewTIL: boolean;
+	mcpEnabled: boolean;
+	mcpPort: number;
 }
 
 export const DEFAULT_SETTINGS: TILSettings = {
@@ -16,6 +18,8 @@ export const DEFAULT_SETTINGS: TILSettings = {
 	fontSize: 13,
 	tilPath: "til",
 	autoOpenNewTIL: true,
+	mcpEnabled: true,
+	mcpPort: 22360,
 };
 
 export class TILSettingTab extends PluginSettingTab {
@@ -93,6 +97,36 @@ export class TILSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.autoOpenNewTIL = value;
 						await this.plugin.saveSettings();
+					})
+			);
+
+		containerEl.createEl("h3", { text: "MCP 서버" });
+
+		new Setting(containerEl)
+			.setName("MCP 서버 활성화")
+			.setDesc("Claude Code가 vault에 직접 접근할 수 있는 MCP 서버를 실행합니다")
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.mcpEnabled)
+					.onChange(async (value) => {
+						this.plugin.settings.mcpEnabled = value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("MCP 포트")
+			.setDesc("WebSocket 서버 포트 (변경 후 플러그인 재시작 필요)")
+			.addText((text) =>
+				text
+					.setPlaceholder("22360")
+					.setValue(String(this.plugin.settings.mcpPort))
+					.onChange(async (value) => {
+						const port = parseInt(value, 10);
+						if (!isNaN(port) && port > 0 && port < 65536) {
+							this.plugin.settings.mcpPort = port;
+							await this.plugin.saveSettings();
+						}
 					})
 			);
 	}

@@ -1,7 +1,7 @@
 {
 	"id": "claude-til",
 	"name": "Claude TIL",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"minAppVersion": "1.5.0",
 	"description": "Obsidian 사이드바에 Claude Code 터미널을 임베딩하여 TIL 학습 워크플로우를 실행합니다.",
 	"author": "SongYunSeop",

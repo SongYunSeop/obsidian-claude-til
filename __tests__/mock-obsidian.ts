@@ -53,6 +53,10 @@ export class Vault {
 	// 테스트 헬퍼: 파일/폴더 등록
 	_setFile(path: string, content: string): void {
 		this.files.set(path, content);
+		// TFile도 자동 등록
+		if (!this.abstractFiles.has(path)) {
+			this.abstractFiles.set(path, new TFile(path));
+		}
 	}
 
 	_setAbstractFile(path: string, file: TFile | TFolder): void {
@@ -61,6 +65,16 @@ export class Vault {
 
 	getAbstractFileByPath(path: string): TFile | TFolder | null {
 		return this.abstractFiles.get(path) ?? null;
+	}
+
+	getFiles(): TFile[] {
+		const result: TFile[] = [];
+		for (const [, file] of this.abstractFiles) {
+			if (file instanceof TFile) {
+				result.push(file);
+			}
+		}
+		return result;
 	}
 
 	async read(file: TFile): Promise<string> {
@@ -95,7 +109,9 @@ export class App {
 	vault: Vault;
 	workspace: {
 		getLeaf: () => { openFile: (...args: unknown[]) => void };
+		getActiveFile: () => TFile | null;
 	};
+	private _activeFile: TFile | null = null;
 
 	constructor(vault?: Vault) {
 		this.vault = vault ?? new Vault();
@@ -103,7 +119,13 @@ export class App {
 			getLeaf: () => ({
 				openFile: () => {},
 			}),
+			getActiveFile: () => this._activeFile,
 		};
+	}
+
+	// 테스트 헬퍼
+	_setActiveFile(file: TFile | null): void {
+		this._activeFile = file;
 	}
 }
 

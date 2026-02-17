@@ -189,3 +189,93 @@
 .claude-til-terminal-content .xterm-viewport {
 	background-color: var(--background-primary) !important;
 }
+
+/* Claude TIL - Dashboard */
+
+.claude-til-dashboard {
+	padding: 16px 20px;
+	overflow-y: auto;
+	height: 100%;
+}
+
+.claude-til-dashboard-header {
+	margin-bottom: 24px;
+}
+
+.claude-til-dashboard-header h2 {
+	margin: 0 0 12px 0;
+	color: var(--text-normal);
+}
+
+.claude-til-dashboard-card {
+	background-color: var(--background-secondary);
+	border-radius: 8px;
+	padding: 16px 20px;
+	display: inline-block;
+	min-width: 120px;
+	text-align: center;
+}
+
+.claude-til-dashboard-card-value {
+	font-size: 2em;
+	font-weight: 700;
+	color: var(--text-accent);
+	line-height: 1.2;
+}
+
+.claude-til-dashboard-card-label {
+	font-size: 0.85em;
+	color: var(--text-muted);
+	margin-top: 4px;
+}
+
+.claude-til-dashboard-section h3 {
+	margin: 0 0 12px 0;
+	color: var(--text-normal);
+}
+
+.claude-til-dashboard-empty {
+	color: var(--text-muted);
+	font-style: italic;
+	padding: 20px 0;
+}
+
+.claude-til-dashboard-categories {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.claude-til-dashboard-category-row {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	gap: 8px;
+	align-items: center;
+}
+
+.claude-til-dashboard-category-name {
+	font-weight: 500;
+	color: var(--text-normal);
+}
+
+.claude-til-dashboard-category-count {
+	font-size: 0.85em;
+	color: var(--text-muted);
+	min-width: 30px;
+	text-align: right;
+}
+
+.claude-til-dashboard-bar-container {
+	grid-column: 1 / -1;
+	height: 4px;
+	background-color: var(--background-modifier-border);
+	border-radius: 2px;
+	overflow: hidden;
+}
+
+.claude-til-dashboard-bar {
+	height: 100%;
+	background-color: var(--text-accent);
+	border-radius: 2px;
+	transition: width 0.3s ease;
+}
