@@ -28,7 +28,7 @@ Obsidian의 역할은 "터미널 임베딩 + 파일 감시 + skill 배포 + MCP 
 src/
 ├── main.ts               ← TILPlugin 진입점 (터미널 뷰 + MCP + 대시보드 + watcher + skill 설치)
 ├── settings.ts           ← 설정 탭 + 인터페이스 (mcpEnabled, mcpPort 포함)
-├── skills.ts             ← Skill 자동 설치 (.claude/skills/)
+├── skills.ts             ← Skill 버전 기반 자동 설치/업데이트 + CLAUDE.md MCP 섹션 관리
 ├── watcher.ts            ← 새 TIL 파일 감지 → 에디터에서 열기
 ├── terminal/
 │   ├── TerminalView.ts   ← 사이드바 터미널 (ItemView + xterm.js)
@@ -56,6 +56,8 @@ npm install
 npm run rebuild-pty    # node-pty를 Obsidian Electron 버전에 맞춰 재빌드
 npm run dev            # 워치 모드
 npm run build          # 프로덕션 빌드
+npm test               # vitest 테스트 실행
+npm run deploy -- <vault-path>  # vault에 배포 (빌드 + 복사 + pty 재빌드)
 ```
 
 ## 규칙
@@ -71,6 +73,10 @@ npm run build          # 프로덕션 빌드
 - MCP 도구는 Obsidian `App` 인스턴스를 통해 vault 접근 — node-pty/터미널을 거치지 않음
 - MCP 서버는 `onload()`에서 시작, `onunload()`에서 종료
 - 대시보드는 순수 DOM 조작 (프레임워크 없음), Obsidian CSS 변수 활용
+- 코드 변경 시 테스트 가능한 부분은 반드시 테스트 작성/실행 후 커밋 (`npm test && npm run build` 통과 확인)
+- Skill 파일은 `.claude/skills/<name>/SKILL.md` 경로에 설치 (Claude Code가 1단계 깊이만 탐색, 중첩 불가)
+- Skill 파일의 `plugin-version` frontmatter로 자동 업데이트 관리. 없으면 사용자 커스터마이즈로 간주하여 덮어쓰지 않음
+- 백로그 파일은 `til/{카테고리}/backlog.md` 경로 패턴
 - 한국어 작성, 기술 용어 원어 병기
 
 ## 참고 문서
