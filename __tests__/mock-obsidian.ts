@@ -149,6 +149,14 @@ export class App {
 	}
 }
 
+export class Notice {
+	noticeEl: HTMLElement;
+	constructor(_message: string | DocumentFragment, _duration?: number) {
+		this.noticeEl = {} as HTMLElement;
+	}
+	hide(): void {}
+}
+
 // UI 클래스 스텁 (테스트에서 직접 사용하지 않지만 import 해소용)
 export class Modal {
 	app: App;

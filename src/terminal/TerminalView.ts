@@ -15,6 +15,7 @@ export class TerminalView extends ItemView {
 	private resizeObserver: ResizeObserver | null = null;
 	private fitDebounceTimer: NodeJS.Timeout | null = null;
 	private linkProviderDisposable: IDisposable | null = null;
+	private pendingCommands: string[] = [];
 	private settings: TILSettings;
 
 	constructor(leaf: WorkspaceLeaf, settings: TILSettings) {
@@ -54,9 +55,14 @@ export class TerminalView extends ItemView {
 
 	/**
 	 * PTY에 명령어를 전송한다.
+	 * PTY가 아직 준비되지 않았으면 큐에 저장하고 준비 후 자동 전송한다.
 	 */
 	writeCommand(command: string): void {
-		this.ptyProcess?.write(command);
+		if (this.ptyProcess) {
+			this.ptyProcess.write(command);
+		} else {
+			this.pendingCommands.push(command);
+		}
 	}
 
 	focusTerminal(): void {
@@ -161,13 +167,24 @@ export class TerminalView extends ItemView {
 					: "clear && claude\r";
 				setTimeout(() => {
 					this.ptyProcess?.write(cmd);
+					// Claude 초기화 후 대기 명령어 전송
+					setTimeout(() => this.flushPendingCommands(), 2000);
 				}, 300);
+			} else {
+				setTimeout(() => this.flushPendingCommands(), 100);
 			}
 		} catch (error) {
 			console.error("Claude TIL: PTY 시작 실패", error);
 			this.terminal.write("\r\n\x1b[31mError: 터미널 시작에 실패했습니다.\x1b[0m\r\n");
 			this.terminal.write(`\r\n${error}\r\n`);
 		}
+	}
+
+	private flushPendingCommands(): void {
+		for (const cmd of this.pendingCommands) {
+			this.ptyProcess?.write(cmd);
+		}
+		this.pendingCommands = [];
 	}
 
 	private destroy(): void {

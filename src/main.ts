@@ -1,4 +1,4 @@
-import { Plugin } from "obsidian";
+import { Plugin, Notice, TFile } from "obsidian";
 import { TerminalView, VIEW_TYPE_TIL_TERMINAL } from "./terminal/TerminalView";
 import { DashboardView, VIEW_TYPE_TIL_DASHBOARD } from "./dashboard/DashboardView";
 import { TILSettingTab, DEFAULT_SETTINGS } from "./settings";
@@ -6,6 +6,7 @@ import type { TILSettings } from "./settings";
 import { TILWatcher } from "./watcher";
 import { TILMcpServer } from "./mcp/server";
 import { installSkills } from "./skills";
+import { parseBacklogItems, extractTopicFromPath } from "./backlog";
 
 export default class TILPlugin extends Plugin {
 	settings: TILSettings = DEFAULT_SETTINGS;
@@ -51,6 +52,76 @@ export default class TILPlugin extends Plugin {
 			this.watcher = new TILWatcher(this.app, this.settings.tilPath);
 			this.watcher.start();
 		}
+
+		// backlog → TIL 유도: 빈 파일 열림 시 backlog 매칭 확인
+		this.registerEvent(
+			this.app.workspace.on("file-open", async (file) => {
+				if (!file || !(file instanceof TFile)) return;
+
+				const tilPath = this.settings.tilPath;
+				if (!file.path.startsWith(tilPath + "/")) return;
+				if (file.name === "backlog.md") return;
+
+				const content = await this.app.vault.read(file);
+				if (content.trim() !== "") return;
+
+				const info = extractTopicFromPath(file.path, tilPath);
+				if (!info) return;
+
+				const backlogFiles = this.app.vault.getFiles().filter(
+					(f) => f.path.startsWith(tilPath + "/") && f.name === "backlog.md",
+				);
+
+				const filePathWithoutExt = file.path.endsWith(".md")
+					? file.path.slice(0, -3)
+					: file.path;
+
+				for (const backlogFile of backlogFiles) {
+					const backlogContent = await this.app.vault.read(backlogFile);
+					const items = parseBacklogItems(backlogContent);
+					const matched = items.find((item) => item.path === filePathWithoutExt);
+
+					if (matched) {
+						const { displayName } = matched;
+						const { category } = info;
+						const notice = new Notice("", 0);
+						notice.noticeEl.empty();
+						notice.noticeEl.createEl("span", {
+							text: `"${displayName}" 주제가 backlog에 있습니다.`,
+						});
+						const btnContainer = notice.noticeEl.createDiv({
+							cls: "notice-actions",
+						});
+						btnContainer.style.display = "flex";
+						btnContainer.style.gap = "8px";
+						btnContainer.style.marginTop = "8px";
+						const startBtn = btnContainer.createEl("button", {
+							text: "실행",
+							cls: "mod-cta",
+						});
+						startBtn.addEventListener("click", async () => {
+							notice.hide();
+							const terminalView = await this.openTerminal();
+							if (terminalView) {
+								const escapedName = displayName.replace(/"/g, '\\"');
+								const escapedCategory = category.replace(/"/g, '\\"');
+								terminalView.writeCommand(
+									`/til "${escapedName}" "${escapedCategory}"`,
+								);
+								terminalView.focusTerminal();
+							}
+						});
+						const laterBtn = btnContainer.createEl("button", {
+							text: "나중에",
+						});
+						laterBtn.addEventListener("click", () => {
+							notice.hide();
+						});
+						return;
+					}
+				}
+			}),
+		);
 
 		// MCP 서버 시작
 		if (this.settings.mcpEnabled) {
