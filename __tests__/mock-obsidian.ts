@@ -113,6 +113,10 @@ export class App {
 	workspace: {
 		getLeaf: () => { openFile: (...args: unknown[]) => void };
 		getActiveFile: () => TFile | null;
+		openLinkText: (linkText: string, sourcePath: string, newLeaf: boolean) => void;
+	};
+	metadataCache: {
+		getFirstLinkpathDest: (linkpath: string, sourcePath: string) => TFile | null;
 	};
 	private _activeFile: TFile | null = null;
 
@@ -123,6 +127,19 @@ export class App {
 				openFile: () => {},
 			}),
 			getActiveFile: () => this._activeFile,
+			openLinkText: () => {},
+		};
+		this.metadataCache = {
+			getFirstLinkpathDest: (linkpath: string) => {
+				// vault에 등록된 파일 중 linkpath와 매치되는 것을 반환
+				const files = this.vault.getFiles();
+				// 정확한 경로 매치
+				const exact = files.find((f) => f.path === linkpath || f.path === linkpath + ".md");
+				if (exact) return exact;
+				// basename 매치 (Obsidian 기본 동작)
+				const byName = files.find((f) => f.basename === linkpath);
+				return byName ?? null;
+			},
 		};
 	}
 

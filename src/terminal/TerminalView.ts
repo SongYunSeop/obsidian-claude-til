@@ -1,9 +1,10 @@
 import { ItemView, WorkspaceLeaf, FileSystemAdapter } from "obsidian";
-import { Terminal } from "@xterm/xterm";
+import { Terminal, type IDisposable } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import type { IPty } from "node-pty";
 import type { TILSettings } from "../settings";
 import { spawnPty } from "./pty";
+import { WikilinkProvider } from "./WikilinkProvider";
 
 export const VIEW_TYPE_TIL_TERMINAL = "claude-til-terminal-view";
 
@@ -13,6 +14,7 @@ export class TerminalView extends ItemView {
 	private ptyProcess: IPty | null = null;
 	private resizeObserver: ResizeObserver | null = null;
 	private fitDebounceTimer: NodeJS.Timeout | null = null;
+	private linkProviderDisposable: IDisposable | null = null;
 	private settings: TILSettings;
 
 	constructor(leaf: WorkspaceLeaf, settings: TILSettings) {
@@ -95,6 +97,11 @@ export class TerminalView extends ItemView {
 		this.terminal.loadAddon(this.fitAddon);
 		this.terminal.open(container);
 
+		// 위키링크 감지 등록
+		this.linkProviderDisposable = this.terminal.registerLinkProvider(
+			new WikilinkProvider(this.app, this.terminal),
+		);
+
 		// DOM 렌더 후 fit → PTY 시작
 		requestAnimationFrame(() => {
 			requestAnimationFrame(() => {
@@ -168,6 +175,9 @@ export class TerminalView extends ItemView {
 			clearTimeout(this.fitDebounceTimer);
 			this.fitDebounceTimer = null;
 		}
+
+		this.linkProviderDisposable?.dispose();
+		this.linkProviderDisposable = null;
 
 		if (this.ptyProcess) {
 			this.ptyProcess.kill();
