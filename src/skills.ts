@@ -4,15 +4,23 @@ import { Vault } from "obsidian";
 import tilSkill from "../skills/til/SKILL.md";
 import backlogSkill from "../skills/backlog/SKILL.md";
 import researchSkill from "../skills/research/SKILL.md";
+import saveSkill from "../skills/save/SKILL.md";
+import saveRules from "../rules/save-rules.md";
 import claudeMdSection from "../skills/claude-md-section.md";
 
 const SKILLS: Record<string, string> = {
 	"til/SKILL.md": tilSkill,
 	"backlog/SKILL.md": backlogSkill,
 	"research/SKILL.md": researchSkill,
+	"save/SKILL.md": saveSkill,
+};
+
+const RULES: Record<string, string> = {
+	"save-rules.md": saveRules,
 };
 
 const SKILLS_BASE = ".claude/skills";
+const RULES_BASE = ".claude/rules";
 const OLD_SKILLS_BASE = ".claude/skills/claude-til";
 
 const MCP_MARKER_START = "<!-- claude-til:mcp-tools:start -->";
@@ -42,15 +50,21 @@ export function isNewerVersion(a: string, b: string): boolean {
 }
 
 /**
- * vault의 .claude/skills/ 에 skill 파일을 설치/업데이트한다.
+ * 버전 관리 파일을 설치/업데이트하는 공통 로직.
  *
  * - 파일이 없으면 새로 설치
  * - plugin-version이 현재보다 낮으면 업데이트
  * - plugin-version이 없으면 사용자 커스터마이즈로 간주, 건너뜀
  */
-export async function installSkills(vault: Vault, pluginVersion: string): Promise<void> {
-	for (const [relativePath, content] of Object.entries(SKILLS)) {
-		const fullPath = `${SKILLS_BASE}/${relativePath}`;
+async function installFiles(
+	vault: Vault,
+	basePath: string,
+	files: Record<string, string>,
+	pluginVersion: string,
+	label: string,
+): Promise<void> {
+	for (const [relativePath, content] of Object.entries(files)) {
+		const fullPath = `${basePath}/${relativePath}`;
 
 		if (await vault.adapter.exists(fullPath)) {
 			const existing = await vault.adapter.read(fullPath);
@@ -69,8 +83,16 @@ export async function installSkills(vault: Vault, pluginVersion: string): Promis
 		}
 
 		await vault.adapter.write(fullPath, content);
-		console.log(`Claude TIL: skill 설치됨 → ${fullPath}`);
+		console.log(`Claude TIL: ${label} 설치됨 → ${fullPath}`);
 	}
+}
+
+/**
+ * vault의 .claude/skills/ 에 skill 파일과 .claude/rules/ 에 rule 파일을 설치/업데이트한다.
+ */
+export async function installSkills(vault: Vault, pluginVersion: string): Promise<void> {
+	await installFiles(vault, SKILLS_BASE, SKILLS, pluginVersion, "skill");
+	await installFiles(vault, RULES_BASE, RULES, pluginVersion, "rule");
 
 	await installClaudeMdSection(vault, pluginVersion);
 	await cleanupOldSkills(vault);

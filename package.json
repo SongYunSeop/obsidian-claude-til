@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-claude-til",
-	"version": "0.1.3",
+	"version": "0.1.4",
 	"description": "Obsidian plugin with embedded Claude Code terminal for TIL learning workflow",
 	"main": "main.js",
 	"scripts": {

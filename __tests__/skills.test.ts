@@ -20,9 +20,10 @@ function isNewerVersion(a: string, b: string): boolean {
 	return false;
 }
 
-// --- installSkills 로직 재현 (esbuild text import 우회) ---
+// --- installFiles 로직 재현 (esbuild text import 우회) ---
 
 const SKILLS_BASE = ".claude/skills";
+const RULES_BASE = ".claude/rules";
 const OLD_SKILLS_BASE = ".claude/skills/claude-til";
 const MCP_MARKER_START = "<!-- claude-til:mcp-tools:start -->";
 const MCP_MARKER_END = "<!-- claude-til:mcp-tools:end -->";
@@ -31,14 +32,15 @@ function escapeRegExp(str: string): string {
 	return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-async function installSkills(
+async function installFiles(
 	vault: Vault,
+	basePath: string,
+	files: Record<string, string>,
 	pluginVersion: string,
-	skills: Record<string, string>,
 ): Promise<string[]> {
 	const installed: string[] = [];
-	for (const [relativePath, content] of Object.entries(skills)) {
-		const fullPath = `${SKILLS_BASE}/${relativePath}`;
+	for (const [relativePath, content] of Object.entries(files)) {
+		const fullPath = `${basePath}/${relativePath}`;
 
 		if (await vault.adapter.exists(fullPath)) {
 			const existing = await vault.adapter.read(fullPath);
@@ -151,11 +153,12 @@ describe("isNewerVersion", () => {
 	});
 });
 
-describe("installSkills", () => {
+describe("installFiles (skills)", () => {
 	let vault: Vault;
 	const skills: Record<string, string> = {
 		"til/SKILL.md": '---\nplugin-version: "0.2.0"\n---\n# TIL Skill v2',
 		"backlog/SKILL.md": '---\nplugin-version: "0.2.0"\n---\n# Backlog Skill v2',
+		"save/SKILL.md": '---\nplugin-version: "0.2.0"\n---\n# Save Skill v2',
 	};
 
 	beforeEach(() => {
@@ -163,10 +166,11 @@ describe("installSkills", () => {
 	});
 
 	it("파일이 없으면 새로 설치한다", async () => {
-		const installed = await installSkills(vault, "0.2.0", skills);
+		const installed = await installFiles(vault, SKILLS_BASE, skills, "0.2.0");
 
 		expect(installed).toContain(".claude/skills/til/SKILL.md");
 		expect(installed).toContain(".claude/skills/backlog/SKILL.md");
+		expect(installed).toContain(".claude/skills/save/SKILL.md");
 
 		const content = await vault.adapter.read(".claude/skills/til/SKILL.md");
 		expect(content).toContain("# TIL Skill v2");
@@ -178,7 +182,7 @@ describe("installSkills", () => {
 			'---\nplugin-version: "0.1.0"\n---\n# TIL Skill v1',
 		);
 
-		const installed = await installSkills(vault, "0.2.0", skills);
+		const installed = await installFiles(vault, SKILLS_BASE, skills, "0.2.0");
 
 		expect(installed).toContain(".claude/skills/til/SKILL.md");
 		const content = await vault.adapter.read(".claude/skills/til/SKILL.md");
@@ -191,7 +195,7 @@ describe("installSkills", () => {
 			'---\nplugin-version: "0.2.0"\n---\n# TIL Skill v2 (기존)',
 		);
 
-		const installed = await installSkills(vault, "0.2.0", skills);
+		const installed = await installFiles(vault, SKILLS_BASE, skills, "0.2.0");
 
 		expect(installed).not.toContain(".claude/skills/til/SKILL.md");
 		const content = await vault.adapter.read(".claude/skills/til/SKILL.md");
@@ -204,7 +208,7 @@ describe("installSkills", () => {
 			"# 사용자가 직접 작성한 스킬",
 		);
 
-		const installed = await installSkills(vault, "0.2.0", skills);
+		const installed = await installFiles(vault, SKILLS_BASE, skills, "0.2.0");
 
 		expect(installed).not.toContain(".claude/skills/til/SKILL.md");
 		const content = await vault.adapter.read(".claude/skills/til/SKILL.md");
@@ -212,8 +216,64 @@ describe("installSkills", () => {
 	});
 
 	it("빈 스킬 목록이면 아무것도 설치하지 않는다", async () => {
-		const installed = await installSkills(vault, "0.2.0", {});
+		const installed = await installFiles(vault, SKILLS_BASE, {}, "0.2.0");
 		expect(installed).toEqual([]);
+	});
+});
+
+describe("installFiles (rules)", () => {
+	let vault: Vault;
+	const rules: Record<string, string> = {
+		"save-rules.md": '---\nplugin-version: "0.2.0"\n---\n# TIL 저장 규칙',
+	};
+
+	beforeEach(() => {
+		vault = new Vault();
+	});
+
+	it("rule 파일이 없으면 새로 설치한다", async () => {
+		const installed = await installFiles(vault, RULES_BASE, rules, "0.2.0");
+
+		expect(installed).toContain(".claude/rules/save-rules.md");
+		const content = await vault.adapter.read(".claude/rules/save-rules.md");
+		expect(content).toContain("# TIL 저장 규칙");
+	});
+
+	it("plugin-version이 낮은 rule은 업데이트한다", async () => {
+		vault._setFile(
+			".claude/rules/save-rules.md",
+			'---\nplugin-version: "0.1.0"\n---\n# 구버전 규칙',
+		);
+
+		const installed = await installFiles(vault, RULES_BASE, rules, "0.2.0");
+
+		expect(installed).toContain(".claude/rules/save-rules.md");
+		const content = await vault.adapter.read(".claude/rules/save-rules.md");
+		expect(content).toContain("# TIL 저장 규칙");
+	});
+
+	it("같은 버전이면 건너뛴다", async () => {
+		vault._setFile(
+			".claude/rules/save-rules.md",
+			'---\nplugin-version: "0.2.0"\n---\n# 기존 규칙',
+		);
+
+		const installed = await installFiles(vault, RULES_BASE, rules, "0.2.0");
+
+		expect(installed).not.toContain(".claude/rules/save-rules.md");
+	});
+
+	it("plugin-version이 없으면 사용자 커스터마이즈로 간주하고 건너뛴다", async () => {
+		vault._setFile(
+			".claude/rules/save-rules.md",
+			"# 사용자가 직접 작성한 규칙",
+		);
+
+		const installed = await installFiles(vault, RULES_BASE, rules, "0.2.0");
+
+		expect(installed).toEqual([]);
+		const content = await vault.adapter.read(".claude/rules/save-rules.md");
+		expect(content).toBe("# 사용자가 직접 작성한 규칙");
 	});
 });
 
