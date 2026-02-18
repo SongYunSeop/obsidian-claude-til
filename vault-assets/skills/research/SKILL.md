@@ -86,7 +86,7 @@ updated: YYYY-MM-DD
 
 ```markdown
 ### claude-code
-- [[til/claude-code/backlog|학습 백로그]]
+- [[til/claude-code/backlog|Backlog]]
 1. [[til/claude-code/overview|Claude Code 개요]]
 ```
 
@@ -138,5 +138,5 @@ updated: YYYY-MM-DD
 - [ ] 백로그 항목이 3단계(선행 지식 / 핵심 개념 / 심화)로 분류됨
 - [ ] 각 항목에 1줄 설명이 있음
 - [ ] 기존 백로그가 있으면 병합됨 (완료 항목 [x] 보존)
-- [ ] TIL MOC에 백로그 링크(`- [[til/{카테고리}/backlog|학습 백로그]]`)가 추가됨
+- [ ] TIL MOC에 백로그 링크(`- [[til/{카테고리}/backlog|Backlog]]`)가 추가됨
 - [ ] 사용자에게 `/til`로 학습을 시작하는 방법을 안내함
