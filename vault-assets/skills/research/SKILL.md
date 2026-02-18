@@ -2,7 +2,7 @@
 name: research
 description: "주제를 리서치하여 학습에 필요한 개념/용어를 파악하고, Obsidian 백로그로 정리"
 argument-hint: "<주제> [카테고리]"
-plugin-version: "0.3.0"
+plugin-version: "0.4.0"
 ---
 
 # Research Skill
