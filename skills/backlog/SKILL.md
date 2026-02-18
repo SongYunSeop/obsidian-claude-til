@@ -3,7 +3,7 @@ name: backlog
 description: "학습 백로그를 조회하고 진행 상황을 보여준다"
 argument-hint: "[카테고리]"
 disable-model-invocation: true
-plugin-version: "0.1.4"
+plugin-version: "0.2.0"
 ---
 
 # Backlog Skill

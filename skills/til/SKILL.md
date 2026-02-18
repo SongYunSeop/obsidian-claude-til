@@ -2,7 +2,7 @@
 name: til
 description: "Today I Learned - 주제를 리서치하고 대화형으로 학습한 뒤 Obsidian 호환 TIL 마크다운으로 저장"
 argument-hint: "<주제> [카테고리]"
-plugin-version: "0.1.4"
+plugin-version: "0.2.0"
 ---
 
 # TIL (Today I Learned) Skill
