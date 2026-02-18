@@ -166,11 +166,17 @@
 
 /* Claude TIL - Terminal Container */
 
+/* Obsidian의 view-content 스크롤이 xterm 내부 스크롤과 충돌하지 않도록 차단 */
+.workspace-leaf-content[data-type="claude-til-terminal-view"] .view-content {
+	overflow: hidden !important;
+}
+
 .claude-til-terminal-container {
 	height: 100%;
 	display: flex;
 	flex-direction: column;
 	background-color: var(--background-primary);
+	overflow: hidden;
 }
 
 .claude-til-terminal-content {

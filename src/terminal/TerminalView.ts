@@ -16,6 +16,9 @@ export class TerminalView extends ItemView {
 	private fitDebounceTimer: NodeJS.Timeout | null = null;
 	private linkProviderDisposable: IDisposable | null = null;
 	private pendingCommands: string[] = [];
+	private lastContainerWidth = 0;
+	private lastContainerHeight = 0;
+	private scrollLockHandler: (() => void) | null = null;
 	private settings: TILSettings;
 
 	constructor(leaf: WorkspaceLeaf, settings: TILSettings) {
@@ -40,6 +43,16 @@ export class TerminalView extends ItemView {
 		if (!container) return;
 		container.empty();
 		container.addClass("claude-til-terminal-container");
+
+		// Obsidian의 view-content 스크롤을 강제 잠금
+		// xterm.js의 hidden textarea focus 시 브라우저가 부모 컨테이너를 스크롤하는 것을 방지
+		const viewContent = container as HTMLElement;
+		viewContent.style.overflow = "hidden";
+		this.scrollLockHandler = () => {
+			if (viewContent.scrollTop !== 0) viewContent.scrollTop = 0;
+			if (viewContent.scrollLeft !== 0) viewContent.scrollLeft = 0;
+		};
+		viewContent.addEventListener("scroll", this.scrollLockHandler);
 
 		const content = container.createDiv({ cls: "claude-til-terminal-content" });
 
@@ -120,7 +133,15 @@ export class TerminalView extends ItemView {
 		});
 
 		// ResizeObserver로 자동 리사이즈 (debounce 50ms)
-		this.resizeObserver = new ResizeObserver(() => {
+		// 컨테이너 픽셀 크기가 실제로 변했을 때만 fit 실행 (불필요한 스크롤 점프 방지)
+		this.resizeObserver = new ResizeObserver((entries) => {
+			const entry = entries[0];
+			if (!entry) return;
+			const { width, height } = entry.contentRect;
+			if (width === this.lastContainerWidth && height === this.lastContainerHeight) return;
+			this.lastContainerWidth = width;
+			this.lastContainerHeight = height;
+
 			if (this.fitDebounceTimer) clearTimeout(this.fitDebounceTimer);
 			this.fitDebounceTimer = setTimeout(() => {
 				if (this.fitAddon && this.terminal && this.ptyProcess) {
@@ -145,9 +166,27 @@ export class TerminalView extends ItemView {
 				cwd: vaultPath,
 			});
 
-			// PTY → xterm
+			// PTY → xterm (스크롤 점프 방지: follow mode일 때 매 프레임 scrollToBottom)
+			let followMode = true;
+			let rafPending = false;
+			const viewport = this.terminal.element?.querySelector(".xterm-viewport") as HTMLElement | null;
+			if (viewport) {
+				viewport.addEventListener("scroll", () => {
+					followMode = viewport.scrollTop + viewport.clientHeight >= viewport.scrollHeight - 10;
+				}, { passive: true });
+			}
+
 			this.ptyProcess.onData((data: string) => {
 				this.terminal?.write(data);
+				if (followMode && !rafPending) {
+					rafPending = true;
+					requestAnimationFrame(() => {
+						rafPending = false;
+						if (followMode) {
+							this.terminal?.scrollToBottom();
+						}
+					});
+				}
 			});
 
 			// xterm → PTY
@@ -188,6 +227,12 @@ export class TerminalView extends ItemView {
 	}
 
 	private destroy(): void {
+		if (this.scrollLockHandler) {
+			const viewContent = this.containerEl.children[1] as HTMLElement | undefined;
+			viewContent?.removeEventListener("scroll", this.scrollLockHandler);
+			this.scrollLockHandler = null;
+		}
+
 		this.resizeObserver?.disconnect();
 		this.resizeObserver = null;
 
