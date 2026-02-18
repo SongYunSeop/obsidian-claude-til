@@ -8,13 +8,15 @@ export class TFile {
 	name: string;
 	extension: string;
 	basename: string;
+	stat: { ctime: number; mtime: number; size: number };
 
-	constructor(path: string) {
+	constructor(path: string, stat?: { ctime?: number; mtime?: number; size?: number }) {
 		this.path = path;
 		this.name = path.split("/").pop() ?? "";
 		const parts = this.name.split(".");
 		this.extension = parts.length > 1 ? parts.pop()! : "";
 		this.basename = parts.join(".");
+		this.stat = { ctime: stat?.ctime ?? 0, mtime: stat?.mtime ?? 0, size: stat?.size ?? 0 };
 	}
 }
 
@@ -54,11 +56,11 @@ export class Vault {
 	};
 
 	// 테스트 헬퍼: 파일/폴더 등록
-	_setFile(path: string, content: string): void {
+	_setFile(path: string, content: string, stat?: { ctime?: number; mtime?: number; size?: number }): void {
 		this.files.set(path, content);
-		// TFile도 자동 등록
-		if (!this.abstractFiles.has(path)) {
-			this.abstractFiles.set(path, new TFile(path));
+		// TFile도 자동 등록 (stat이 주어지면 갱신)
+		if (!this.abstractFiles.has(path) || stat) {
+			this.abstractFiles.set(path, new TFile(path, stat));
 		}
 	}
 
@@ -108,6 +110,12 @@ export class Vault {
 	}
 }
 
+export interface CachedMetadata {
+	headings?: Array<{ heading: string; level: number }>;
+	links?: Array<{ link: string; displayText?: string }>;
+	tags?: Array<{ tag: string }>;
+}
+
 export class App {
 	vault: Vault;
 	workspace: {
@@ -117,8 +125,12 @@ export class App {
 	};
 	metadataCache: {
 		getFirstLinkpathDest: (linkpath: string, sourcePath: string) => TFile | null;
+		getFileCache: (file: TFile) => CachedMetadata | null;
+		resolvedLinks: Record<string, Record<string, number>>;
+		unresolvedLinks: Record<string, Record<string, number>>;
 	};
 	private _activeFile: TFile | null = null;
+	private _fileCacheMap: Map<string, CachedMetadata> = new Map();
 
 	constructor(vault?: Vault) {
 		this.vault = vault ?? new Vault();
@@ -140,12 +152,29 @@ export class App {
 				const byName = files.find((f) => f.basename === linkpath);
 				return byName ?? null;
 			},
+			getFileCache: (file: TFile) => {
+				return this._fileCacheMap.get(file.path) ?? null;
+			},
+			resolvedLinks: {},
+			unresolvedLinks: {},
 		};
 	}
 
 	// 테스트 헬퍼
 	_setActiveFile(file: TFile | null): void {
 		this._activeFile = file;
+	}
+
+	_setFileCache(path: string, cache: CachedMetadata): void {
+		this._fileCacheMap.set(path, cache);
+	}
+
+	_setResolvedLinks(links: Record<string, Record<string, number>>): void {
+		this.metadataCache.resolvedLinks = links;
+	}
+
+	_setUnresolvedLinks(links: Record<string, Record<string, number>>): void {
+		this.metadataCache.unresolvedLinks = links;
 	}
 }
 

@@ -1,14 +1,34 @@
 import { describe, it, expect } from "vitest";
-import { App, Vault, TFile } from "obsidian";
+import { App, Vault, TFile, type CachedMetadata } from "obsidian";
+import {
+	findPathMatches,
+	buildFileContext,
+	findUnresolvedMentions,
+	formatTopicContext,
+	filterRecentFiles,
+	formatRecentContext,
+	type TilFileContext,
+	type TopicContextResult,
+} from "../src/mcp/context";
 
 // MCP 도구의 핵심 로직을 직접 테스트한다.
 // 실제 McpServer 없이 vault 접근 로직만 검증.
 // 각 테스트의 필터링 로직은 tools.ts의 실제 코드와 동일해야 한다.
 
+type AppWithHelpers = App & {
+	_setActiveFile: (f: TFile | null) => void;
+	_setFileCache: (path: string, cache: CachedMetadata) => void;
+	_setResolvedLinks: (links: Record<string, Record<string, number>>) => void;
+	_setUnresolvedLinks: (links: Record<string, Record<string, number>>) => void;
+};
+type VaultWithHelpers = Vault & {
+	_setFile: (p: string, c: string, stat?: { ctime?: number; mtime?: number; size?: number }) => void;
+};
+
 function createApp(files: Record<string, string>): App {
 	const vault = new Vault();
 	for (const [path, content] of Object.entries(files)) {
-		(vault as Vault & { _setFile: (p: string, c: string) => void })._setFile(path, content);
+		(vault as VaultWithHelpers)._setFile(path, content);
 	}
 	return new App(vault);
 }
@@ -351,10 +371,168 @@ describe("vault_get_active_file", () => {
 	it("열린 파일의 경로와 내용을 반환한다", async () => {
 		const app = createApp({ "til/test.md": "# Test content" });
 		const file = new TFile("til/test.md");
-		(app as App & { _setActiveFile: (f: TFile | null) => void })._setActiveFile(file);
+		(app as AppWithHelpers)._setActiveFile(file);
 
 		const active = app.workspace.getActiveFile();
 		expect(active).not.toBeNull();
 		expect(active!.path).toBe("til/test.md");
+	});
+});
+
+// --- til_get_context 통합 테스트 ---
+
+describe("til_get_context (통합)", () => {
+	const tilPath = "til";
+
+	it("경로 매칭 + metadataCache enrichment 전체 파이프라인", async () => {
+		const vault = new Vault();
+		const v = vault as VaultWithHelpers;
+		v._setFile("til/typescript/generics.md", "# Generics\n제네릭 기초 내용");
+		v._setFile("til/typescript/types.md", "# Types\n타입 관련 내용");
+		v._setFile("til/react/hooks.md", "# Hooks\ntypescript와 함께 사용");
+		v._setFile("til/react/backlog.md", "- [ ] 미완료");
+
+		const app = new App(vault) as AppWithHelpers;
+		app._setFileCache("til/typescript/generics.md", {
+			headings: [{ heading: "Generics", level: 1 }, { heading: "제약 조건", level: 2 }],
+			links: [{ link: "types" }],
+			tags: [{ tag: "#typescript" }],
+		});
+		app._setResolvedLinks({
+			"til/react/hooks.md": { "til/typescript/generics.md": 1 },
+		});
+		app._setUnresolvedLinks({
+			"til/typescript/generics.md": { "고급 타입": 1, "유틸리티 타입": 1 },
+		});
+
+		// tools.ts의 til_get_context 로직 재현
+		const allFiles = app.vault.getFiles().filter((f: TFile) => f.extension === "md");
+		const allPaths = allFiles.map((f: TFile) => f.path);
+
+		const pathMatches = findPathMatches(allPaths, "typescript", tilPath);
+		expect(pathMatches).toContain("til/typescript/generics.md");
+		expect(pathMatches).toContain("til/typescript/types.md");
+		expect(pathMatches).not.toContain("til/react/backlog.md");
+
+		// content 매칭 (pathMatches에 포함되지 않은 파일에서)
+		const pathMatchSet = new Set(pathMatches);
+		const contentMatches: string[] = [];
+		for (const file of allFiles) {
+			if (pathMatchSet.has(file.path)) continue;
+			if (!file.path.startsWith(tilPath + "/")) continue;
+			if (file.name === "backlog.md") continue;
+			const text = await app.vault.read(file);
+			if (text.toLowerCase().includes("typescript")) {
+				contentMatches.push(file.path);
+			}
+		}
+		expect(contentMatches).toContain("til/react/hooks.md");
+
+		// enrichment
+		const file = app.vault.getAbstractFileByPath("til/typescript/generics.md") as TFile;
+		const cache = app.metadataCache.getFileCache(file);
+		expect(cache?.headings).toHaveLength(2);
+		expect(cache?.tags).toHaveLength(1);
+
+		// backlinks
+		const resolvedLinks = app.metadataCache.resolvedLinks;
+		const backlinks: string[] = [];
+		for (const [sourcePath, targets] of Object.entries(resolvedLinks)) {
+			if (targets["til/typescript/generics.md"]) {
+				backlinks.push(sourcePath);
+			}
+		}
+		expect(backlinks).toContain("til/react/hooks.md");
+
+		// unresolved mentions
+		const unresolvedMentions = findUnresolvedMentions(
+			app.metadataCache.unresolvedLinks,
+			"타입",
+			tilPath,
+		);
+		expect(unresolvedMentions).toHaveLength(2);
+
+		// 포맷
+		const result: TopicContextResult = {
+			topic: "typescript",
+			matchedFiles: [
+				buildFileContext(
+					"til/typescript/generics.md",
+					tilPath,
+					"path",
+					cache!.headings!.map((h) => h.heading),
+					cache!.links!.map((l) => l.link),
+					backlinks,
+					cache!.tags!.map((t) => t.tag),
+				),
+			],
+			unresolvedMentions,
+		};
+		const text = formatTopicContext(result);
+		expect(text).toContain('"typescript" 학습 컨텍스트');
+		expect(text).toContain("Generics");
+	});
+
+	it("매칭 파일이 없으면 새 주제 메시지를 반환한다", () => {
+		const app = createApp({ "til/react/hooks.md": "# Hooks" });
+		const allPaths = app.vault.getFiles().map((f: TFile) => f.path);
+		const pathMatches = findPathMatches(allPaths, "golang", tilPath);
+		expect(pathMatches).toHaveLength(0);
+
+		const result: TopicContextResult = {
+			topic: "golang",
+			matchedFiles: [],
+			unresolvedMentions: [],
+		};
+		expect(formatTopicContext(result)).toContain("새 주제입니다");
+	});
+});
+
+// --- til_recent_context 통합 테스트 ---
+
+describe("til_recent_context (통합)", () => {
+	const tilPath = "til";
+	const now = new Date("2026-02-18T12:00:00Z").getTime();
+	const day = 24 * 60 * 60 * 1000;
+
+	it("mtime 기반 필터링 + headings 추출 전체 파이프라인", () => {
+		const vault = new Vault();
+		const v = vault as VaultWithHelpers;
+		v._setFile("til/typescript/generics.md", "# Generics", { mtime: now - 1 * day });
+		v._setFile("til/react/hooks.md", "# Hooks", { mtime: now - 3 * day });
+		v._setFile("til/old/ancient.md", "# Old", { mtime: now - 30 * day });
+		v._setFile("til/react/backlog.md", "- [ ] todo", { mtime: now - 1 * day });
+
+		const app = new App(vault) as AppWithHelpers;
+		app._setFileCache("til/typescript/generics.md", {
+			headings: [{ heading: "Generics", level: 1 }],
+		});
+		app._setFileCache("til/react/hooks.md", {
+			headings: [{ heading: "Hooks", level: 1 }, { heading: "useState", level: 2 }],
+		});
+
+		const allFiles = app.vault.getFiles().filter((f: TFile) => f.extension === "md");
+		const filesWithMeta = allFiles.map((f: TFile) => {
+			const cache = app.metadataCache.getFileCache(f);
+			const headings = (cache?.headings ?? []).map((h) => h.heading);
+			return { path: f.path, mtime: f.stat.mtime, headings };
+		});
+
+		const result = filterRecentFiles(filesWithMeta, 7, tilPath, now);
+		expect(result.totalFiles).toBe(2);
+		expect(result.groups.flatMap((g) => g.files.map((f) => f.path))).toContain("til/typescript/generics.md");
+		expect(result.groups.flatMap((g) => g.files.map((f) => f.path))).toContain("til/react/hooks.md");
+		expect(result.groups.flatMap((g) => g.files.map((f) => f.path))).not.toContain("til/old/ancient.md");
+		expect(result.groups.flatMap((g) => g.files.map((f) => f.path))).not.toContain("til/react/backlog.md");
+
+		const text = formatRecentContext(result);
+		expect(text).toContain("최근 7일 학습 활동 (2개 파일)");
+		expect(text).toContain("Generics");
+	});
+
+	it("활동이 없으면 안내 메시지를 반환한다", () => {
+		const result = filterRecentFiles([], 7, tilPath, now);
+		const text = formatRecentContext(result);
+		expect(text).toContain("학습 활동이 없습니다");
 	});
 });

@@ -37,7 +37,8 @@ src/
 │   └── pty.ts                ← PTY 프로세스 관리 (node-pty)
 ├── mcp/
 │   ├── server.ts         ← MCP 서버 라이프사이클 (HTTP + Streamable HTTP 트랜스포트)
-│   └── tools.ts          ← MCP 도구 정의 (vault 접근)
+│   ├── tools.ts          ← MCP 도구 정의 (vault 접근)
+│   └── context.ts        ← 학습 컨텍스트 순수 함수 (topic 매칭, 최근 활동, 포맷)
 └── dashboard/
     ├── DashboardView.ts  ← 학습 대시보드 (ItemView)
     └── stats.ts          ← vault 파싱 → TIL 통계 계산
@@ -52,6 +53,7 @@ __tests__/
 ├── watcher.test.ts       ← 파일 감시 필터링 로직 테스트
 ├── stats.test.ts         ← 통계 계산 로직 테스트
 ├── mcp-tools.test.ts     ← MCP 도구 필터링/집계 로직 테스트
+├── context.test.ts       ← 학습 컨텍스트 순수 함수 테스트
 ├── mcp-server.test.ts    ← MCP 서버 HTTP 라우팅/CORS/라이프사이클 테스트
 ├── main-logic.test.ts    ← 플러그인 핵심 로직 (watcher 동기화, 설정 검증)
 ├── backlog.test.ts       ← 백로그 파싱/경로 추출 테스트

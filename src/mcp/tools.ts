@@ -1,6 +1,16 @@
 import { App, TFile } from "obsidian";
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import {
+	findPathMatches,
+	buildFileContext,
+	findUnresolvedMentions,
+	formatTopicContext,
+	filterRecentFiles,
+	formatRecentContext,
+	type TilFileContext,
+	type TopicContextResult,
+} from "./context";
 
 /**
  * MCP 도구를 서버에 등록한다.
@@ -183,6 +193,101 @@ export function registerTools(server: McpServer, app: App, tilPath: string): voi
 				? `백로그 진행률: ${totalDone}/${total} (${pct}%)\n\n${results.join("\n")}`
 				: "백로그 항목이 없습니다";
 			return { content: [{ type: "text" as const, text }] };
+		},
+	);
+
+	// til_get_context: 주제 관련 기존 지식 컨텍스트
+	server.registerTool(
+		"til_get_context",
+		{
+			title: "Get Topic Context",
+			description: "주제 관련 기존 학습 내용을 파악합니다 (파일, 링크 관계, 미작성 주제)",
+			inputSchema: z.object({
+				topic: z.string().describe("학습 주제 (예: typescript, hooks, flexbox)"),
+			}),
+		},
+		async ({ topic }) => {
+			const allFiles = app.vault.getFiles().filter((f) => f.extension === "md");
+			const allPaths = allFiles.map((f) => f.path);
+
+			// 1단계: 경로 매칭
+			const pathMatches = findPathMatches(allPaths, topic, tilPath);
+
+			// 2단계: 내용 매칭 (경로 매칭에 포함되지 않은 파일만)
+			const pathMatchSet = new Set(pathMatches);
+			const contentMatches: string[] = [];
+			const lowerTopic = topic.toLowerCase();
+			for (const file of allFiles) {
+				if (pathMatchSet.has(file.path)) continue;
+				if (!file.path.startsWith(tilPath + "/")) continue;
+				if (file.name === "backlog.md") continue;
+				const text = await app.vault.read(file);
+				if (text.toLowerCase().includes(lowerTopic)) {
+					contentMatches.push(file.path);
+				}
+				if (pathMatches.length + contentMatches.length >= 20) break;
+			}
+
+			// 3단계: metadataCache로 enrichment
+			const resolvedLinks = app.metadataCache.resolvedLinks;
+			const matchedFiles: TilFileContext[] = [];
+
+			for (const filePath of [...pathMatches, ...contentMatches]) {
+				const file = app.vault.getAbstractFileByPath(filePath);
+				if (!file || !(file instanceof TFile)) continue;
+
+				const cache = app.metadataCache.getFileCache(file);
+				const headings = (cache?.headings ?? []).map((h) => h.heading);
+				const outgoingLinks = (cache?.links ?? []).map((l) => l.link);
+				const tags = (cache?.tags ?? []).map((t) => t.tag);
+
+				// backlinks: resolvedLinks에서 이 파일을 참조하는 파일들
+				const backlinks: string[] = [];
+				for (const [sourcePath, targets] of Object.entries(resolvedLinks)) {
+					if (targets[filePath]) {
+						backlinks.push(sourcePath);
+					}
+				}
+
+				const matchType = pathMatchSet.has(filePath) ? "path" as const : "content" as const;
+				matchedFiles.push(
+					buildFileContext(filePath, tilPath, matchType, headings, outgoingLinks, backlinks, tags),
+				);
+			}
+
+			// 4단계: 미작성 링크 탐색
+			const unresolvedMentions = findUnresolvedMentions(
+				app.metadataCache.unresolvedLinks,
+				topic,
+				tilPath,
+			);
+
+			const result: TopicContextResult = { topic, matchedFiles, unresolvedMentions };
+			return { content: [{ type: "text" as const, text: formatTopicContext(result) }] };
+		},
+	);
+
+	// til_recent_context: 최근 학습 흐름
+	server.registerTool(
+		"til_recent_context",
+		{
+			title: "Recent Learning Context",
+			description: "최근 학습 흐름을 시간순으로 파악합니다",
+			inputSchema: z.object({
+				days: z.number().min(1).max(90).default(7).describe("조회할 일수 (기본 7일)"),
+			}),
+		},
+		async ({ days }) => {
+			const allFiles = app.vault.getFiles().filter((f) => f.extension === "md");
+
+			const filesWithMeta = allFiles.map((f) => {
+				const cache = app.metadataCache.getFileCache(f);
+				const headings = (cache?.headings ?? []).map((h) => h.heading);
+				return { path: f.path, mtime: f.stat.mtime, headings };
+			});
+
+			const result = filterRecentFiles(filesWithMeta, days, tilPath);
+			return { content: [{ type: "text" as const, text: formatRecentContext(result) }] };
 		},
 	);
 }
