@@ -13,14 +13,16 @@ Obsidian 사이드바에 Claude Code 터미널을 임베딩하여 AI 기반 TIL(
 - **터미널 임베딩** — Obsidian 사이드바에서 Claude Code 터미널 실행 (xterm.js + node-pty)
 - **MCP 서버 내장** — Claude Code가 HTTP로 vault에 직접 접근 (별도 플러그인 불필요)
 - **학습 대시보드** — TIL 통계, 카테고리별 학습 현황을 한눈에
-- **스킬 자동 설치** — `/til`, `/research`, `/backlog` 명령을 바로 사용 가능
+- **스킬 자동 설치** — `/til`, `/research`, `/backlog`, `/save` 명령을 바로 사용 가능
+- **위키링크 감지** — 터미널의 `[[위키링크]]`를 클릭하면 노트 열기 (CJK 문자 지원)
+- **백로그 → TIL 연동** — 빈 백로그 링크 클릭 시 TIL 학습 세션 시작 제안
 - **파일 자동 열기** — 새로 생성된 TIL 파일을 에디터에서 자동으로 열기
 
 ## 핵심 흐름
 
 ```
 커맨드 팔레트 → 터미널 열기 → Claude Code 자동 시작
-→ /til, /backlog, /research 스킬 실행
+→ /til, /backlog, /research, /save 스킬 실행
 → Claude가 리서치 → 대화형 학습 → TIL 마크다운 저장
 → 새 파일 감지 → 에디터에서 자동 열기
 ```
@@ -58,6 +60,7 @@ claude mcp add --transport http claude-til http://localhost:22360/mcp
 |------|--------|------|
 | Shell 경로 | 시스템 기본 셸 | 터미널에서 사용할 셸 |
 | Claude 자동 실행 | `true` | 터미널 열릴 때 `claude` 명령 자동 실행 |
+| 이전 세션 재개 | `false` | 이전 Claude 세션 이어서 시작 (`--continue`) |
 | 글꼴 크기 | `13` | 터미널 글꼴 크기 (px) |
 | TIL 폴더 경로 | `til` | TIL 파일 저장 폴더 (vault 루트 기준) |
 | 새 TIL 파일 자동 열기 | `true` | til/ 폴더에 새 파일 생성 시 자동 오픈 |
@@ -86,6 +89,7 @@ MCP 서버 연결 시 Claude Code에서 사용할 수 있는 도구:
 | **til** | `/til <주제> [카테고리]` | 주제 리서치 → 대화형 학습 → TIL 저장 |
 | **research** | `/research <주제> [카테고리]` | 주제를 리서치하여 학습 백로그 생성 |
 | **backlog** | `/backlog [카테고리]` | 학습 백로그 조회 및 진행 상황 요약 |
+| **save** | *(/til에서 자동 호출)* | TIL 마크다운 저장 + Daily 노트, MOC, 백로그 연동 |
 
 ## 개발
 
@@ -94,6 +98,7 @@ npm run dev              # 워치 모드 (esbuild)
 npm test                 # 테스트 실행 (vitest)
 npm run rebuild-pty      # Obsidian Electron용 node-pty 재빌드
 npm run deploy -- /path  # vault에 배포
+npm run deploy -- --refresh-skills /path  # 스킬/규칙 강제 재설치 포함
 ```
 
 ### 프로젝트 구조
@@ -102,10 +107,12 @@ npm run deploy -- /path  # vault에 배포
 src/
 ├── main.ts                  # 플러그인 진입점
 ├── settings.ts              # 설정 탭 + 인터페이스
-├── skills.ts                # 스킬 자동 설치
+├── skills.ts                # 스킬/규칙 자동 설치
 ├── watcher.ts               # 파일 감시 → 에디터에서 열기
+├── backlog.ts               # 백로그 파싱 순수 함수
 ├── terminal/
 │   ├── TerminalView.ts      # 사이드바 터미널 (ItemView + xterm.js)
+│   ├── WikilinkProvider.ts  # [[위키링크]] 감지 + 클릭 시 노트 열기 (CJK 지원)
 │   └── pty.ts               # PTY 프로세스 관리 (node-pty)
 ├── mcp/
 │   ├── server.ts            # MCP 서버 라이프사이클 (Streamable HTTP)

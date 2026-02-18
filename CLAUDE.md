@@ -4,7 +4,7 @@
 
 Obsidian 플러그인. 사이드바에 Claude Code 터미널을 임베딩하여 TIL 학습 워크플로우를 Obsidian 안에서 실행한다. xterm.js + node-pty 기반.
 
-핵심 흐름: 커맨드 팔레트 → 터미널 열기 → Claude Code에서 `/til`, `/backlog`, `/research` 스킬 직접 실행 → 새 파일 감지 시 에디터에서 열기
+핵심 흐름: 커맨드 팔레트 → 터미널 열기 → Claude Code에서 `/til`, `/backlog`, `/research`, `/save` 스킬 직접 실행 → 새 파일 감지 시 에디터에서 열기
 
 Obsidian의 역할은 "터미널 임베딩 + 파일 감시 + skill 배포 + MCP 서버 + 대시보드"로 한정하고, 워크플로우 주도권은 Claude Code에 있다.
 
@@ -28,11 +28,12 @@ Obsidian의 역할은 "터미널 임베딩 + 파일 감시 + skill 배포 + MCP 
 src/
 ├── main.ts               ← TILPlugin 진입점 (터미널 뷰 + MCP + 대시보드 + watcher + skill 설치)
 ├── settings.ts           ← 설정 탭 + 인터페이스 (mcpEnabled, mcpPort 포함)
-├── skills.ts             ← Skill 버전 기반 자동 설치/업데이트 + CLAUDE.md MCP 섹션 관리
+├── skills.ts             ← Skill/Rule 버전 기반 자동 설치/업데이트 + CLAUDE.md MCP 섹션 관리
 ├── watcher.ts            ← 새 TIL 파일 감지 → 에디터에서 열기
+├── backlog.ts            ← 백로그 파싱 순수 함수 (parseBacklogItems, extractTopicFromPath)
 ├── terminal/
 │   ├── TerminalView.ts       ← 사이드바 터미널 (ItemView + xterm.js)
-│   ├── WikilinkProvider.ts   ← [[위키링크]] 감지 + 클릭 시 노트 열기 (ILinkProvider)
+│   ├── WikilinkProvider.ts   ← [[위키링크]] 감지 + CJK 셀 너비 + 클릭 시 노트 열기 (ILinkProvider)
 │   └── pty.ts                ← PTY 프로세스 관리 (node-pty)
 ├── mcp/
 │   ├── server.ts         ← MCP 서버 라이프사이클 (HTTP + Streamable HTTP 트랜스포트)
@@ -41,16 +42,20 @@ src/
     ├── DashboardView.ts  ← 학습 대시보드 (ItemView)
     └── stats.ts          ← vault 파싱 → TIL 통계 계산
 
+rules/
+└── save-rules.md         ← /save 스킬 규칙 (esbuild text import → vault에 설치)
+
 __tests__/
 ├── mock-obsidian.ts      ← obsidian 모듈 mock
 ├── utils.test.ts         ← 설정 기본값 테스트
-├── skills.test.ts        ← skill 버전 기반 설치/업데이트 로직 테스트
+├── skills.test.ts        ← skill/rule 버전 기반 설치/업데이트 로직 테스트
 ├── watcher.test.ts       ← 파일 감시 필터링 로직 테스트
 ├── stats.test.ts         ← 통계 계산 로직 테스트
 ├── mcp-tools.test.ts     ← MCP 도구 필터링/집계 로직 테스트
 ├── mcp-server.test.ts    ← MCP 서버 HTTP 라우팅/CORS/라이프사이클 테스트
 ├── main-logic.test.ts    ← 플러그인 핵심 로직 (watcher 동기화, 설정 검증)
-└── wikilink-provider.test.ts ← 위키링크 감지 순수 함수 테스트
+├── backlog.test.ts       ← 백로그 파싱/경로 추출 테스트
+└── wikilink-provider.test.ts ← 위키링크 감지 + CJK 셀 너비 순수 함수 테스트
 ```
 
 ## 빌드
@@ -62,6 +67,7 @@ npm run dev            # 워치 모드
 npm run build          # 프로덕션 빌드
 npm test               # vitest 테스트 실행
 npm run deploy -- <vault-path>  # vault에 배포 (빌드 + 복사 + pty 재빌드)
+npm run deploy -- --refresh-skills <vault-path>  # 스킬/규칙 강제 재설치 포함
 ```
 
 ## 규칙
@@ -82,12 +88,14 @@ npm run deploy -- <vault-path>  # vault에 배포 (빌드 + 복사 + pty 재빌�
 - Skill 파일의 `plugin-version` frontmatter로 자동 업데이트 관리. 없으면 사용자 커스터마이즈로 간주하여 덮어쓰지 않음
 - 백로그 파일은 `til/{카테고리}/backlog.md` 경로 패턴
 - 한국어 작성, 기술 용어 원어 병기
-- **버전 업데이트 체크리스트**: 기능 추가/스킬 변경 시 아래 5개 파일의 버전을 반드시 동기화:
+- **문서 동기화**: 새 파일 추가, 설정 변경, 스킬 추가/삭제 등 구조적 변경이 있으면 `CLAUDE.md`, `README.md`, `README.ko.md`도 함께 업데이트한다 (구조 섹션, 기능 목록, 설정 테이블, 스킬 목록)
+- **버전 업데이트 체크리스트**: 기능 추가/스킬 변경 시 아래 6개 파일의 버전을 반드시 동기화:
   1. `package.json` → `"version"`
   2. `manifest.json` → `"version"`
   3. `skills/til/SKILL.md` → `plugin-version` frontmatter
   4. `skills/backlog/SKILL.md` → `plugin-version` frontmatter
   5. `skills/research/SKILL.md` → `plugin-version` frontmatter
+  6. `skills/save/SKILL.md` → `plugin-version` frontmatter
 
 ## 참고 문서
 

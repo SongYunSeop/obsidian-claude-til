@@ -13,14 +13,16 @@ An Obsidian plugin that embeds a Claude Code terminal in the sidebar and provide
 - **Embedded Terminal** — Claude Code terminal in Obsidian sidebar (xterm.js + node-pty)
 - **Built-in MCP Server** — Claude Code can directly access your vault via HTTP
 - **Learning Dashboard** — TIL statistics and category breakdown at a glance
-- **Auto-installed Skills** — `/til`, `/research`, `/backlog` commands ready out of the box
+- **Auto-installed Skills** — `/til`, `/research`, `/backlog`, `/save` commands ready out of the box
+- **Wikilink Detection** — `[[wikilinks]]` in terminal are clickable and open notes (CJK-aware)
+- **Backlog-to-TIL Trigger** — Click an empty backlog link to start a TIL session
 - **File Watcher** — Newly created TIL files open automatically in the editor
 
 ## How It Works
 
 ```
 Command Palette → Open Terminal → Claude Code starts
-→ Run /til, /backlog, /research skills
+→ Run /til, /backlog, /research, /save skills
 → Claude researches → interactive learning → saves TIL markdown
 → New file detected → opens in editor
 ```
@@ -58,6 +60,7 @@ claude mcp add --transport http claude-til http://localhost:22360/mcp
 |---------|---------|-------------|
 | Shell Path | System default | Shell to use in the terminal |
 | Auto Launch Claude | `true` | Run `claude` when terminal opens |
+| Resume Last Session | `false` | Resume previous Claude session (`--continue`) |
 | Font Size | `13` | Terminal font size (px) |
 | TIL Folder | `til` | Where TIL files are stored (relative to vault root) |
 | Auto Open New TIL | `true` | Open new TIL files in editor automatically |
@@ -86,6 +89,7 @@ The plugin auto-installs these skills to `.claude/skills/`:
 | **til** | `/til <topic> [category]` | Research a topic → interactive learning → save TIL |
 | **research** | `/research <topic> [category]` | Research a topic and create a learning backlog |
 | **backlog** | `/backlog [category]` | View learning backlog and progress |
+| **save** | *(auto-invoked by /til)* | Save TIL markdown with Daily note, MOC, and backlog updates |
 
 ## Development
 
@@ -94,6 +98,7 @@ npm run dev              # Watch mode (esbuild)
 npm test                 # Run tests (vitest)
 npm run rebuild-pty      # Rebuild node-pty for Obsidian's Electron
 npm run deploy -- /path  # Deploy to vault
+npm run deploy -- --refresh-skills /path  # Deploy with skill/rule refresh
 ```
 
 ### Project Structure
@@ -102,10 +107,12 @@ npm run deploy -- /path  # Deploy to vault
 src/
 ├── main.ts                  # Plugin entry point
 ├── settings.ts              # Settings tab & interface
-├── skills.ts                # Skill auto-installer
+├── skills.ts                # Skill/rule auto-installer
 ├── watcher.ts               # File watcher → open in editor
+├── backlog.ts               # Backlog parsing (pure functions)
 ├── terminal/
 │   ├── TerminalView.ts      # Sidebar terminal (ItemView + xterm.js)
+│   ├── WikilinkProvider.ts  # [[wikilink]] detection + click-to-open (CJK-aware)
 │   └── pty.ts               # PTY process manager (node-pty)
 ├── mcp/
 │   ├── server.ts            # MCP server lifecycle (Streamable HTTP)
