@@ -157,6 +157,8 @@ src/
 - [ ] Backlog progress bars in dashboard
 - [ ] Configurable TIL folder path
 - [ ] Rich dashboard — recent TILs, streaks, weekly summary
+- [ ] Dynamic code blocks (`til-moc`, `til-daily`) — auto-render TIL lists without Dataview
+- [ ] Multi-terminal tabs — run multiple Claude Code sessions
 - [ ] Note linking — auto-insert backlinks to related notes
 
 ## Acknowledgments
