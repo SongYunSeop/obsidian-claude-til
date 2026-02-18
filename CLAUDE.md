@@ -106,13 +106,7 @@ npm run deploy -- --refresh-skills <vault-path>  # 스킬/규칙 강제 재설�
 - 백로그 파일은 `til/{카테고리}/backlog.md` 경로 패턴
 - 한국어 작성, 기술 용어 원어 병기
 - **문서 동기화**: 새 파일 추가, 설정 변경, 스킬 추가/삭제 등 구조적 변경이 있으면 `CLAUDE.md`, `README.md`, `README.ko.md`도 함께 업데이트한다 (구조 섹션, 기능 목록, 설정 테이블, 스킬 목록)
-- **버전 업데이트 체크리스트**: 기능 추가/스킬 변경 시 아래 6개 파일의 버전을 반드시 동기화:
-  1. `package.json` → `"version"`
-  2. `manifest.json` → `"version"`
-  3. `src/vault-assets/skills/til/SKILL.md` → `plugin-version` frontmatter
-  4. `src/vault-assets/skills/backlog/SKILL.md` → `plugin-version` frontmatter
-  5. `src/vault-assets/skills/research/SKILL.md` → `plugin-version` frontmatter
-  6. `src/vault-assets/skills/save/SKILL.md` → `plugin-version` frontmatter
+- **버전 관리**: vault-assets의 `plugin-version`은 `__PLUGIN_VERSION__` 플레이스홀더로 관리되며, `skills.ts`가 설치 시 `manifest.json` 버전으로 자동 치환한다. 릴리즈 시 수동 업데이트 대상은 `package.json`, `manifest.json`, `versions.json` 3개 파일뿐이다. `/release` 스킬 사용을 권장한다.
 
 ## 참고 문서
 

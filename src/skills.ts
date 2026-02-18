@@ -26,6 +26,15 @@ const OLD_SKILLS_BASE = ".claude/skills/claude-til";
 const MCP_MARKER_START = "<!-- claude-til:mcp-tools:start -->";
 const MCP_MARKER_END = "<!-- claude-til:mcp-tools:end -->";
 
+const VERSION_PLACEHOLDER = "__PLUGIN_VERSION__";
+
+/**
+ * 소스 파일의 __PLUGIN_VERSION__ 플레이스홀더를 실제 버전으로 치환한다.
+ */
+export function resolveVersionPlaceholder(content: string, version: string): string {
+	return content.replace(VERSION_PLACEHOLDER, version);
+}
+
 /**
  * frontmatter에서 plugin-version 값을 추출한다.
  */
@@ -82,7 +91,7 @@ async function installFiles(
 			await vault.adapter.mkdir(dir);
 		}
 
-		await vault.adapter.write(fullPath, content);
+		await vault.adapter.write(fullPath, resolveVersionPlaceholder(content, pluginVersion));
 		console.log(`Claude TIL: ${label} 설치됨 → ${fullPath}`);
 	}
 }

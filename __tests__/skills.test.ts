@@ -3,6 +3,12 @@ import { Vault } from "./mock-obsidian";
 
 // --- 순수 함수 테스트 (skills.ts에서 로직만 복사) ---
 
+const VERSION_PLACEHOLDER = "__PLUGIN_VERSION__";
+
+function resolveVersionPlaceholder(content: string, version: string): string {
+	return content.replace(VERSION_PLACEHOLDER, version);
+}
+
 function extractPluginVersion(content: string): string | null {
 	const match = content.match(/^---\n([\s\S]*?)\n---/);
 	if (!match) return null;
@@ -54,7 +60,7 @@ async function installFiles(
 			await vault.adapter.mkdir(dir);
 		}
 
-		await vault.adapter.write(fullPath, content);
+		await vault.adapter.write(fullPath, resolveVersionPlaceholder(content, pluginVersion));
 		installed.push(fullPath);
 	}
 	return installed;
@@ -110,6 +116,19 @@ async function cleanupOldSkills(vault: Vault): Promise<string[]> {
 
 // --- 테스트 ---
 
+describe("resolveVersionPlaceholder", () => {
+	it("__PLUGIN_VERSION__을 실제 버전으로 치환한다", () => {
+		const content = '---\nplugin-version: "__PLUGIN_VERSION__"\n---\n# Skill';
+		const result = resolveVersionPlaceholder(content, "0.5.0");
+		expect(result).toBe('---\nplugin-version: "0.5.0"\n---\n# Skill');
+	});
+
+	it("플레이스홀더가 없으면 원본을 그대로 반환한다", () => {
+		const content = '---\nplugin-version: "0.2.0"\n---\n# Skill';
+		expect(resolveVersionPlaceholder(content, "0.5.0")).toBe(content);
+	});
+});
+
 describe("extractPluginVersion", () => {
 	it("frontmatter에서 plugin-version을 추출한다", () => {
 		const content = '---\nname: til\nplugin-version: "0.1.2"\n---\n# TIL';
@@ -156,9 +175,9 @@ describe("isNewerVersion", () => {
 describe("installFiles (skills)", () => {
 	let vault: Vault;
 	const skills: Record<string, string> = {
-		"til/SKILL.md": '---\nplugin-version: "0.2.0"\n---\n# TIL Skill v2',
-		"backlog/SKILL.md": '---\nplugin-version: "0.2.0"\n---\n# Backlog Skill v2',
-		"save/SKILL.md": '---\nplugin-version: "0.2.0"\n---\n# Save Skill v2',
+		"til/SKILL.md": '---\nplugin-version: "__PLUGIN_VERSION__"\n---\n# TIL Skill v2',
+		"backlog/SKILL.md": '---\nplugin-version: "__PLUGIN_VERSION__"\n---\n# Backlog Skill v2',
+		"save/SKILL.md": '---\nplugin-version: "__PLUGIN_VERSION__"\n---\n# Save Skill v2',
 	};
 
 	beforeEach(() => {
@@ -174,6 +193,8 @@ describe("installFiles (skills)", () => {
 
 		const content = await vault.adapter.read(".claude/skills/til/SKILL.md");
 		expect(content).toContain("# TIL Skill v2");
+		expect(content).toContain('plugin-version: "0.2.0"');
+		expect(content).not.toContain("__PLUGIN_VERSION__");
 	});
 
 	it("plugin-version이 낮은 파일은 업데이트한다", async () => {
@@ -224,7 +245,7 @@ describe("installFiles (skills)", () => {
 describe("installFiles (rules)", () => {
 	let vault: Vault;
 	const rules: Record<string, string> = {
-		"save-rules.md": '---\nplugin-version: "0.2.0"\n---\n# TIL 저장 규칙',
+		"save-rules.md": '---\nplugin-version: "__PLUGIN_VERSION__"\n---\n# TIL 저장 규칙',
 	};
 
 	beforeEach(() => {

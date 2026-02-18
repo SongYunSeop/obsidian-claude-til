@@ -46,14 +46,11 @@ $ARGUMENTS에서 bump 타입을 추출합니다: `patch`, `minor`, `major` (기�
 
 1. `npm test`로 테스트 통과 확인
 2. `npm run build`로 프로덕션 빌드 확인
-3. 아래 **7개 파일**의 버전을 새 버전으로 업데이트:
+3. 아래 **3개 파일**의 버전을 새 버전으로 업데이트:
    - `package.json` → `"version"`
    - `manifest.json` → `"version"`
    - `versions.json` → 새 버전 항목 추가 (minAppVersion은 manifest.json에서 읽기)
-   - `src/vault-assets/skills/til/SKILL.md` → `plugin-version` frontmatter
-   - `src/vault-assets/skills/backlog/SKILL.md` → `plugin-version` frontmatter
-   - `src/vault-assets/skills/research/SKILL.md` → `plugin-version` frontmatter
-   - `src/vault-assets/skills/save/SKILL.md` → `plugin-version` frontmatter
+   - (vault-assets의 `plugin-version`은 `__PLUGIN_VERSION__` 플레이스홀더로 자동 치환됨)
 4. 변경사항을 커밋: `🔖 chore: release v{version}`
 5. 태그 생성: `git tag v{version}`
 6. 푸시: `git push origin main --tags`

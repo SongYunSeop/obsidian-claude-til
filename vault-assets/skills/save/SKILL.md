@@ -2,7 +2,7 @@
 name: save
 description: "학습 내용을 TIL 파일로 저장하고 Daily 노트, MOC, 백로그를 일괄 업데이트"
 argument-hint: "[주제] [카테고리]"
-plugin-version: "0.4.0"
+plugin-version: "__PLUGIN_VERSION__"
 ---
 
 # Save Skill

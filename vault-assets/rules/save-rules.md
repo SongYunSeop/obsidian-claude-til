@@ -1,5 +1,5 @@
 ---
-plugin-version: "0.4.0"
+plugin-version: "__PLUGIN_VERSION__"
 ---
 
 # TIL 저장 규칙
