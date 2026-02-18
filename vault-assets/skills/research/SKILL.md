@@ -52,6 +52,8 @@ plugin-version: "0.2.0"
 tags:
   - backlog
   - {카테고리}
+aliases:
+  - "Backlog - {주제}"
 updated: YYYY-MM-DD
 ---
 
