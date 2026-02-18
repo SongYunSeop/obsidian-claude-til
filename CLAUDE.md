@@ -86,6 +86,7 @@ npm run deploy -- --refresh-skills <vault-path>  # 스킬/규칙 강제 재설�
 
 ## 규칙
 
+- **새 기능/워크플로우 변경 시 반드시 사용자와 방향을 먼저 논의한다**. 구현 방식이 여러 가지일 수 있는 작업은 바로 코드를 작성하지 않고, 접근 방법을 제안하고 합의한 뒤 작업한다.
 - Obsidian API는 `obsidian` 모듈에서 import
 - node-pty는 `electronRequire`로 로드 (일반 import 불가, 네이티브 모듈)
 - `onload()`에서 등록한 리소스는 자동 해제됨
