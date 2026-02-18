@@ -37,48 +37,25 @@ git pull origin main
 
 충돌이 발생하면 사용자에게 알린다.
 
-### 3. 의존성 업데이트 + 빌드
+### 3. 배포
+
+사용자에게 스킬/규칙도 갱신할지 물은 후, deploy 스크립트를 실행한다.
+
+**스킬 갱신 포함:**
 
 ```bash
-npm install
-npm run build
+npm run deploy -- --refresh-skills <vault-path>
 ```
 
-### 4. 에셋 교체
+**스킬 갱신 없이:**
 
 ```bash
-PLUGIN_DIR="<vault-path>/.obsidian/plugins/claude-til"
-cp main.js "$PLUGIN_DIR/main.js"
-cp manifest.json "$PLUGIN_DIR/manifest.json"
-cp styles.css "$PLUGIN_DIR/styles.css"
+npm run deploy -- <vault-path>
 ```
 
-### 5. node-pty 재빌드 (필요 시)
+deploy 스크립트가 빌드, 에셋 복사, node-pty 재빌드(Electron 버전 변경 시에만), 스킬 재설치를 자동 처리한다.
 
-`node_modules/node-pty`가 이미 있으면 재빌드만 실행한다. 없으면 `/install-plugin`의 5~6단계를 수행한다.
-
-Electron 버전 감지는 `/install-plugin`과 동일한 방법을 사용한다.
-
-```bash
-npx @electron/rebuild -m "$PLUGIN_DIR/node_modules/node-pty" -v <감지된-electron-version>
-```
-
-### 6. 스킬/규칙 강제 재설치 (선택)
-
-사용자에게 스킬/규칙도 최신 버전으로 갱신할지 묻는다. 원하면:
-
-```bash
-# plugin-version이 있는 스킬 파일 삭제 → 다음 플러그인 로드 시 재설치
-SKILLS_DIR="<vault-path>/.claude/skills"
-for skill in til backlog research save; do
-  SKILL_FILE="$SKILLS_DIR/$skill/SKILL.md"
-  if [ -f "$SKILL_FILE" ] && grep -q "plugin-version:" "$SKILL_FILE"; then
-    rm "$SKILL_FILE"
-  fi
-done
-```
-
-### 7. 완료 안내
+### 4. 완료 안내
 
 ```
 업데이트 완료!
@@ -90,4 +67,4 @@ Obsidian을 재시작하거나 플러그인을 다시 로드하세요.
 
 - 이 스킬은 프로젝트 루트 디렉토리에서 실행해야 한다
 - 에셋(main.js, manifest.json, styles.css)만 교체하므로 사용자 설정은 유지된다
-- node-pty 재빌드는 Obsidian의 Electron 버전이 변경되었을 때만 필요하지만, 안전을 위해 항상 실행한다
+- node-pty 재빌드는 Electron 버전이 변경된 경우에만 실행된다 (`.electron-version` 파일로 추적)

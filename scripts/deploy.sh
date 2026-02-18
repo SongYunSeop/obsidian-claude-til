@@ -105,11 +105,22 @@ fi
 cd "$PLUGIN_DIR"
 npm install --production 2>&1
 
-# ── 4. node-pty Electron 재빌드 ────────────────────────────
+# ── 4. node-pty Electron 재빌드 (버전 변경 시에만) ──────────
 
-echo "==> node-pty를 Electron ${ELECTRON_VERSION}에 맞춰 재빌드 중..."
-cd "$PROJECT_DIR"
-npx @electron/rebuild -m "$PLUGIN_DIR/node_modules/node-pty" -v "$ELECTRON_VERSION" 2>&1
+ELECTRON_VERSION_FILE="$PLUGIN_DIR/.electron-version"
+LAST_ELECTRON_VERSION=""
+if [ -f "$ELECTRON_VERSION_FILE" ]; then
+  LAST_ELECTRON_VERSION=$(cat "$ELECTRON_VERSION_FILE")
+fi
+
+if [ "$LAST_ELECTRON_VERSION" = "$ELECTRON_VERSION" ]; then
+  echo "==> node-pty 재빌드 스킵 (Electron ${ELECTRON_VERSION} 동일)"
+else
+  echo "==> node-pty를 Electron ${ELECTRON_VERSION}에 맞춰 재빌드 중..."
+  cd "$PROJECT_DIR"
+  npx @electron/rebuild -m "$PLUGIN_DIR/node_modules/node-pty" -v "$ELECTRON_VERSION" 2>&1
+  echo "$ELECTRON_VERSION" > "$ELECTRON_VERSION_FILE"
+fi
 
 # ── 5. 스킬/규칙 강제 재설치 (옵션) ─────────────────────────
 
