@@ -47,6 +47,41 @@ export function findWikilinks(text: string): WikilinkMatch[] {
 	return results;
 }
 
+/**
+ * CJK/전각 문자 여부를 판별한다. (터미널에서 2셀 너비)
+ */
+export function isFullWidth(code: number): boolean {
+	return (
+		(code >= 0x1100 && code <= 0x115F) ||  // Hangul Jamo
+		(code >= 0x2E80 && code <= 0x303E) ||  // CJK Radicals, Kangxi, Symbols
+		(code >= 0x3040 && code <= 0x33BF) ||  // Hiragana, Katakana, Bopomofo
+		(code >= 0x3400 && code <= 0x4DBF) ||  // CJK Extension A
+		(code >= 0x4E00 && code <= 0x9FFF) ||  // CJK Unified Ideographs
+		(code >= 0xAC00 && code <= 0xD7AF) ||  // Hangul Syllables
+		(code >= 0xF900 && code <= 0xFAFF) ||  // CJK Compatibility Ideographs
+		(code >= 0xFE10 && code <= 0xFE19) ||  // Vertical Forms
+		(code >= 0xFE30 && code <= 0xFE6F) ||  // CJK Compatibility Forms
+		(code >= 0xFF01 && code <= 0xFF60) ||  // Fullwidth Forms
+		(code >= 0xFFE0 && code <= 0xFFE6) ||  // Fullwidth Signs
+		(code >= 0x20000 && code <= 0x2FFFD) || // CJK Extension B-F
+		(code >= 0x30000 && code <= 0x3FFFD)    // CJK Extension G
+	);
+}
+
+/**
+ * 문자열의 charIndex까지의 터미널 셀 너비를 계산한다.
+ * 한글 등 전각 문자는 2셀, ASCII는 1셀.
+ */
+export function cellWidth(text: string, charIndex: number): number {
+	let width = 0;
+	for (let i = 0; i < charIndex; i++) {
+		const code = text.codePointAt(i)!;
+		width += isFullWidth(code) ? 2 : 1;
+		if (code > 0xFFFF) i++; // surrogate pair
+	}
+	return width;
+}
+
 const LINK_DECORATIONS: ILinkDecorations = {
 	pointerCursor: true,
 	underline: true,
@@ -84,21 +119,22 @@ export class WikilinkProvider implements ILinkProvider {
 			return;
 		}
 
-		// 존재하는 노트만 링크로 표시 (false positive 방지)
+		// bash [[ condition ]] 등 false positive 방지:
+		// 앞뒤 공백이 있는 매치는 노트 이름이 아니므로 제외
 		const links: ILink[] = matches
-			.filter((m) => {
-				const resolved = this.app.metadataCache.getFirstLinkpathDest(m.linkText, "");
-				return resolved !== null;
-			})
+			.filter((m) => m.linkText === m.linkText.trim())
 			.map((m) => ({
 				range: {
-					start: { x: m.startIndex + 1, y: bufferLineNumber },
-					end: { x: m.endIndex, y: bufferLineNumber },
+					start: { x: cellWidth(text, m.startIndex) + 1, y: bufferLineNumber },
+					end: { x: cellWidth(text, m.endIndex), y: bufferLineNumber },
 				},
 				text: m.fullMatch,
 				decorations: LINK_DECORATIONS,
 				activate: () => {
-					this.app.workspace.openLinkText(m.linkText, "", false);
+					// basename만으로도 vault 내 노트를 찾을 수 있도록 먼저 검색
+					const resolved = this.app.metadataCache.getFirstLinkpathDest(m.linkText, "");
+					const linkPath = resolved ? resolved.path : m.linkText;
+					this.app.workspace.openLinkText(linkPath, "", false);
 				},
 			}));
 

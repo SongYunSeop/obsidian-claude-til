@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { findWikilinks } from "../src/terminal/WikilinkProvider";
+import { findWikilinks, isFullWidth, cellWidth } from "../src/terminal/WikilinkProvider";
 
 describe("findWikilinks", () => {
 	it("기본 [[note]] 패턴을 감지한다", () => {
@@ -95,5 +95,59 @@ describe("findWikilinks", () => {
 		const results = findWikilinks("참고: [[타입스크립트 제네릭]]");
 		expect(results).toHaveLength(1);
 		expect(results[0]!.linkText).toBe("타입스크립트 제네릭");
+	});
+});
+
+describe("isFullWidth", () => {
+	it("한글 음절은 전각이다", () => {
+		expect(isFullWidth("가".codePointAt(0)!)).toBe(true);
+		expect(isFullWidth("힣".codePointAt(0)!)).toBe(true);
+	});
+
+	it("CJK 한자는 전각이다", () => {
+		expect(isFullWidth("中".codePointAt(0)!)).toBe(true);
+	});
+
+	it("일본어 히라가나/카타카나는 전각이다", () => {
+		expect(isFullWidth("あ".codePointAt(0)!)).toBe(true);
+		expect(isFullWidth("ア".codePointAt(0)!)).toBe(true);
+	});
+
+	it("ASCII 문자는 반각이다", () => {
+		expect(isFullWidth("a".codePointAt(0)!)).toBe(false);
+		expect(isFullWidth("[".codePointAt(0)!)).toBe(false);
+		expect(isFullWidth(" ".codePointAt(0)!)).toBe(false);
+	});
+});
+
+describe("cellWidth", () => {
+	it("ASCII만 있으면 문자 수와 같다", () => {
+		expect(cellWidth("hello", 5)).toBe(5);
+		expect(cellWidth("[[link]]", 2)).toBe(2);
+	});
+
+	it("한글은 2셀 너비로 계산한다", () => {
+		expect(cellWidth("앞 ", 1)).toBe(2);  // "앞" = 2셀
+		expect(cellWidth("앞 ", 2)).toBe(3);  // "앞 " = 2 + 1 = 3셀
+	});
+
+	it("한글 앞의 위키링크 셀 위치가 정확하다", () => {
+		const text = "앞 [[link]] 뒤";
+		const m = findWikilinks(text)[0]!;
+		// "앞 " = 2 + 1 = 3셀 → 링크 시작 셀 = 4 (1-based)
+		expect(cellWidth(text, m.startIndex) + 1).toBe(4);
+		// "앞 [[link]]" = 3 + 8 = 11셀
+		expect(cellWidth(text, m.endIndex)).toBe(11);
+	});
+
+	it("한글이 포함된 위키링크의 셀 너비가 정확하다", () => {
+		const text = "참고: [[타입스크립트]]";
+		const m = findWikilinks(text)[0]!;
+		// "참고: " = 2+2+1+1 = 6셀 → 시작 셀 = 7
+		expect(cellWidth(text, m.startIndex) + 1).toBe(7);
+	});
+
+	it("빈 문자열은 0이다", () => {
+		expect(cellWidth("", 0)).toBe(0);
 	});
 });
