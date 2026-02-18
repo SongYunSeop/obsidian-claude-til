@@ -37,7 +37,8 @@ export class DashboardView extends ItemView {
 		container.empty();
 		container.addClass("claude-til-dashboard");
 
-		const stats = await computeStats(this.app, this.tilPath);
+		const files = this.app.vault.getFiles().map((f) => ({ path: f.path, extension: f.extension }));
+		const stats = computeStats(files, this.tilPath);
 		this.renderHeader(container as HTMLElement, stats);
 		this.renderCategories(container as HTMLElement, stats);
 	}

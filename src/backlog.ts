@@ -28,6 +28,24 @@ export function parseBacklogItems(content: string): BacklogItem[] {
  * 파일 경로에서 topic과 category를 추출한다.
  * `til/{category}/{slug}.md` → `{ topic: slug, category }`
  */
+export interface BacklogProgress {
+	todo: number;
+	done: number;
+}
+
+/**
+ * 백로그 내용에서 완료/미완료 항목 수를 계산한다.
+ * `- [ ]` → todo, `- [x]`/`- [X]` → done
+ */
+export function computeBacklogProgress(content: string): BacklogProgress {
+	const todoMatches = content.match(/- \[ \]/g);
+	const doneMatches = content.match(/- \[x\]/gi);
+	return {
+		todo: todoMatches?.length ?? 0,
+		done: doneMatches?.length ?? 0,
+	};
+}
+
 export function extractTopicFromPath(
 	filePath: string,
 	tilPath: string,

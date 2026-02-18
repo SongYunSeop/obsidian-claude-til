@@ -61,6 +61,16 @@ export function findPathMatches(
 }
 
 /**
+ * TIL 파일 경로에서 카테고리를 추출한다.
+ * `tilPath/{category}/file.md` → category, 하위 폴더 없으면 "(uncategorized)"
+ */
+export function extractCategory(filePath: string, tilPath: string): string {
+	const relative = filePath.slice(tilPath.length + 1);
+	const parts = relative.split("/");
+	return parts.length >= 2 ? parts[0]! : "(uncategorized)";
+}
+
+/**
  * 파일 경로와 메타데이터를 조합하여 TilFileContext를 생성한다.
  */
 export function buildFileContext(
@@ -72,10 +82,7 @@ export function buildFileContext(
 	backlinks: string[],
 	tags: string[],
 ): TilFileContext {
-	const relative = path.slice(tilPath.length + 1);
-	const parts = relative.split("/");
-	const category = parts.length >= 2 ? parts[0]! : "(uncategorized)";
-
+	const category = extractCategory(path, tilPath);
 	return { path, category, headings, outgoingLinks, backlinks, tags, matchType };
 }
 
@@ -148,6 +155,31 @@ export function formatTopicContext(result: TopicContextResult): string {
 }
 
 /**
+ * 파일 경로를 카테고리별로 그룹핑한다.
+ * category 지정 시 해당 카테고리만 반환한다.
+ */
+export function groupFilesByCategory(
+	filePaths: string[],
+	tilPath: string,
+	category?: string,
+): Record<string, string[]> {
+	const prefix = tilPath + "/";
+	const result: Record<string, string[]> = {};
+
+	for (const p of filePaths) {
+		if (!p.startsWith(prefix)) continue;
+		const relative = p.slice(prefix.length);
+		const parts = relative.split("/");
+		const cat = parts.length >= 2 ? parts[0]! : "(uncategorized)";
+		if (category && cat !== category) continue;
+		if (!result[cat]) result[cat] = [];
+		result[cat]!.push(p);
+	}
+
+	return result;
+}
+
+/**
  * mtime 기준으로 최근 파일을 필터링하고 날짜별로 그룹핑한다.
  * newest-first 정렬.
  */
@@ -173,9 +205,7 @@ export function filterRecentFiles(
 	for (const f of filtered) {
 		const d = new Date(f.mtime);
 		const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-		const relative = f.path.slice(tilPath.length + 1);
-		const parts = relative.split("/");
-		const category = parts.length >= 2 ? parts[0]! : "(uncategorized)";
+		const category = extractCategory(f.path, tilPath);
 
 		if (!groupMap.has(date)) groupMap.set(date, []);
 		groupMap.get(date)!.push({

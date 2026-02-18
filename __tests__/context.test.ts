@@ -6,6 +6,8 @@ import {
 	filterRecentFiles,
 	formatTopicContext,
 	formatRecentContext,
+	extractCategory,
+	groupFilesByCategory,
 	type TopicContextResult,
 	type RecentContextResult,
 } from "../src/mcp/context";
@@ -262,6 +264,63 @@ describe("formatTopicContext", () => {
 		const text = formatTopicContext(result);
 		expect(text).toContain("미작성 관련 링크");
 		expect(text).not.toContain("관련 파일");
+	});
+});
+
+describe("extractCategory", () => {
+	it("하위 폴더명을 카테고리로 추출한다", () => {
+		expect(extractCategory("til/typescript/generics.md", "til")).toBe("typescript");
+	});
+
+	it("루트 파일은 (uncategorized)로 반환한다", () => {
+		expect(extractCategory("til/overview.md", "til")).toBe("(uncategorized)");
+	});
+
+	it("깊은 경로에서 첫 번째 폴더를 카테고리로 반환한다", () => {
+		expect(extractCategory("til/react/advanced/patterns.md", "til")).toBe("react");
+	});
+
+	it("커스텀 tilPath를 지원한다", () => {
+		expect(extractCategory("learning/react/hooks.md", "learning")).toBe("react");
+	});
+});
+
+describe("groupFilesByCategory", () => {
+	const paths = [
+		"til/typescript/generics.md",
+		"til/typescript/types.md",
+		"til/react/hooks.md",
+		"til/overview.md",
+		"notes/other.md",
+	];
+
+	it("카테고리별로 그룹핑한다", () => {
+		const result = groupFilesByCategory(paths, "til");
+		expect(result["typescript"]).toHaveLength(2);
+		expect(result["react"]).toHaveLength(1);
+		expect(result["(uncategorized)"]).toContain("til/overview.md");
+	});
+
+	it("tilPath 밖의 파일을 제외한다", () => {
+		const result = groupFilesByCategory(paths, "til");
+		const allPaths = Object.values(result).flat();
+		expect(allPaths).not.toContain("notes/other.md");
+	});
+
+	it("카테고리 필터를 적용한다", () => {
+		const result = groupFilesByCategory(paths, "til", "typescript");
+		expect(Object.keys(result)).toEqual(["typescript"]);
+		expect(result["typescript"]).toHaveLength(2);
+	});
+
+	it("존재하지 않는 카테고리 필터에 빈 결과를 반환한다", () => {
+		const result = groupFilesByCategory(paths, "til", "nonexistent");
+		expect(Object.keys(result)).toHaveLength(0);
+	});
+
+	it("빈 배열에서 빈 객체를 반환한다", () => {
+		const result = groupFilesByCategory([], "til");
+		expect(result).toEqual({});
 	});
 });
 

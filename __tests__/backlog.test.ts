@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseBacklogItems, extractTopicFromPath } from "../src/backlog";
+import { parseBacklogItems, extractTopicFromPath, computeBacklogProgress } from "../src/backlog";
 
 describe("parseBacklogItems", () => {
 	it("미완료 항목 [[path|name]] 을 파싱한다", () => {
@@ -63,6 +63,35 @@ describe("parseBacklogItems", () => {
 		const items = parseBacklogItems(content);
 		expect(items).toHaveLength(2);
 		expect(items.map((i) => i.displayName)).toEqual(["MCP 서버", "Skill 작성"]);
+	});
+});
+
+describe("computeBacklogProgress", () => {
+	it("완료/미완료 항목 수를 계산한다", () => {
+		const content = "- [x] 완료\n- [ ] 미완료1\n- [ ] 미완료2";
+		const result = computeBacklogProgress(content);
+		expect(result.done).toBe(1);
+		expect(result.todo).toBe(2);
+	});
+
+	it("[X] 대문자도 완료로 카운트한다", () => {
+		const content = "- [X] 대문자 완료\n- [x] 소문자 완료\n- [ ] 미완료";
+		const result = computeBacklogProgress(content);
+		expect(result.done).toBe(2);
+		expect(result.todo).toBe(1);
+	});
+
+	it("체크박스가 없으면 0을 반환한다", () => {
+		const content = "# Empty backlog\nNo items here.";
+		const result = computeBacklogProgress(content);
+		expect(result.done).toBe(0);
+		expect(result.todo).toBe(0);
+	});
+
+	it("빈 문자열에서 0을 반환한다", () => {
+		const result = computeBacklogProgress("");
+		expect(result.done).toBe(0);
+		expect(result.todo).toBe(0);
 	});
 });
 

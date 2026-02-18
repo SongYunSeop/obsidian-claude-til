@@ -1,24 +1,27 @@
-import { App } from "obsidian";
+import { extractCategory } from "../mcp/context";
 
 export interface TILStats {
 	totalTils: number;
 	categories: { name: string; count: number }[];
 }
 
+export interface StatsFileEntry {
+	path: string;
+	extension: string;
+}
+
 /**
- * vault에서 TIL 통계를 계산한다.
+ * TIL 통계를 계산한다.
  * tilPath/ 하위의 .md 파일을 수집하고 폴더명으로 카테고리를 분류한다.
  */
-export async function computeStats(app: App, tilPath: string): Promise<TILStats> {
-	const files = app.vault.getFiles().filter((f) => {
+export function computeStats(files: StatsFileEntry[], tilPath: string): TILStats {
+	const tilFiles = files.filter((f) => {
 		return f.path.startsWith(tilPath + "/") && f.extension === "md";
 	});
 
 	const categoryMap: Record<string, number> = {};
-	for (const file of files) {
-		const relative = file.path.replace(tilPath + "/", "");
-		const parts = relative.split("/");
-		const cat = parts.length >= 2 ? parts[0]! : "(uncategorized)";
+	for (const file of tilFiles) {
+		const cat = extractCategory(file.path, tilPath);
 		categoryMap[cat] = (categoryMap[cat] ?? 0) + 1;
 	}
 
@@ -27,7 +30,7 @@ export async function computeStats(app: App, tilPath: string): Promise<TILStats>
 		.sort((a, b) => b.count - a.count);
 
 	return {
-		totalTils: files.length,
+		totalTils: tilFiles.length,
 		categories,
 	};
 }

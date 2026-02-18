@@ -8,9 +8,12 @@ import {
 	formatTopicContext,
 	filterRecentFiles,
 	formatRecentContext,
+	extractCategory,
+	groupFilesByCategory,
 	type TilFileContext,
 	type TopicContextResult,
 } from "./context";
+import { computeBacklogProgress } from "../backlog";
 
 /**
  * MCP 도구를 서버에 등록한다.
@@ -117,26 +120,14 @@ export function registerTools(server: McpServer, app: App, tilPath: string): voi
 			}),
 		},
 		async ({ category }) => {
-			const files = app.vault.getFiles().filter((f) => {
-				if (!f.path.startsWith(tilPath + "/")) return false;
-				if (f.extension !== "md") return false;
-				if (category) {
-					const parts = f.path.replace(tilPath + "/", "").split("/");
-					if (parts.length < 2 || parts[0] !== category) return false;
-				}
-				return true;
-			});
+			const filePaths = app.vault.getFiles()
+				.filter((f) => f.path.startsWith(tilPath + "/") && f.extension === "md")
+				.map((f) => f.path);
 
-			const byCategory: Record<string, string[]> = {};
-			for (const file of files) {
-				const relative = file.path.replace(tilPath + "/", "");
-				const parts = relative.split("/");
-				const cat = parts.length >= 2 ? parts[0]! : "(uncategorized)";
-				if (!byCategory[cat]) byCategory[cat] = [];
-				byCategory[cat]!.push(file.path);
-			}
+			const byCategory = groupFilesByCategory(filePaths, tilPath, category);
+			const totalCount = Object.values(byCategory).reduce((sum, paths) => sum + paths.length, 0);
 
-			const lines: string[] = [`TIL 총 ${files.length}개`];
+			const lines: string[] = [`TIL 총 ${totalCount}개`];
 			for (const [cat, paths] of Object.entries(byCategory)) {
 				lines.push(`\n## ${cat} (${paths.length}개)`);
 				for (const p of paths) {
@@ -163,8 +154,7 @@ export function registerTools(server: McpServer, app: App, tilPath: string): voi
 				if (!f.path.startsWith(tilPath + "/")) return false;
 				if (f.name !== "backlog.md") return false;
 				if (category) {
-					const relative = f.path.replace(tilPath + "/", "");
-					const cat = relative.split("/")[0];
+					const cat = extractCategory(f.path, tilPath);
 					if (cat !== category) return false;
 				}
 				return true;
@@ -176,14 +166,11 @@ export function registerTools(server: McpServer, app: App, tilPath: string): voi
 
 			for (const file of files) {
 				const text = await app.vault.read(file);
-				const todoMatches = text.match(/- \[ \]/g);
-				const doneMatches = text.match(/- \[x\]/gi);
-				const todo = todoMatches?.length ?? 0;
-				const done = doneMatches?.length ?? 0;
-				totalTodo += todo;
-				totalDone += done;
-				if (todo + done > 0) {
-					results.push(`${file.path}: ${done}/${todo + done} 완료`);
+				const progress = computeBacklogProgress(text);
+				totalTodo += progress.todo;
+				totalDone += progress.done;
+				if (progress.todo + progress.done > 0) {
+					results.push(`${file.path}: ${progress.done}/${progress.todo + progress.done} 완료`);
 				}
 			}
 

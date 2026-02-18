@@ -8,6 +8,16 @@ Obsidian 플러그인. 사이드바에 Claude Code 터미널을 임베딩하여 
 
 Obsidian의 역할은 "터미널 임베딩 + 파일 감시 + skill 배포 + MCP 서버 + 대시보드"로 한정하고, 워크플로우 주도권은 Claude Code에 있다.
 
+## 프로젝트 철학
+
+코어 가치는 Claude Code 기반 학습 워크플로우(스킬, MCP 도구, 학습 컨텍스트 분석)에 있다.
+Obsidian은 현재 검증 환경이자 배포 채널이며, 코어 로직은 Obsidian 없이도 성립해야 한다.
+
+- **코어 레이어** (Obsidian 비종속): 스킬 프롬프트, MCP 도구 로직(context.ts, backlog.ts, stats.ts), 학습 워크플로우 설계
+- **플랫폼 어댑터** (Obsidian 종속): 터미널 임베딩, 파일 감시, 대시보드 UI, 설정 탭, Plugin 라이프사이클
+
+새 기능 추가 시 로직은 코어 레이어에, UI/이벤트 연결은 플랫폼 어댑터에 배치한다.
+
 ## 기술 스택
 
 - TypeScript + Obsidian Plugin API

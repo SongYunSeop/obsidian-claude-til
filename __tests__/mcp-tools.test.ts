@@ -7,9 +7,11 @@ import {
 	formatTopicContext,
 	filterRecentFiles,
 	formatRecentContext,
+	groupFilesByCategory,
 	type TilFileContext,
 	type TopicContextResult,
 } from "../src/mcp/context";
+import { computeBacklogProgress } from "../src/backlog";
 
 // MCP 도구의 핵심 로직을 직접 테스트한다.
 // 실제 McpServer 없이 vault 접근 로직만 검증.
@@ -71,25 +73,10 @@ async function vaultSearch(app: App, query: string): Promise<string[]> {
 }
 
 function tilList(app: App, tilPath: string, category?: string): Record<string, string[]> {
-	const files = app.vault.getFiles().filter((f) => {
-		if (!f.path.startsWith(tilPath + "/")) return false;
-		if (f.extension !== "md") return false;
-		if (category) {
-			const parts = f.path.replace(tilPath + "/", "").split("/");
-			if (parts.length < 2 || parts[0] !== category) return false;
-		}
-		return true;
-	});
-
-	const byCategory: Record<string, string[]> = {};
-	for (const file of files) {
-		const relative = file.path.replace(tilPath + "/", "");
-		const parts = relative.split("/");
-		const cat = parts.length >= 2 ? parts[0]! : "(uncategorized)";
-		if (!byCategory[cat]) byCategory[cat] = [];
-		byCategory[cat]!.push(file.path);
-	}
-	return byCategory;
+	const filePaths = app.vault.getFiles()
+		.filter((f) => f.path.startsWith(tilPath + "/") && f.extension === "md")
+		.map((f) => f.path);
+	return groupFilesByCategory(filePaths, tilPath, category);
 }
 
 async function tilBacklogStatus(
@@ -97,7 +84,6 @@ async function tilBacklogStatus(
 	tilPath: string,
 	category?: string,
 ): Promise<{ totalTodo: number; totalDone: number; results: string[] }> {
-	// tools.ts의 실제 필터링 로직과 동일
 	const files = app.vault.getFiles().filter((f) => {
 		if (!f.path.startsWith(tilPath + "/")) return false;
 		if (f.name !== "backlog.md") return false;
@@ -115,14 +101,11 @@ async function tilBacklogStatus(
 
 	for (const file of files) {
 		const text = await app.vault.read(file);
-		const todoMatches = text.match(/- \[ \]/g);
-		const doneMatches = text.match(/- \[x\]/gi);
-		const todo = todoMatches?.length ?? 0;
-		const done = doneMatches?.length ?? 0;
-		totalTodo += todo;
-		totalDone += done;
-		if (todo + done > 0) {
-			results.push(`${file.path}: ${done}/${todo + done} 완료`);
+		const progress = computeBacklogProgress(text);
+		totalTodo += progress.todo;
+		totalDone += progress.done;
+		if (progress.todo + progress.done > 0) {
+			results.push(`${file.path}: ${progress.done}/${progress.todo + progress.done} 완료`);
 		}
 	}
 	return { totalTodo, totalDone, results };
