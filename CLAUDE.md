@@ -88,7 +88,9 @@ npm run deploy -- --refresh-skills <vault-path>  # 스킬/규칙 강제 재설�
 
 ## 규칙
 
+- **코드 변경 시 항상 feature branch + worktree에서 작업한다**. main 브랜치에서 직접 수정하지 않는다.
 - **새 기능/워크플로우 변경 시 반드시 사용자와 방향을 먼저 논의한다**. 구현 방식이 여러 가지일 수 있는 작업은 바로 코드를 작성하지 않고, 접근 방법을 제안하고 합의한 뒤 작업한다.
+- **브랜치 격리 (git worktree)**: feature 브랜치 작업 시 `git worktree`를 사용하여 작업 디렉토리를 분리한다. 현재 브랜치에서 다른 feature 작업이 필요하면 `git worktree add ../obsidian-claude-til-<branch-name> <branch-name>`으로 별도 worktree를 생성하도록 안내한다. 같은 디렉토리에서 브랜치를 전환하지 않는다.
 - Obsidian API는 `obsidian` 모듈에서 import
 - node-pty는 `electronRequire`로 로드 (일반 import 불가, 네이티브 모듈)
 - `onload()`에서 등록한 리소스는 자동 해제됨
