@@ -4,7 +4,7 @@ import { FitAddon } from "@xterm/addon-fit";
 import type { IPty } from "node-pty";
 import type { TILSettings } from "../settings";
 import { spawnPty } from "./pty";
-import { WikilinkProvider } from "./WikilinkProvider";
+import { MarkdownLinkProvider } from "./MarkdownLinkProvider";
 import { handleShiftEnter } from "./keyboard";
 
 export const VIEW_TYPE_TIL_TERMINAL = "claude-til-terminal-view";
@@ -129,9 +129,9 @@ export class TerminalView extends ItemView {
 			return result.allowDefault;
 		});
 
-		// 위키링크 감지 등록
+		// 마크다운 링크 감지 등록
 		this.linkProviderDisposable = this.terminal.registerLinkProvider(
-			new WikilinkProvider(this.app, this.terminal),
+			new MarkdownLinkProvider(this.app, this.terminal),
 		);
 
 		// DOM 렌더 후 fit → PTY 시작

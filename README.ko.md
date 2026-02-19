@@ -16,7 +16,7 @@ Obsidian 사이드바에 Claude Code 터미널을 임베딩하여 AI 기반 TIL(
 - **MCP 서버 내장** — Claude Code가 HTTP로 vault에 직접 접근 (별도 플러그인 불필요)
 - **학습 대시보드** — TIL 통계, 카테고리별 학습 현황을 한눈에
 - **스킬 자동 설치** — `/til`, `/research`, `/backlog`, `/save` 명령을 바로 사용 가능
-- **위키링크 감지** — 터미널의 `[[위키링크]]`를 클릭하면 노트 열기 (CJK 문자 지원)
+- **마크다운 링크 감지** — 터미널의 `[텍스트](경로)` 링크를 클릭하면 노트 열기 (CJK 문자 지원)
 - **백로그 → TIL 연동** — 빈 백로그 링크 클릭 시 TIL 학습 세션 시작 제안
 - **파일 자동 열기** — 새로 생성된 TIL 파일을 에디터에서 자동으로 열기
 
@@ -130,7 +130,7 @@ src/
 ├── backlog.ts               # 백로그 파싱 순수 함수
 ├── terminal/
 │   ├── TerminalView.ts      # 사이드바 터미널 (ItemView + xterm.js)
-│   ├── WikilinkProvider.ts  # [[위키링크]] 감지 + 클릭 시 노트 열기 (CJK 지원)
+│   ├── MarkdownLinkProvider.ts  # [마크다운 링크](path) 감지 + 클릭 시 노트 열기 (CJK 지원)
 │   └── pty.ts               # PTY 프로세스 관리 (node-pty)
 ├── mcp/
 │   ├── server.ts            # MCP 서버 라이프사이클 (Streamable HTTP)

@@ -263,6 +263,7 @@ describe("formatTopicContext", () => {
 		};
 		const text = formatTopicContext(result);
 		expect(text).toContain("미작성 관련 링크");
+		expect(text).toContain("[고급 타입](고급 타입.md)");
 		expect(text).not.toContain("관련 파일");
 	});
 });

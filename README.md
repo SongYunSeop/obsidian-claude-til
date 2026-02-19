@@ -16,7 +16,7 @@ An Obsidian plugin that embeds a Claude Code terminal in the sidebar and provide
 - **Built-in MCP Server** — Claude Code can directly access your vault via HTTP
 - **Learning Dashboard** — TIL statistics and category breakdown at a glance
 - **Auto-installed Skills** — `/til`, `/research`, `/backlog`, `/save` commands ready out of the box
-- **Wikilink Detection** — `[[wikilinks]]` in terminal are clickable and open notes (CJK-aware)
+- **Markdown Link Detection** — `[text](path)` links in terminal are clickable and open notes (CJK-aware)
 - **Backlog-to-TIL Trigger** — Click an empty backlog link to start a TIL session
 - **File Watcher** — Newly created TIL files open automatically in the editor
 
@@ -130,7 +130,7 @@ src/
 ├── backlog.ts               # Backlog parsing (pure functions)
 ├── terminal/
 │   ├── TerminalView.ts      # Sidebar terminal (ItemView + xterm.js)
-│   ├── WikilinkProvider.ts  # [[wikilink]] detection + click-to-open (CJK-aware)
+│   ├── MarkdownLinkProvider.ts  # [text](path) detection + click-to-open (CJK-aware)
 │   └── pty.ts               # PTY process manager (node-pty)
 ├── mcp/
 │   ├── server.ts            # MCP server lifecycle (Streamable HTTP)

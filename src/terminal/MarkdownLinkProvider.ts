@@ -7,12 +7,12 @@ import type {
 	Terminal,
 } from "@xterm/xterm";
 
-export interface WikilinkMatch {
-	/** 전체 매치 텍스트 (예: "[[note|alias]]") */
+export interface MarkdownLinkMatch {
+	/** 전체 매치 텍스트 (예: "[text](path.md)") */
 	fullMatch: string;
-	/** 링크 대상 (예: "note") — pipe 앞 부분 */
+	/** 링크 경로 (예: "til/typescript/generics.md") — () 안 */
 	linkText: string;
-	/** 표시 텍스트 (예: "alias") — pipe 뒤 부분, 없으면 linkText와 동일 */
+	/** 표시 텍스트 (예: "제네릭 정리") — [] 안 */
 	displayText: string;
 	/** 매치 시작 인덱스 (0-based) */
 	startIndex: number;
@@ -21,19 +21,18 @@ export interface WikilinkMatch {
 }
 
 /**
- * 텍스트에서 Obsidian 위키링크 `[[...]]`를 찾아 반환한다.
+ * 텍스트에서 표준 마크다운 링크 `[text](path)`를 찾아 반환한다.
+ * 이미지 문법 `![alt](img)` 는 제외한다.
  * 순수 함수 — 부수효과 없음, 단위 테스트 가능.
  */
-export function findWikilinks(text: string): WikilinkMatch[] {
-	const regex = /\[\[([^\][\]]+)\]\]/g;
-	const results: WikilinkMatch[] = [];
+export function findMarkdownLinks(text: string): MarkdownLinkMatch[] {
+	const regex = /(?<!!)\[([^\[\]]*)\]\(([^()]+)\)/g;
+	const results: MarkdownLinkMatch[] = [];
 	let match: RegExpExecArray | null;
 
 	while ((match = regex.exec(text)) !== null) {
-		const inner = match[1]!;
-		const pipeIndex = inner.indexOf("|");
-		const linkText = pipeIndex >= 0 ? inner.slice(0, pipeIndex) : inner;
-		const displayText = pipeIndex >= 0 ? inner.slice(pipeIndex + 1) : inner;
+		const displayText = match[1]! || match[2]!;
+		const linkText = match[2]!;
 
 		results.push({
 			fullMatch: match[0],
@@ -89,10 +88,10 @@ const LINK_DECORATIONS: ILinkDecorations = {
 
 /**
  * xterm.js ILinkProvider 구현.
- * 터미널 버퍼에서 `[[위키링크]]`를 감지하고,
+ * 터미널 버퍼에서 `[text](path)` 마크다운 링크를 감지하고,
  * 클릭 시 Obsidian에서 해당 노트를 연다.
  */
-export class WikilinkProvider implements ILinkProvider {
+export class MarkdownLinkProvider implements ILinkProvider {
 	private terminal: Terminal;
 
 	constructor(private app: App, terminal: Terminal) {
@@ -112,31 +111,28 @@ export class WikilinkProvider implements ILinkProvider {
 		}
 
 		const text = line.translateToString();
-		const matches = findWikilinks(text);
+		const matches = findMarkdownLinks(text);
 
 		if (matches.length === 0) {
 			callback(undefined);
 			return;
 		}
 
-		// bash [[ condition ]] 등 false positive 방지:
-		// 앞뒤 공백이 있는 매치는 노트 이름이 아니므로 제외
-		const links: ILink[] = matches
-			.filter((m) => m.linkText === m.linkText.trim())
-			.map((m) => ({
-				range: {
-					start: { x: cellWidth(text, m.startIndex) + 1, y: bufferLineNumber },
-					end: { x: cellWidth(text, m.endIndex), y: bufferLineNumber },
-				},
-				text: m.fullMatch,
-				decorations: LINK_DECORATIONS,
-				activate: () => {
-					// basename만으로도 vault 내 노트를 찾을 수 있도록 먼저 검색
-					const resolved = this.app.metadataCache.getFirstLinkpathDest(m.linkText, "");
-					const linkPath = resolved ? resolved.path : m.linkText;
-					this.app.workspace.openLinkText(linkPath, "", false);
-				},
-			}));
+		const links: ILink[] = matches.map((m) => ({
+			range: {
+				start: { x: cellWidth(text, m.startIndex) + 1, y: bufferLineNumber },
+				end: { x: cellWidth(text, m.endIndex), y: bufferLineNumber },
+			},
+			text: m.fullMatch,
+			decorations: LINK_DECORATIONS,
+			activate: () => {
+				// .md 확장자 제거 후 Obsidian에 전달
+				const pathWithoutExt = m.linkText.replace(/\.md$/, "");
+				const resolved = this.app.metadataCache.getFirstLinkpathDest(pathWithoutExt, "");
+				const linkPath = resolved ? resolved.path : pathWithoutExt;
+				this.app.workspace.openLinkText(linkPath, "", false);
+			},
+		}));
 
 		callback(links.length > 0 ? links : undefined);
 	}

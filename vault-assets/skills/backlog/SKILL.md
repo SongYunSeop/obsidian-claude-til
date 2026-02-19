@@ -62,40 +62,40 @@ MCP 도구를 사용할 수 없는 경우 아래 워크플로우대로 파일을
 
 | 카테고리 | 진행률 | 완료 | 최근 학습 | 진행바 |
 |---------|--------|------|----------|--------|
-| [[til/claude-code/backlog|claude-code]] | 30% | 4/13 | 2026-02-15 | ████░░░░░░ |
-| [[til/javascript/backlog|javascript]] | 0% | 0/8 | 2026-02-10 | ░░░░░░░░░░ |
+| [claude-code](til/claude-code/backlog.md) | 30% | 4/13 | 2026-02-15 | ████░░░░░░ |
+| [javascript](til/javascript/backlog.md) | 0% | 0/8 | 2026-02-10 | ░░░░░░░░░░ |
 
 총 21개 항목 중 4개 완료
 ```
 
-카테고리명은 `[[til/{카테고리}/backlog|카테고리명]]` 위키링크로 출력하여 클릭 시 해당 백로그 파일로 이동할 수 있게 한다.
+카테고리명은 `[카테고리명](til/{카테고리}/backlog.md)` 마크다운 링크로 출력하여 클릭 시 해당 백로그 파일로 이동할 수 있게 한다.
 
 ### 카테고리 조회 (`/backlog claude-code`)
 
 ```
-📋 [[til/claude-code/backlog|claude-code]] 백로그 (4/13 완료, 30%)
+📋 [claude-code](til/claude-code/backlog.md) 백로그 (4/13 완료, 30%)
 
 ## 선행 지식 (2/4)
-- [x] [[til/claude-code/claude-md|CLAUDE.md]] ✅
-- [x] [[til/claude-code/settings|Settings와 Configuration]] ✅
-- [ ] [[til/claude-code/permission-mode|Permission 모드]]
-- [ ] [[til/claude-code/cli-reference|CLI 레퍼런스(CLI Reference)]]
+- [x] [CLAUDE.md](til/claude-code/claude-md.md) ✅
+- [x] [Settings와 Configuration](til/claude-code/settings.md) ✅
+- [ ] [Permission 모드](til/claude-code/permission-mode.md)
+- [ ] [CLI 레퍼런스(CLI Reference)](til/claude-code/cli-reference.md)
 
 ## 핵심 개념 (1/5)
-- [x] [[til/claude-code/hooks|Hooks]] ✅
-- [ ] [[til/claude-code/mcp|MCP(Model Context Protocol)]]
-- [ ] [[til/claude-code/context-management|Context 관리(Context Management)]]
-- [ ] [[til/claude-code/agent-teams|Agent Teams]]
-- [ ] [[til/claude-code/ide-integration|IDE Integration]]
+- [x] [Hooks](til/claude-code/hooks.md) ✅
+- [ ] [MCP(Model Context Protocol)](til/claude-code/mcp.md)
+- [ ] [Context 관리(Context Management)](til/claude-code/context-management.md)
+- [ ] [Agent Teams](til/claude-code/agent-teams.md)
+- [ ] [IDE Integration](til/claude-code/ide-integration.md)
 
 ## 심화 (1/4)
-- [ ] [[til/claude-code/github-actions-ci-cd|GitHub Actions와 CI/CD]]
+- [ ] [GitHub Actions와 CI/CD](til/claude-code/github-actions-ci-cd.md)
 - ...
 ```
 
-- 완료된 항목은 `- [x] [[경로|항목명]] ✅` 형식으로 위키링크 + 체크마크를 함께 표시한다
-- 각 항목의 위키링크는 backlog.md 파일에 이미 `[[til/{카테고리}/{slug}|표시명]]` 형태로 저장되어 있으므로, 해당 링크를 그대로 출력한다
-- backlog.md의 원본 위키링크를 파싱하여 출력한다. 원본에 위키링크가 없는 항목은 일반 텍스트로 출력한다
+- 완료된 항목은 `- [x] [항목명](경로.md) ✅` 형식으로 링크 + 체크마크를 함께 표시한다
+- 각 항목의 링크는 backlog.md 파일에 이미 `[표시명](til/{카테고리}/{slug}.md)` 형태로 저장되어 있으므로, 해당 링크를 그대로 출력한다
+- backlog.md의 원본 링크를 파싱하여 출력한다. 원본에 링크가 없는 항목은 일반 텍스트로 출력한다
 
 ## 주의사항
 
@@ -106,5 +106,5 @@ MCP 도구를 사용할 수 없는 경우 아래 워크플로우대로 파일을
 ## 피해야 할 실패 모드
 
 - **백로그 파일 수정**: 이 스킬은 읽기 전용이다. 절대 backlog.md를 편집하지 않는다
-- **잘못된 카운팅**: `- [x]`와 `- [ ]`를 정확히 세어야 한다. 섹션 헤딩(`##`)이나 백로그 링크(`- [[backlog]]`)를 항목으로 잘못 세지 않는다
+- **잘못된 카운팅**: `- [x]`와 `- [ ]`를 정확히 세어야 한다. 섹션 헤딩(`##`)이나 백로그 링크(`- [backlog](backlog.md)`)를 항목으로 잘못 세지 않는다
 - **섹션 누락**: 카테고리 조회 시 모든 섹션(선행 지식/핵심 개념/심화/생태계 등)을 빠짐없이 보여준다

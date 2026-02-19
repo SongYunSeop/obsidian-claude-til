@@ -5,7 +5,7 @@ export interface BacklogItem {
 
 /**
  * backlog.md 내용에서 미완료 항목을 파싱한다.
- * 형식: `- [ ] [[path|displayName]]` 또는 `- [ ] [[path]]`
+ * 형식: `- [ ] [displayName](path.md)` 또는 `- [ ] [](path.md)`
  * 완료 항목 `- [x]`는 제외한다.
  */
 export function parseBacklogItems(content: string): BacklogItem[] {
@@ -13,11 +13,11 @@ export function parseBacklogItems(content: string): BacklogItem[] {
 	const lines = content.split("\n");
 
 	for (const line of lines) {
-		const match = line.match(/^-\s+\[ \]\s+\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/);
+		const match = line.match(/^-\s+\[ \]\s+\[([^\[\]]*)\]\(([^()]+)\)/);
 		if (match) {
-			const path = match[1]!.trim();
-			const displayName = match[2]?.trim() ?? path;
-			items.push({ path, displayName });
+			const rawPath = match[2]!.trim().replace(/\.md$/, "");
+			const displayName = match[1]?.trim() || rawPath;
+			items.push({ path: rawPath, displayName });
 		}
 	}
 

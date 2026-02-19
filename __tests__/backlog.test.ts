@@ -2,9 +2,9 @@ import { describe, it, expect } from "vitest";
 import { parseBacklogItems, extractTopicFromPath, computeBacklogProgress } from "../src/backlog";
 
 describe("parseBacklogItems", () => {
-	it("미완료 항목 [[path|name]] 을 파싱한다", () => {
-		const content = `- [ ] [[til/claude-code/permission-mode|Permission 모드]]
-- [ ] [[til/typescript/generics|Generics 완전 정복]]`;
+	it("미완료 항목 [name](path.md) 을 파싱한다", () => {
+		const content = `- [ ] [Permission 모드](til/claude-code/permission-mode.md)
+- [ ] [Generics 완전 정복](til/typescript/generics.md)`;
 
 		const items = parseBacklogItems(content);
 		expect(items).toEqual([
@@ -14,16 +14,16 @@ describe("parseBacklogItems", () => {
 	});
 
 	it("완료 항목 [x] 는 제외한다", () => {
-		const content = `- [x] [[til/done-topic|완료됨]]
-- [ ] [[til/pending-topic|진행 중]]`;
+		const content = `- [x] [완료됨](til/done-topic.md)
+- [ ] [진행 중](til/pending-topic.md)`;
 
 		const items = parseBacklogItems(content);
 		expect(items).toHaveLength(1);
 		expect(items[0]!.displayName).toBe("진행 중");
 	});
 
-	it("표시 이름 없는 경우 [[path]] → path를 displayName으로 사용한다", () => {
-		const content = `- [ ] [[til/react/hooks]]`;
+	it("표시 이름 없는 경우 path를 displayName으로 사용한다", () => {
+		const content = `- [ ] [](til/react/hooks.md)`;
 
 		const items = parseBacklogItems(content);
 		expect(items).toEqual([
@@ -44,7 +44,7 @@ describe("parseBacklogItems", () => {
 	});
 
 	it("설명 텍스트가 포함된 항목에서 설명을 무시한다", () => {
-		const content = `- [ ] [[til/react/hooks|React Hooks]] - 커스텀 훅 패턴 학습`;
+		const content = `- [ ] [React Hooks](til/react/hooks.md) - 커스텀 훅 패턴 학습`;
 
 		const items = parseBacklogItems(content);
 		expect(items).toEqual([
@@ -55,10 +55,10 @@ describe("parseBacklogItems", () => {
 	it("완료/미완료 항목이 섞여있어도 정확히 파싱한다", () => {
 		const content = `# Claude Code 학습
 
-- [x] [[til/claude-code/basics|기본 사용법]]
-- [ ] [[til/claude-code/mcp|MCP 서버]]
-- [x] [[til/claude-code/hooks|Hook 시스템]]
-- [ ] [[til/claude-code/skills|Skill 작성]]`;
+- [x] [기본 사용법](til/claude-code/basics.md)
+- [ ] [MCP 서버](til/claude-code/mcp.md)
+- [x] [Hook 시스템](til/claude-code/hooks.md)
+- [ ] [Skill 작성](til/claude-code/skills.md)`;
 
 		const items = parseBacklogItems(content);
 		expect(items).toHaveLength(2);

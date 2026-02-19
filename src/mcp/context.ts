@@ -147,7 +147,7 @@ export function formatTopicContext(result: TopicContextResult): string {
 	if (result.unresolvedMentions.length > 0) {
 		lines.push(`\n### 미작성 관련 링크 (${result.unresolvedMentions.length}개)\n`);
 		for (const u of result.unresolvedMentions) {
-			lines.push(`- [[${u.linkName}]] — 언급 파일: ${u.mentionedIn.join(", ")}`);
+			lines.push(`- [${u.linkName}](${u.linkName}.md) — 언급 파일: ${u.mentionedIn.join(", ")}`);
 		}
 	}
 
