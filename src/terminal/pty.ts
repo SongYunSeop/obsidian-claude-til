@@ -1,6 +1,7 @@
 import type { IPty } from "node-pty";
 import * as path from "path";
 import { FileSystemAdapter, App } from "obsidian";
+import { ensurePath } from "./env";
 
 const electronRequire = (window as unknown as { require: NodeJS.Require }).require;
 
@@ -32,13 +33,14 @@ export function spawnPty(app: App, opts: PtyOptions): IPty {
 	const nodePty = loadNodePty(app);
 	const vaultPath = (app.vault.adapter as FileSystemAdapter).getBasePath();
 
-	return nodePty.spawn(opts.shellPath, [], {
+	return nodePty.spawn(opts.shellPath, ["-l"], {
 		name: "xterm-256color",
 		cols: opts.cols,
 		rows: opts.rows,
 		cwd: opts.cwd || vaultPath,
 		env: {
 			...process.env,
+			PATH: ensurePath(process.env.PATH),
 			TERM: "xterm-256color",
 			COLORTERM: "truecolor",
 		},
