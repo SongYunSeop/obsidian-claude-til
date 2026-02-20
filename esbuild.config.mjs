@@ -47,6 +47,18 @@ const context = await esbuild.context({
 
 if (prod) {
 	await context.rebuild();
+
+	// migrate-links CLI를 standalone 번들로 빌드
+	await esbuild.build({
+		entryPoints: ["scripts/migrate-links.ts"],
+		bundle: true,
+		format: "esm",
+		target: "es2020",
+		platform: "node",
+		outfile: "migrate-links.mjs",
+		banner: { js: "" },
+	});
+
 	process.exit(0);
 } else {
 	await context.watch();
