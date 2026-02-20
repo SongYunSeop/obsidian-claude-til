@@ -39,21 +39,13 @@ git pull origin main
 
 ### 3. 배포
 
-사용자에게 스킬/규칙도 갱신할지 물은 후, deploy 스크립트를 실행한다.
-
-**스킬 갱신 포함:**
+스킬/규칙을 항상 포함하여 배포한다 (`plugin-version` frontmatter로 사용자 커스터마이즈 파일은 자동 보호됨).
 
 ```bash
 npm run deploy -- --refresh-skills <vault-path>
 ```
 
-**스킬 갱신 없이:**
-
-```bash
-npm run deploy -- <vault-path>
-```
-
-deploy 스크립트가 빌드, 에셋 복사, node-pty 재빌드(Electron 버전 변경 시에만), 스킬 재설치를 자동 처리한다.
+deploy 스크립트가 빌드, 에셋 복사, node-pty 재빌드(Electron 버전 변경 시에만), 스킬/규칙 재설치를 자동 처리한다.
 
 ### 4. 완료 안내
 
