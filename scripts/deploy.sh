@@ -80,6 +80,7 @@ mkdir -p "$PLUGIN_DIR"
 cp "$PROJECT_DIR/main.js" "$PLUGIN_DIR/main.js"
 cp "$PROJECT_DIR/manifest.json" "$PLUGIN_DIR/manifest.json"
 cp "$PROJECT_DIR/styles.css" "$PLUGIN_DIR/styles.css"
+cp "$PROJECT_DIR/migrate-links.mjs" "$PLUGIN_DIR/migrate-links.mjs"
 
 # ── 3. 네이티브 의존성 설치 ────────────────────────────────
 
@@ -128,26 +129,47 @@ if [ "$REFRESH_SKILLS" = true ]; then
   echo "==> 스킬/규칙 파일 강제 재설치 중..."
   SKILLS_DIR="$VAULT_PATH/.claude/skills"
   RULES_DIR="$VAULT_PATH/.claude/rules"
+  ASSETS_DIR="$PROJECT_DIR/vault-assets"
+  PLUGIN_VERSION=$(node -p "require('$PROJECT_DIR/manifest.json').version")
 
-  # 플러그인 관리 스킬 삭제 (plugin-version이 있는 파일만)
-  for skill in til backlog research save; do
-    SKILL_FILE="$SKILLS_DIR/$skill/SKILL.md"
-    if [ -f "$SKILL_FILE" ] && grep -q "plugin-version:" "$SKILL_FILE"; then
-      rm "$SKILL_FILE"
-      echo "    삭제: $SKILL_FILE"
-    fi
+  # 기존 플러그인 관리 스킬 삭제 (plugin-version이 있는 파일만 자동 탐색)
+  if [ -d "$SKILLS_DIR" ]; then
+    find "$SKILLS_DIR" -name "SKILL.md" -type f | while read -r SKILL_FILE; do
+      if grep -q "plugin-version:" "$SKILL_FILE"; then
+        rm "$SKILL_FILE"
+        echo "    삭제: $SKILL_FILE"
+      fi
+    done
+  fi
+
+  # 기존 플러그인 관리 규칙 삭제
+  if [ -d "$RULES_DIR" ]; then
+    find "$RULES_DIR" -name "*.md" -type f | while read -r RULE_FILE; do
+      if grep -q "plugin-version:" "$RULE_FILE"; then
+        rm "$RULE_FILE"
+        echo "    삭제: $RULE_FILE"
+      fi
+    done
+  fi
+
+  # vault-assets/skills/ 에서 최신 스킬 설치
+  for SKILL_SRC in "$ASSETS_DIR"/skills/*/SKILL.md; do
+    SKILL_NAME=$(basename "$(dirname "$SKILL_SRC")")
+    DEST_DIR="$SKILLS_DIR/$SKILL_NAME"
+    mkdir -p "$DEST_DIR"
+    sed "s/__PLUGIN_VERSION__/$PLUGIN_VERSION/g" "$SKILL_SRC" > "$DEST_DIR/SKILL.md"
+    echo "    설치: $DEST_DIR/SKILL.md"
   done
 
-  # 플러그인 관리 규칙 삭제 (plugin-version이 있는 파일만)
-  for rule in save-rules.md; do
-    RULE_FILE="$RULES_DIR/$rule"
-    if [ -f "$RULE_FILE" ] && grep -q "plugin-version:" "$RULE_FILE"; then
-      rm "$RULE_FILE"
-      echo "    삭제: $RULE_FILE"
-    fi
+  # vault-assets/rules/ 에서 최신 규칙 설치
+  for RULE_SRC in "$ASSETS_DIR"/rules/*.md; do
+    RULE_NAME=$(basename "$RULE_SRC")
+    mkdir -p "$RULES_DIR"
+    sed "s/__PLUGIN_VERSION__/$PLUGIN_VERSION/g" "$RULE_SRC" > "$RULES_DIR/$RULE_NAME"
+    echo "    설치: $RULES_DIR/$RULE_NAME"
   done
 
-  echo "    다음 플러그인 로드 시 최신 버전으로 재설치됩니다."
+  echo "    스킬/규칙 재설치 완료."
 fi
 
 # ── 완료 ───────────────────────────────────────────────────
