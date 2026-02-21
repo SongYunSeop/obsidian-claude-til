@@ -13,7 +13,7 @@ import {
 	type TilFileContext,
 	type TopicContextResult,
 } from "./context";
-import { computeBacklogProgress } from "../backlog";
+import { computeBacklogProgress, parseBacklogSections } from "../backlog";
 
 /**
  * MCP 도구를 서버에 등록한다.
@@ -127,14 +127,14 @@ export function registerTools(server: McpServer, app: App, tilPath: string): voi
 			const byCategory = groupFilesByCategory(filePaths, tilPath, category);
 			const totalCount = Object.values(byCategory).reduce((sum, paths) => sum + paths.length, 0);
 
-			const lines: string[] = [`TIL 총 ${totalCount}개`];
-			for (const [cat, paths] of Object.entries(byCategory)) {
-				lines.push(`\n## ${cat} (${paths.length}개)`);
-				for (const p of paths) {
-					lines.push(`- ${p}`);
-				}
-			}
-			return { content: [{ type: "text" as const, text: lines.join("\n") }] };
+			const categories = Object.entries(byCategory).map(([cat, paths]) => ({
+				name: cat,
+				count: paths.length,
+				files: paths,
+			}));
+
+			const data = { totalCount, categories };
+			return { content: [{ type: "text" as const, text: JSON.stringify(data) }] };
 		},
 	);
 
@@ -160,27 +160,30 @@ export function registerTools(server: McpServer, app: App, tilPath: string): voi
 				return true;
 			});
 
-			let totalTodo = 0;
-			let totalDone = 0;
-			const results: string[] = [];
+			const categories: { name: string; path: string; done: number; total: number; sections?: { heading: string; items: { displayName: string; path: string; done: boolean }[] }[] }[] = [];
 
 			for (const file of files) {
-				const text = await app.vault.read(file);
-				const progress = computeBacklogProgress(text);
-				totalTodo += progress.todo;
-				totalDone += progress.done;
-				if (progress.todo + progress.done > 0) {
-					const cat = extractCategory(file.path, tilPath);
-					results.push(`[${cat}](${file.path}): ${progress.done}/${progress.todo + progress.done} 완료`);
+				const content = await app.vault.read(file);
+				const progress = computeBacklogProgress(content);
+				const total = progress.todo + progress.done;
+				if (total > 0) {
+					const entry: typeof categories[number] = {
+						name: extractCategory(file.path, tilPath),
+						path: file.path,
+						done: progress.done,
+						total,
+					};
+					if (category) {
+						entry.sections = parseBacklogSections(content);
+					}
+					categories.push(entry);
 				}
 			}
 
-			const total = totalTodo + totalDone;
-			const pct = total > 0 ? Math.round((totalDone / total) * 100) : 0;
-			const text = total > 0
-				? `백로그 진행률: ${totalDone}/${total} (${pct}%)\n\n${results.join("\n")}`
-				: "백로그 항목이 없습니다";
-			return { content: [{ type: "text" as const, text }] };
+			const totalDone = categories.reduce((sum, c) => sum + c.done, 0);
+			const totalItems = categories.reduce((sum, c) => sum + c.total, 0);
+			const data = { totalDone, totalItems, categories };
+			return { content: [{ type: "text" as const, text: JSON.stringify(data) }] };
 		},
 	);
 

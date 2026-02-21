@@ -27,7 +27,7 @@ plugin-version: "__PLUGIN_VERSION__"
 
 `claude-til` MCP 서버가 연결되어 있으면 MCP 도구를 활용한다:
 
-- **Phase 1 시작 전**: `til_list`로 기존 TIL 목록을 확인하여 동일/유사 주제가 있으면 심화 학습 모드로 전환
+- **Phase 1 시작 전**: `til_list`로 기존 TIL 목록을 확인하여 동일/유사 주제가 있으면 심화 학습 모드로 전환. `til_list`는 JSON을 반환한다: `{ totalCount, categories: [{ name, count, files }] }`
 - **Phase 2 중**: `til_get_context`로 주제 관련 기존 TIL과 백로그를 파악하여 마크다운 링크 후보 확보
 - **Phase 3 저장 전**: `vault_get_active_file`로 사용자가 보고 있는 파일 컨텍스트 확인
 
