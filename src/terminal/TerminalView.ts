@@ -101,7 +101,7 @@ export class TerminalView extends ItemView {
 
 		this.terminal = new Terminal({
 			fontSize: this.settings.fontSize,
-			fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+			fontFamily: this.settings.fontFamily,
 			theme: {
 				background: theme.background,
 				foreground: theme.foreground,

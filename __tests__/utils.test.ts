@@ -6,6 +6,7 @@ describe("DEFAULT_SETTINGS", () => {
 		expect(DEFAULT_SETTINGS.autoLaunchClaude).toBe(true);
 		expect(DEFAULT_SETTINGS.resumeLastSession).toBe(false);
 		expect(DEFAULT_SETTINGS.fontSize).toBe(13);
+		expect(DEFAULT_SETTINGS.fontFamily).toBe('Menlo, Monaco, "Courier New", monospace');
 		expect(DEFAULT_SETTINGS.tilPath).toBe("til");
 		expect(DEFAULT_SETTINGS.autoOpenNewTIL).toBe(true);
 	});
