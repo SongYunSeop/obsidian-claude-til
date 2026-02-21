@@ -11,7 +11,7 @@ import {
 	type TilFileContext,
 	type TopicContextResult,
 } from "../src/mcp/context";
-import { computeBacklogProgress } from "../src/backlog";
+import { computeBacklogProgress, parseBacklogSections } from "../src/backlog";
 
 // MCP 도구의 핵심 로직을 직접 테스트한다.
 // 실제 McpServer 없이 vault 접근 로직만 검증.
@@ -83,7 +83,7 @@ async function tilBacklogStatus(
 	app: App,
 	tilPath: string,
 	category?: string,
-): Promise<{ totalDone: number; totalItems: number; categories: { name: string; path: string; done: number; total: number }[] }> {
+): Promise<{ totalDone: number; totalItems: number; categories: { name: string; path: string; done: number; total: number; sections?: ReturnType<typeof parseBacklogSections> }[] }> {
 	const files = app.vault.getFiles().filter((f) => {
 		if (!f.path.startsWith(tilPath + "/")) return false;
 		if (f.name !== "backlog.md") return false;
@@ -95,7 +95,7 @@ async function tilBacklogStatus(
 		return true;
 	});
 
-	const categories: { name: string; path: string; done: number; total: number }[] = [];
+	const categories: { name: string; path: string; done: number; total: number; sections?: ReturnType<typeof parseBacklogSections> }[] = [];
 
 	for (const file of files) {
 		const content = await app.vault.read(file);
@@ -103,7 +103,11 @@ async function tilBacklogStatus(
 		const total = progress.todo + progress.done;
 		if (total > 0) {
 			const name = file.path.replace(tilPath + "/", "").split("/")[0]!;
-			categories.push({ name, path: file.path, done: progress.done, total });
+			const entry: typeof categories[number] = { name, path: file.path, done: progress.done, total };
+			if (category) {
+				entry.sections = parseBacklogSections(content);
+			}
+			categories.push(entry);
 		}
 	}
 
@@ -343,6 +347,39 @@ describe("til_backlog_status", () => {
 		const result = await tilBacklogStatus(app, tilPath);
 		expect(result.totalDone).toBe(2);
 		expect(result.totalItems).toBe(3);
+	});
+
+	it("category 지정 시 sections에 sourceUrls가 포함된다", async () => {
+		const backlogContent = `---
+tags:
+  - backlog
+sources:
+  generics:
+    - https://www.typescriptlang.org/docs/handbook/2/generics.html
+    - https://blog.example.com/generics-deep-dive
+  mapped-types:
+    - https://www.typescriptlang.org/docs/handbook/2/mapped-types.html
+---
+
+## 핵심 개념
+- [ ] [제네릭](til/typescript/generics.md) - 타입 매개변수
+- [ ] [매핑된 타입](til/typescript/mapped-types.md) - 기존 타입 변환
+- [ ] [조건부 타입](til/typescript/conditional-types.md) - 조건 분기`;
+
+		const app = createApp({
+			"til/typescript/backlog.md": backlogContent,
+		});
+
+		const result = await tilBacklogStatus(app, tilPath, "typescript");
+		expect(result.categories).toHaveLength(1);
+		const sections = result.categories[0]!.sections!;
+		expect(sections).toHaveLength(1);
+		expect(sections[0]!.items[0]!.sourceUrls).toEqual([
+			"https://www.typescriptlang.org/docs/handbook/2/generics.html",
+			"https://blog.example.com/generics-deep-dive",
+		]);
+		expect(sections[0]!.items[1]!.sourceUrls).toEqual(["https://www.typescriptlang.org/docs/handbook/2/mapped-types.html"]);
+		expect(sections[0]!.items[2]!.sourceUrls).toBeUndefined();
 	});
 });
 

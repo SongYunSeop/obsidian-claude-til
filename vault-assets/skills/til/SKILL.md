@@ -42,6 +42,9 @@ MCP 도구를 사용할 수 없는 경우, `./til/TIL MOC.md`와 `./til/{카테�
 ```
 
 1. `til_get_context`로 주제 관련 기존 TIL이 있는지 확인한다. MCP 도구를 사용할 수 없으면 `til_list`로 폴백한다
+   - 백로그에서 항목을 학습할 때, `til_backlog_status`(category 지정) 응답의 `sourceUrls`를 확인한다
+   - `sourceUrls`가 있으면 해당 URL들을 **우선 참조**하여 원본 콘텐츠 기반으로 학습한다
+   - `sourceUrls`가 없으면 기존대로 웹 검색으로 리서치한다
 2. **기존 TIL이 있으면**: 사용자에게 선택지를 제시한다:
    ```
    "{주제}"에 대한 기존 TIL이 있습니다: {파일 경로}

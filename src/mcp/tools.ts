@@ -160,7 +160,7 @@ export function registerTools(server: McpServer, app: App, tilPath: string): voi
 				return true;
 			});
 
-			const categories: { name: string; path: string; done: number; total: number; sections?: { heading: string; items: { displayName: string; path: string; done: boolean }[] }[] }[] = [];
+			const categories: { name: string; path: string; done: number; total: number; sections?: { heading: string; items: { displayName: string; path: string; done: boolean; sourceUrls?: string[] }[] }[] }[] = [];
 
 			for (const file of files) {
 				const content = await app.vault.read(file);

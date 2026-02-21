@@ -1,3 +1,5 @@
+import { parse as parseYaml } from "yaml";
+
 export interface BacklogItem {
 	path: string;        // "til/claude-code/permission-mode"
 	displayName: string; // "Permission 모드"
@@ -109,6 +111,8 @@ export interface BacklogSectionItem {
 	path: string;
 	/** 완료 여부 */
 	done: boolean;
+	/** 원본 출처 URL 목록 (frontmatter sources에서 매핑) */
+	sourceUrls?: string[];
 }
 
 export interface BacklogSection {
@@ -119,11 +123,46 @@ export interface BacklogSection {
 }
 
 /**
+ * 백로그 frontmatter에서 sources 맵을 파싱한다.
+ * 두 가지 형식을 지원한다:
+ * 1. 단일 URL: `  slug: url` → 배열로 정규화
+ * 2. 복수 URL: `  slug:\n    - url1\n    - url2`
+ * yaml 패키지로 파싱. 순수 함수 — 부수효과 없음.
+ */
+export function parseFrontmatterSources(content: string): Record<string, string[]> {
+	const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
+	if (!fmMatch) return {};
+
+	let parsed: Record<string, unknown>;
+	try {
+		parsed = parseYaml(fmMatch[1]!) as Record<string, unknown>;
+	} catch {
+		return {};
+	}
+
+	if (!parsed || typeof parsed !== "object" || !parsed.sources) return {};
+
+	const sources = parsed.sources as Record<string, unknown>;
+	if (typeof sources !== "object" || sources === null) return {};
+
+	const result: Record<string, string[]> = {};
+	for (const [slug, value] of Object.entries(sources)) {
+		if (typeof value === "string") {
+			result[slug] = [value];
+		} else if (Array.isArray(value)) {
+			result[slug] = value.filter((v): v is string => typeof v === "string");
+		}
+	}
+	return result;
+}
+
+/**
  * 백로그 내용을 섹션별로 파싱하여 개별 항목을 반환한다.
  * `## 섹션명` 헤딩 아래의 `- [ ]`/`- [x]` 항목을 파싱한다.
  * 순수 함수 — 부수효과 없음.
  */
 export function parseBacklogSections(content: string): BacklogSection[] {
+	const sources = parseFrontmatterSources(content);
 	const sections: BacklogSection[] = [];
 	let currentSection: BacklogSection | null = null;
 
@@ -143,7 +182,13 @@ export function parseBacklogSections(content: string): BacklogSection[] {
 			const rawPath = itemMatch[3]!.trim();
 			const path = rawPath.endsWith(".md") ? rawPath : rawPath + ".md";
 			const displayName = itemMatch[2]?.trim() || path.replace(/\.md$/, "");
-			currentSection.items.push({ displayName, path, done });
+			// slug 추출: til/{category}/{slug}.md → slug
+			const slug = path.replace(/\.md$/, "").split("/").pop() ?? "";
+			const item: BacklogSectionItem = { displayName, path, done };
+			if (sources[slug] && sources[slug]!.length > 0) {
+				item.sourceUrls = sources[slug];
+			}
+			currentSection.items.push(item);
 		}
 	}
 

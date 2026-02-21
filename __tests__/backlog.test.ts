@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseBacklogItems, extractTopicFromPath, computeBacklogProgress, formatProgressBar, formatBacklogTable, parseBacklogSections, type BacklogCategoryStatus } from "../src/backlog";
+import { parseBacklogItems, extractTopicFromPath, computeBacklogProgress, formatProgressBar, formatBacklogTable, parseBacklogSections, parseFrontmatterSources, type BacklogCategoryStatus } from "../src/backlog";
 
 describe("parseBacklogItems", () => {
 	it("미완료 항목 [name](path.md) 을 파싱한다", () => {
@@ -265,5 +265,123 @@ describe("parseBacklogSections", () => {
 
 		const sections = parseBacklogSections(content);
 		expect(sections[0]!.items[0]!.displayName).toBe("til/test/item");
+	});
+
+	it("frontmatter sources가 있으면 sourceUrls를 매핑한다", () => {
+		const content = `---
+tags:
+  - backlog
+sources:
+  compound-learning:
+    - https://example.com/compound
+    - https://example.com/compound-2
+  deliberate-practice:
+    - https://example.com/practice
+---
+
+## 선행 지식
+- [ ] [복리 학습](til/agile-story/compound-learning.md)
+- [ ] [의도적 수련](til/agile-story/deliberate-practice.md)
+- [ ] [메타 인지](til/agile-story/metacognition.md)`;
+
+		const sections = parseBacklogSections(content);
+		expect(sections[0]!.items[0]!.sourceUrls).toEqual([
+			"https://example.com/compound",
+			"https://example.com/compound-2",
+		]);
+		expect(sections[0]!.items[1]!.sourceUrls).toEqual(["https://example.com/practice"]);
+		expect(sections[0]!.items[2]!.sourceUrls).toBeUndefined();
+	});
+
+	it("단일 URL 인라인 형식도 배열로 매핑한다", () => {
+		const content = `---
+sources:
+  compound-learning: https://example.com/compound
+---
+
+## 선행 지식
+- [ ] [복리 학습](til/agile-story/compound-learning.md)`;
+
+		const sections = parseBacklogSections(content);
+		expect(sections[0]!.items[0]!.sourceUrls).toEqual(["https://example.com/compound"]);
+	});
+
+	it("frontmatter sources가 없으면 sourceUrls는 undefined이다", () => {
+		const content = `---
+tags:
+  - backlog
+---
+
+## 테스트
+- [ ] [항목](til/test/item.md)`;
+
+		const sections = parseBacklogSections(content);
+		expect(sections[0]!.items[0]!.sourceUrls).toBeUndefined();
+	});
+});
+
+describe("parseFrontmatterSources", () => {
+	it("배열 형식의 sources를 파싱한다", () => {
+		const content = `---
+tags:
+  - backlog
+sources:
+  compound-learning:
+    - https://example.com/compound
+    - https://example.com/compound-alt
+  deliberate-practice:
+    - https://example.com/practice
+updated: 2026-02-21
+---
+
+# 학습 백로그`;
+
+		const sources = parseFrontmatterSources(content);
+		expect(sources).toEqual({
+			"compound-learning": ["https://example.com/compound", "https://example.com/compound-alt"],
+			"deliberate-practice": ["https://example.com/practice"],
+		});
+	});
+
+	it("인라인 단일 URL도 배열로 반환한다", () => {
+		const content = `---
+sources:
+  compound-learning: https://example.com/compound
+---
+
+# 학습 백로그`;
+
+		const sources = parseFrontmatterSources(content);
+		expect(sources).toEqual({
+			"compound-learning": ["https://example.com/compound"],
+		});
+	});
+
+	it("frontmatter가 없으면 빈 객체를 반환한다", () => {
+		const content = `# 백로그
+- [ ] [항목](til/test/item.md)`;
+
+		expect(parseFrontmatterSources(content)).toEqual({});
+	});
+
+	it("sources 키가 없으면 빈 객체를 반환한다", () => {
+		const content = `---
+tags:
+  - backlog
+updated: 2026-02-21
+---
+
+# 백로그`;
+
+		expect(parseFrontmatterSources(content)).toEqual({});
+	});
+
+	it("sources가 비어있으면 빈 객체를 반환한다", () => {
+		const content = `---
+sources:
+updated: 2026-02-21
+---`;
+
+		expect(parseFrontmatterSources(content)).toEqual({});
 	});
 });
