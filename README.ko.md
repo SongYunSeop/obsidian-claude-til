@@ -79,6 +79,8 @@ claude mcp add --transport http claude-til http://localhost:22360/mcp
 | Claude 자동 실행 | `true` | 터미널 열릴 때 `claude` 명령 자동 실행 |
 | 이전 세션 재개 | `false` | 이전 Claude 세션 이어서 시작 (`--continue`) |
 | 글꼴 크기 | `13` | 터미널 글꼴 크기 (px) |
+| 글꼴 | `Menlo` | 터미널 글꼴 (Menlo, SF Mono, Fira Code, JetBrains Mono 등) |
+| 행간 | `1.0` | 터미널 행간 (1.0 = 기본, 최대 2.0) |
 | 새 TIL 파일 자동 열기 | `true` | til/ 폴더에 새 파일 생성 시 자동 오픈 |
 | MCP 서버 활성화 | `true` | 내장 MCP 서버 실행 여부 |
 | MCP 포트 | `22360` | MCP 서버 포트 |
@@ -128,10 +130,13 @@ src/
 ├── settings.ts              # 설정 탭 + 인터페이스
 ├── skills.ts                # 스킬/규칙 자동 설치
 ├── watcher.ts               # 파일 감시 → 에디터에서 열기
-├── backlog.ts               # 백로그 파싱 순수 함수
+├── backlog.ts               # 백로그 파싱/포맷 순수 함수
+├── migrate-links.ts         # Wikilink [[]] → [](path) 변환
 ├── terminal/
 │   ├── TerminalView.ts      # 사이드바 터미널 (ItemView + xterm.js)
-│   ├── MarkdownLinkProvider.ts  # [마크다운 링크](path) 감지 + 클릭 시 노트 열기 (CJK 지원)
+│   ├── MarkdownLinkProvider.ts  # 3개 ILinkProvider: 마크다운, 파일경로, OSC 8
+│   ├── env.ts               # macOS PATH 보정 (Homebrew)
+│   ├── keyboard.ts          # Shift+Enter → \n (멀티라인 지원)
 │   └── pty.ts               # PTY 프로세스 관리 (node-pty)
 ├── mcp/
 │   ├── server.ts            # MCP 서버 라이프사이클 (Streamable HTTP)

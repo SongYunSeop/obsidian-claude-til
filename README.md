@@ -79,6 +79,8 @@ claude mcp add --transport http claude-til http://localhost:22360/mcp
 | Auto Launch Claude | `true` | Run `claude` when terminal opens |
 | Resume Last Session | `false` | Resume previous Claude session (`--continue`) |
 | Font Size | `13` | Terminal font size (px) |
+| Font Family | `Menlo` | Terminal font (Menlo, SF Mono, Fira Code, JetBrains Mono, etc.) |
+| Line Height | `1.0` | Terminal line spacing (1.0 = default, up to 2.0) |
 | Auto Open New TIL | `true` | Open new TIL files in editor automatically |
 | MCP Server | `true` | Enable built-in MCP server |
 | MCP Port | `22360` | MCP server port |
@@ -128,10 +130,13 @@ src/
 ├── settings.ts              # Settings tab & interface
 ├── skills.ts                # Skill/rule auto-installer
 ├── watcher.ts               # File watcher → open in editor
-├── backlog.ts               # Backlog parsing (pure functions)
+├── backlog.ts               # Backlog parsing/formatting (pure functions)
+├── migrate-links.ts         # Wikilink [[]] → [](path) conversion
 ├── terminal/
 │   ├── TerminalView.ts      # Sidebar terminal (ItemView + xterm.js)
-│   ├── MarkdownLinkProvider.ts  # [text](path) detection + click-to-open (CJK-aware)
+│   ├── MarkdownLinkProvider.ts  # 3 ILinkProviders: Markdown, Filepath, OSC 8
+│   ├── env.ts               # macOS PATH resolution (Homebrew)
+│   ├── keyboard.ts          # Shift+Enter → \n (multiline support)
 │   └── pty.ts               # PTY process manager (node-pty)
 ├── mcp/
 │   ├── server.ts            # MCP server lifecycle (Streamable HTTP)
