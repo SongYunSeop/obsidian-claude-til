@@ -11,7 +11,7 @@ import {
 	type TilFileContext,
 	type TopicContextResult,
 } from "../src/mcp/context";
-import { computeBacklogProgress } from "../src/backlog";
+import { computeBacklogProgress, parseBacklogSections } from "../src/backlog";
 
 // MCP 도구의 핵심 로직을 직접 테스트한다.
 // 실제 McpServer 없이 vault 접근 로직만 검증.
@@ -83,7 +83,7 @@ async function tilBacklogStatus(
 	app: App,
 	tilPath: string,
 	category?: string,
-): Promise<{ totalTodo: number; totalDone: number; results: string[] }> {
+): Promise<{ totalDone: number; totalItems: number; categories: { name: string; path: string; done: number; total: number; sections?: ReturnType<typeof parseBacklogSections> }[] }> {
 	const files = app.vault.getFiles().filter((f) => {
 		if (!f.path.startsWith(tilPath + "/")) return false;
 		if (f.name !== "backlog.md") return false;
@@ -95,20 +95,25 @@ async function tilBacklogStatus(
 		return true;
 	});
 
-	let totalTodo = 0;
-	let totalDone = 0;
-	const results: string[] = [];
+	const categories: { name: string; path: string; done: number; total: number; sections?: ReturnType<typeof parseBacklogSections> }[] = [];
 
 	for (const file of files) {
-		const text = await app.vault.read(file);
-		const progress = computeBacklogProgress(text);
-		totalTodo += progress.todo;
-		totalDone += progress.done;
-		if (progress.todo + progress.done > 0) {
-			results.push(`${file.path}: ${progress.done}/${progress.todo + progress.done} 완료`);
+		const content = await app.vault.read(file);
+		const progress = computeBacklogProgress(content);
+		const total = progress.todo + progress.done;
+		if (total > 0) {
+			const name = file.path.replace(tilPath + "/", "").split("/")[0]!;
+			const entry: typeof categories[number] = { name, path: file.path, done: progress.done, total };
+			if (category) {
+				entry.sections = parseBacklogSections(content);
+			}
+			categories.push(entry);
 		}
 	}
-	return { totalTodo, totalDone, results };
+
+	const totalDone = categories.reduce((sum, c) => sum + c.done, 0);
+	const totalItems = categories.reduce((sum, c) => sum + c.total, 0);
+	return { totalDone, totalItems, categories };
 }
 
 // --- 테스트 ---
@@ -271,8 +276,8 @@ describe("til_backlog_status", () => {
 
 		const result = await tilBacklogStatus(app, tilPath);
 		expect(result.totalDone).toBe(1);
-		expect(result.totalTodo).toBe(3);
-		expect(result.results).toHaveLength(2);
+		expect(result.totalItems).toBe(4);
+		expect(result.categories).toHaveLength(2);
 	});
 
 	it("카테고리 필터를 적용한다", async () => {
@@ -283,9 +288,10 @@ describe("til_backlog_status", () => {
 
 		const result = await tilBacklogStatus(app, tilPath, "typescript");
 		expect(result.totalDone).toBe(1);
-		expect(result.totalTodo).toBe(1);
-		expect(result.results).toHaveLength(1);
-		expect(result.results[0]).toContain("til/typescript/backlog.md");
+		expect(result.totalItems).toBe(2);
+		expect(result.categories).toHaveLength(1);
+		expect(result.categories[0]!.name).toBe("typescript");
+		expect(result.categories[0]!.path).toBe("til/typescript/backlog.md");
 	});
 
 	it("backlog.md가 아닌 파일은 무시한다", async () => {
@@ -296,8 +302,8 @@ describe("til_backlog_status", () => {
 
 		const result = await tilBacklogStatus(app, tilPath);
 		expect(result.totalDone).toBe(1);
-		expect(result.totalTodo).toBe(0);
-		expect(result.results).toHaveLength(1);
+		expect(result.totalItems).toBe(1);
+		expect(result.categories).toHaveLength(1);
 	});
 
 	it("tilPath 밖의 backlog.md는 무시한다", async () => {
@@ -308,7 +314,7 @@ describe("til_backlog_status", () => {
 
 		const result = await tilBacklogStatus(app, tilPath);
 		expect(result.totalDone).toBe(1);
-		expect(result.totalTodo).toBe(0);
+		expect(result.totalItems).toBe(1);
 	});
 
 	it("체크박스가 없는 백로그는 결과에서 제외된다", async () => {
@@ -318,8 +324,8 @@ describe("til_backlog_status", () => {
 		});
 
 		const result = await tilBacklogStatus(app, tilPath);
-		expect(result.results).toHaveLength(1);
-		expect(result.results[0]).toContain("typescript");
+		expect(result.categories).toHaveLength(1);
+		expect(result.categories[0]!.name).toBe("typescript");
 	});
 
 	it("백로그가 없으면 빈 결과를 반환한다", async () => {
@@ -329,8 +335,8 @@ describe("til_backlog_status", () => {
 
 		const result = await tilBacklogStatus(app, tilPath);
 		expect(result.totalDone).toBe(0);
-		expect(result.totalTodo).toBe(0);
-		expect(result.results).toHaveLength(0);
+		expect(result.totalItems).toBe(0);
+		expect(result.categories).toHaveLength(0);
 	});
 
 	it("[X] 대문자도 완료로 카운트한다", async () => {
@@ -340,7 +346,40 @@ describe("til_backlog_status", () => {
 
 		const result = await tilBacklogStatus(app, tilPath);
 		expect(result.totalDone).toBe(2);
-		expect(result.totalTodo).toBe(1);
+		expect(result.totalItems).toBe(3);
+	});
+
+	it("category 지정 시 sections에 sourceUrls가 포함된다", async () => {
+		const backlogContent = `---
+tags:
+  - backlog
+sources:
+  generics:
+    - https://www.typescriptlang.org/docs/handbook/2/generics.html
+    - https://blog.example.com/generics-deep-dive
+  mapped-types:
+    - https://www.typescriptlang.org/docs/handbook/2/mapped-types.html
+---
+
+## 핵심 개념
+- [ ] [제네릭](til/typescript/generics.md) - 타입 매개변수
+- [ ] [매핑된 타입](til/typescript/mapped-types.md) - 기존 타입 변환
+- [ ] [조건부 타입](til/typescript/conditional-types.md) - 조건 분기`;
+
+		const app = createApp({
+			"til/typescript/backlog.md": backlogContent,
+		});
+
+		const result = await tilBacklogStatus(app, tilPath, "typescript");
+		expect(result.categories).toHaveLength(1);
+		const sections = result.categories[0]!.sections!;
+		expect(sections).toHaveLength(1);
+		expect(sections[0]!.items[0]!.sourceUrls).toEqual([
+			"https://www.typescriptlang.org/docs/handbook/2/generics.html",
+			"https://blog.example.com/generics-deep-dive",
+		]);
+		expect(sections[0]!.items[1]!.sourceUrls).toEqual(["https://www.typescriptlang.org/docs/handbook/2/mapped-types.html"]);
+		expect(sections[0]!.items[2]!.sourceUrls).toBeUndefined();
 	});
 });
 

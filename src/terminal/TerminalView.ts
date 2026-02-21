@@ -4,7 +4,7 @@ import { FitAddon } from "@xterm/addon-fit";
 import type { IPty } from "node-pty";
 import type { TILSettings } from "../settings";
 import { spawnPty } from "./pty";
-import { MarkdownLinkProvider } from "./MarkdownLinkProvider";
+import { MarkdownLinkProvider, FilepathLinkProvider, Osc8LinkProvider } from "./MarkdownLinkProvider";
 import { handleShiftEnter } from "./keyboard";
 
 export const VIEW_TYPE_TIL_TERMINAL = "claude-til-terminal-view";
@@ -16,6 +16,9 @@ export class TerminalView extends ItemView {
 	private resizeObserver: ResizeObserver | null = null;
 	private fitDebounceTimer: NodeJS.Timeout | null = null;
 	private linkProviderDisposable: IDisposable | null = null;
+	private filepathLinkProviderDisposable: IDisposable | null = null;
+	private osc8LinkProvider: Osc8LinkProvider | null = null;
+	private osc8LinkProviderDisposable: IDisposable | null = null;
 	private pendingCommands: string[] = [];
 	private lastContainerWidth = 0;
 	private lastContainerHeight = 0;
@@ -98,7 +101,8 @@ export class TerminalView extends ItemView {
 
 		this.terminal = new Terminal({
 			fontSize: this.settings.fontSize,
-			fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+			fontFamily: this.settings.fontFamily,
+			lineHeight: this.settings.lineHeight,
 			theme: {
 				background: theme.background,
 				foreground: theme.foreground,
@@ -108,6 +112,7 @@ export class TerminalView extends ItemView {
 			cursorBlink: true,
 			cursorStyle: "bar",
 			allowTransparency: true,
+			allowProposedApi: true,
 			scrollback: 10000,
 			cols: 80,
 			rows: 24,
@@ -133,6 +138,15 @@ export class TerminalView extends ItemView {
 		this.linkProviderDisposable = this.terminal.registerLinkProvider(
 			new MarkdownLinkProvider(this.app, this.terminal),
 		);
+
+		// TIL 파일 경로 감지 등록 (til/category/slug.md 패턴)
+		this.filepathLinkProviderDisposable = this.terminal.registerLinkProvider(
+			new FilepathLinkProvider(this.app, this.terminal),
+		);
+
+		// OSC 8 하이퍼링크 감지 등록 (파서 기반 URL 추적 + 클릭 처리)
+		this.osc8LinkProvider = new Osc8LinkProvider(this.app, this.terminal);
+		this.osc8LinkProviderDisposable = this.terminal.registerLinkProvider(this.osc8LinkProvider);
 
 		// DOM 렌더 후 fit → PTY 시작
 		requestAnimationFrame(() => {
@@ -256,6 +270,14 @@ export class TerminalView extends ItemView {
 
 		this.linkProviderDisposable?.dispose();
 		this.linkProviderDisposable = null;
+
+		this.filepathLinkProviderDisposable?.dispose();
+		this.filepathLinkProviderDisposable = null;
+
+		this.osc8LinkProviderDisposable?.dispose();
+		this.osc8LinkProviderDisposable = null;
+		this.osc8LinkProvider?.dispose();
+		this.osc8LinkProvider = null;
 
 		if (this.ptyProcess) {
 			this.ptyProcess.kill();

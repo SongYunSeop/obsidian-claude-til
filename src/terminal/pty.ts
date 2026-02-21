@@ -43,6 +43,7 @@ export function spawnPty(app: App, opts: PtyOptions): IPty {
 			PATH: ensurePath(process.env.PATH),
 			TERM: "xterm-256color",
 			COLORTERM: "truecolor",
+			FORCE_HYPERLINK: "1",
 		},
 	});
 }

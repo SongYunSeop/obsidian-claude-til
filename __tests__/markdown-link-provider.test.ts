@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { findMarkdownLinks, isFullWidth, cellWidth } from "../src/terminal/MarkdownLinkProvider";
+import { findMarkdownLinks, findTilFilePaths, isFullWidth, cellWidth, parseOsc8Uri } from "../src/terminal/MarkdownLinkProvider";
 
 describe("findMarkdownLinks", () => {
 	it("기본 [text](path.md) 패턴을 감지한다", () => {
@@ -94,6 +94,67 @@ describe("findMarkdownLinks", () => {
 	});
 });
 
+describe("findTilFilePaths", () => {
+	it("기본 til/category/slug.md 패턴을 감지한다", () => {
+		const results = findTilFilePaths("- til/datadog/backlog.md");
+		expect(results).toHaveLength(1);
+		expect(results[0]!.filePath).toBe("til/datadog/backlog.md");
+	});
+
+	it("한국어 카테고리를 감지한다", () => {
+		const results = findTilFilePaths("│ til/도시정비사업/backlog.md │");
+		expect(results).toHaveLength(1);
+		expect(results[0]!.filePath).toBe("til/도시정비사업/backlog.md");
+	});
+
+	it("한 줄에 여러 경로를 감지한다", () => {
+		const results = findTilFilePaths("til/a/b.md 그리고 til/c/d.md");
+		expect(results).toHaveLength(2);
+		expect(results[0]!.filePath).toBe("til/a/b.md");
+		expect(results[1]!.filePath).toBe("til/c/d.md");
+	});
+
+	it("마크다운 링크의 () 안에 있는 경로는 제외한다", () => {
+		const results = findTilFilePaths("[datadog](til/datadog/backlog.md)");
+		expect(results).toEqual([]);
+	});
+
+	it("til/ 로 시작하지 않는 경로는 무시한다", () => {
+		const results = findTilFilePaths("src/main.ts some/path.md");
+		expect(results).toEqual([]);
+	});
+
+	it("빈 문자열에서 빈 배열을 반환한다", () => {
+		expect(findTilFilePaths("")).toEqual([]);
+	});
+
+	it("테이블 셀 안의 경로를 감지한다", () => {
+		const results = findTilFilePaths("│ til/postgresql/vacuum.md          │ 0%  │");
+		expect(results).toHaveLength(1);
+		expect(results[0]!.filePath).toBe("til/postgresql/vacuum.md");
+	});
+
+	it("하이픈이 포함된 slug를 감지한다", () => {
+		const results = findTilFilePaths("til/claude-code/permission-mode.md");
+		expect(results).toHaveLength(1);
+		expect(results[0]!.filePath).toBe("til/claude-code/permission-mode.md");
+	});
+
+	it("startIndex와 endIndex가 정확하다", () => {
+		const text = "- til/aws/rds-proxy.md";
+		const results = findTilFilePaths(text);
+		expect(results).toHaveLength(1);
+		expect(results[0]!.startIndex).toBe(2);
+		expect(results[0]!.endIndex).toBe(22);
+		expect(text.slice(results[0]!.startIndex, results[0]!.endIndex)).toBe("til/aws/rds-proxy.md");
+	});
+
+	it(".md가 아닌 확장자는 무시한다", () => {
+		const results = findTilFilePaths("til/test/file.txt til/test/file.js");
+		expect(results).toEqual([]);
+	});
+});
+
 describe("isFullWidth", () => {
 	it("한글 음절은 전각이다", () => {
 		expect(isFullWidth("가".codePointAt(0)!)).toBe(true);
@@ -143,5 +204,42 @@ describe("cellWidth", () => {
 
 	it("빈 문자열은 0이다", () => {
 		expect(cellWidth("", 0)).toBe(0);
+	});
+});
+
+describe("parseOsc8Uri", () => {
+	const vaultPath = "/Users/yunseop/workspace/obsidian-vault";
+
+	it("file:// URI에서 vault 상대 경로를 추출한다", () => {
+		const uri = "file:///Users/yunseop/workspace/obsidian-vault/til/typescript/generics.md";
+		expect(parseOsc8Uri(uri, vaultPath)).toBe("til/typescript/generics.md");
+	});
+
+	it("한글 카테고리 경로를 처리한다", () => {
+		const uri = "file:///Users/yunseop/workspace/obsidian-vault/til/%EB%8F%84%EC%8B%9C%EC%A0%95%EB%B9%84%EC%82%AC%EC%97%85/backlog.md";
+		expect(parseOsc8Uri(uri, vaultPath)).toBe("til/도시정비사업/backlog.md");
+	});
+
+	it("절대 경로에서 vault 상대 경로를 추출한다", () => {
+		const uri = "/Users/yunseop/workspace/obsidian-vault/til/datadog/rum.md";
+		expect(parseOsc8Uri(uri, vaultPath)).toBe("til/datadog/rum.md");
+	});
+
+	it("상대 경로는 그대로 반환한다", () => {
+		expect(parseOsc8Uri("til/aws/rds.md", vaultPath)).toBe("til/aws/rds.md");
+	});
+
+	it("vault 외부 경로는 null을 반환한다", () => {
+		const uri = "file:///Users/other/docs/note.md";
+		expect(parseOsc8Uri(uri, vaultPath)).toBeNull();
+	});
+
+	it("vault 외부 절대 경로는 null을 반환한다", () => {
+		expect(parseOsc8Uri("/tmp/other/file.md", vaultPath)).toBeNull();
+	});
+
+	it("vaultPath에 trailing slash가 있어도 동작한다", () => {
+		const uri = "file:///Users/yunseop/workspace/obsidian-vault/til/a/b.md";
+		expect(parseOsc8Uri(uri, vaultPath + "/")).toBe("til/a/b.md");
 	});
 });

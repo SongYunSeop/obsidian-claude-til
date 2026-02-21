@@ -19,10 +19,10 @@ Obsidian 플러그인이 MCP 서버를 통해 vault 접근 도구를 제공합�
 | `vault_list_files` | 폴더 내 파일 목록 | TIL 폴더 구조 파악 |
 | `vault_search` | vault 전체 텍스트 검색 | 관련 노트 찾기, 링크 후보 탐색 |
 | `vault_get_active_file` | 현재 열린 파일 경로 + 내용 | 사용자가 보고 있는 파일 확인 |
-| `til_list` | TIL 파일 목록 + 카테고리별 분류 | 중복 확인, 전체 현황 파악 |
+| `til_list` | TIL 파일 목록 + 카테고리별 분류 (JSON: `{ totalCount, categories: [{ name, count, files }] }`) | 중복 확인, 전체 현황 파악 |
 | `til_get_context` | 주제 관련 기존 학습 컨텍스트 (파일, 링크 관계, 미작성 주제) | `/til`, `/save`에서 관련 TIL·백로그 파악 |
 | `til_recent_context` | 최근 학습 흐름 (시간순) | 최근 학습 맥락 파악 |
-| `til_backlog_status` | 백로그 진행률 요약 | 학습 진행 상황 확인 |
+| `til_backlog_status` | 백로그 진행률 요약 (JSON: `{ totalDone, totalItems, categories: [{ name, path, done, total }] }`) | 학습 진행 상황 확인 |
 
 ### 활용 팁
 

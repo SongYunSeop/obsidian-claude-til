@@ -5,6 +5,8 @@ export interface TILSettings {
 	autoLaunchClaude: boolean;
 	resumeLastSession: boolean;
 	fontSize: number;
+	fontFamily: string;
+	lineHeight: number;
 	tilPath: string;
 	autoOpenNewTIL: boolean;
 	mcpEnabled: boolean;
@@ -18,6 +20,8 @@ export const DEFAULT_SETTINGS: TILSettings = {
 	autoLaunchClaude: true,
 	resumeLastSession: false,
 	fontSize: 13,
+	fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+	lineHeight: 1.0,
 	tilPath: "til",
 	autoOpenNewTIL: true,
 	mcpEnabled: true,
@@ -83,6 +87,50 @@ export class TILSettingTab extends PluginSettingTab {
 					.setDynamicTooltip()
 					.onChange(async (value) => {
 						this.plugin.settings.fontSize = value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("글꼴")
+			.setDesc("터미널 글꼴 (시스템에 설치된 폰트만 적용, 변경 후 터미널 재시작 필요)")
+			.addDropdown((dropdown) => {
+				const presets: Record<string, string> = {
+					'Menlo, Monaco, "Courier New", monospace': "Menlo (기본값)",
+					'"SF Mono", Menlo, Monaco, monospace': "SF Mono",
+					'"Fira Code", "Fira Mono", monospace': "Fira Code",
+					'"JetBrains Mono", monospace': "JetBrains Mono",
+					'"Source Code Pro", monospace': "Source Code Pro",
+					'"Cascadia Code", "Cascadia Mono", monospace': "Cascadia Code",
+					'Consolas, "Courier New", monospace': "Consolas",
+					'"IBM Plex Mono", monospace': "IBM Plex Mono",
+					'"D2Coding", monospace': "D2Coding",
+				};
+				for (const [value, label] of Object.entries(presets)) {
+					dropdown.addOption(value, label);
+				}
+				const currentValue = this.plugin.settings.fontFamily;
+				if (!(currentValue in presets)) {
+					dropdown.addOption(currentValue, `커스텀: ${currentValue}`);
+				}
+				dropdown
+					.setValue(currentValue)
+					.onChange(async (value) => {
+						this.plugin.settings.fontFamily = value;
+						await this.plugin.saveSettings();
+					});
+			});
+
+		new Setting(containerEl)
+			.setName("행간")
+			.setDesc("터미널 행간 (1.0 = 기본, 1.2 = 넓게)")
+			.addSlider((slider) =>
+				slider
+					.setLimits(1.0, 2.0, 0.1)
+					.setValue(this.plugin.settings.lineHeight)
+					.setDynamicTooltip()
+					.onChange(async (value) => {
+						this.plugin.settings.lineHeight = value;
 						await this.plugin.saveSettings();
 					})
 			);
