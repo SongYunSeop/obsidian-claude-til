@@ -29,33 +29,46 @@ AI 기반 TIL(Today I Learned) 학습 워크플로우를 위한 Claude Code 플�
 → 새 파일 감지 → 에디터에서 자동 열기
 ```
 
-## Standalone 사용법 (Obsidian 없이)
+## 설치
 
-`npx`로 Obsidian 없이 MCP 서버를 설치하고 실행할 수 있습니다:
+### 방법 A: 독립 CLI (Obsidian 없이)
 
-```bash
-npx oh-my-til init                              # 스킬/규칙/CLAUDE.md 섹션 설치
-npx oh-my-til serve                             # MCP 서버 시작 (기본 포트 22360)
-npx oh-my-til serve --port 3000 --til-path my-til
-```
+git clone 없이 `npx`만으로 바로 시작할 수 있습니다.
 
-이후 Claude Code에서 MCP 서버를 연결합니다:
+**요구 사항:** [Node.js](https://nodejs.org) 18 이상 / [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) (`claude`)
 
-```bash
-claude mcp add --transport http oh-my-til http://localhost:22360/mcp
-```
+1. **TIL 디렉토리로 이동** (없으면 새로 생성):
 
-## 시작하기 (Obsidian 플러그인)
+   ```bash
+   mkdir ~/my-til && cd ~/my-til
+   ```
 
-### 요구 사항
+2. **초기화** — 현재 디렉토리에 스킬, 규칙, CLAUDE.md 설정을 설치합니다:
 
-- [Obsidian](https://obsidian.md) v1.5.0 이상
-- [Node.js](https://nodejs.org) 18 이상
-- [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) (`claude`)
+   ```bash
+   npx oh-my-til init
+   ```
 
-### 설치
+3. **Claude Code 시작** — `/til`, `/research`, `/backlog` 스킬을 바로 사용할 수 있습니다:
 
-#### 방법 A: Claude Code (권장)
+   ```bash
+   claude
+   ```
+
+4. **(선택) MCP 서버 시작** — Claude Code가 TIL 파일을 조회할 수 있게 합니다:
+
+   ```bash
+   npx oh-my-til serve
+   claude mcp add --transport http oh-my-til http://localhost:22360/mcp
+   ```
+
+> **중요:** `npx oh-my-til init`은 **현재 작업 디렉토리**에 설정을 생성합니다. 반드시 TIL 노트를 관리할 폴더 안에서 실행하세요.
+
+### 방법 B: Obsidian 플러그인
+
+**요구 사항:** [Obsidian](https://obsidian.md) v1.5.0 이상 / [Node.js](https://nodejs.org) 18 이상 / [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) (`claude`)
+
+#### Claude Code로 설치 (권장)
 
 ```bash
 git clone https://github.com/SongYunSeop/oh-my-til.git
@@ -66,7 +79,7 @@ claude
 
 Claude Code가 Electron 버전을 자동 감지하고 네이티브 모듈 재빌드를 처리합니다.
 
-#### 방법 B: 수동 설치
+#### 수동 설치
 
 ```bash
 git clone https://github.com/SongYunSeop/oh-my-til.git
@@ -77,11 +90,11 @@ ELECTRON_VERSION=<Electron-버전> npm run deploy -- /path/to/your/vault
 
 > Electron 버전 확인: Obsidian 개발자 도구(Ctrl+Shift+I)에서 `process.versions.electron` 실행
 
-Obsidian을 재시작한 뒤 설정 > Community plugins에서 **Oh My TIL**을 활성화합니다.
+설치 후 Obsidian을 재시작하고, 설정 > Community plugins에서 **Oh My TIL**을 활성화합니다.
 
-### MCP 서버 연결 (선택)
+#### MCP 서버 연결 (선택)
 
-플러그인이 HTTP 기반 MCP 서버를 내장하고 있어 Claude Code가 vault에 직접 접근할 수 있습니다:
+플러그인에 MCP 서버가 내장되어 있어 Claude Code가 vault에 직접 접근할 수 있습니다:
 
 ```bash
 claude mcp add --transport http oh-my-til http://localhost:22360/mcp
