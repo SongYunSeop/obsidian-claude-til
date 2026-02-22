@@ -1,14 +1,14 @@
-# Claude TIL
+# Oh My TIL
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Obsidian](https://img.shields.io/badge/Obsidian-v1.5.0+-7C3AED)](https://obsidian.md)
-[![Version](https://img.shields.io/github/v/release/SongYunSeop/obsidian-claude-til)](https://github.com/SongYunSeop/obsidian-claude-til/releases)
+[![Version](https://img.shields.io/github/v/release/SongYunSeop/oh-my-til)](https://github.com/SongYunSeop/oh-my-til/releases)
 
 [English](README.md) | **한국어**
 
-Obsidian 사이드바에 Claude Code 터미널을 임베딩하여 AI 기반 TIL(Today I Learned) 학습 워크플로우를 제공하는 플러그인입니다.
+AI 기반 TIL(Today I Learned) 학습 워크플로우를 위한 Claude Code 플러그인입니다. 독립 CLI(`npx oh-my-til`)로 실행하거나, Obsidian 플러그인으로 사이드바에 Claude Code 터미널을 임베딩하여 사용할 수 있습니다.
 
-![Claude TIL — 터미널 + TIL 노트](docs/screenshots/terminal-til.png)
+![Oh My TIL — 터미널 + TIL 노트](docs/screenshots/terminal-til.png)
 
 ## 기능
 
@@ -29,7 +29,23 @@ Obsidian 사이드바에 Claude Code 터미널을 임베딩하여 AI 기반 TIL(
 → 새 파일 감지 → 에디터에서 자동 열기
 ```
 
-## 시작하기
+## Standalone 사용법 (Obsidian 없이)
+
+`npx`로 Obsidian 없이 MCP 서버를 설치하고 실행할 수 있습니다:
+
+```bash
+npx oh-my-til init                              # 스킬/규칙/CLAUDE.md 섹션 설치
+npx oh-my-til serve                             # MCP 서버 시작 (기본 포트 22360)
+npx oh-my-til serve --port 3000 --til-path my-til
+```
+
+이후 Claude Code에서 MCP 서버를 연결합니다:
+
+```bash
+claude mcp add --transport http oh-my-til http://localhost:22360/mcp
+```
+
+## 시작하기 (Obsidian 플러그인)
 
 ### 요구 사항
 
@@ -42,8 +58,8 @@ Obsidian 사이드바에 Claude Code 터미널을 임베딩하여 AI 기반 TIL(
 #### 방법 A: Claude Code (권장)
 
 ```bash
-git clone https://github.com/SongYunSeop/obsidian-claude-til.git
-cd obsidian-claude-til
+git clone https://github.com/SongYunSeop/oh-my-til.git
+cd oh-my-til
 claude
 # 실행 후: /install-plugin /path/to/your/vault
 ```
@@ -53,22 +69,22 @@ Claude Code가 Electron 버전을 자동 감지하고 네이티브 모듈 재빌
 #### 방법 B: 수동 설치
 
 ```bash
-git clone https://github.com/SongYunSeop/obsidian-claude-til.git
-cd obsidian-claude-til
+git clone https://github.com/SongYunSeop/oh-my-til.git
+cd oh-my-til
 npm install
 ELECTRON_VERSION=<Electron-버전> npm run deploy -- /path/to/your/vault
 ```
 
 > Electron 버전 확인: Obsidian 개발자 도구(Ctrl+Shift+I)에서 `process.versions.electron` 실행
 
-Obsidian을 재시작한 뒤 설정 > Community plugins에서 **Claude TIL**을 활성화합니다.
+Obsidian을 재시작한 뒤 설정 > Community plugins에서 **Oh My TIL**을 활성화합니다.
 
 ### MCP 서버 연결 (선택)
 
 플러그인이 HTTP 기반 MCP 서버를 내장하고 있어 Claude Code가 vault에 직접 접근할 수 있습니다:
 
 ```bash
-claude mcp add --transport http claude-til http://localhost:22360/mcp
+claude mcp add --transport http oh-my-til http://localhost:22360/mcp
 ```
 
 ## 설정
@@ -126,25 +142,37 @@ npm run deploy -- --refresh-skills /path  # 스킬/규칙 강제 재설치 포�
 
 ```
 src/
-├── main.ts                  # 플러그인 진입점
-├── settings.ts              # 설정 탭 + 인터페이스
-├── skills.ts                # 스킬/규칙 자동 설치
-├── watcher.ts               # 파일 감시 → 에디터에서 열기
-├── backlog.ts               # 백로그 파싱/포맷 순수 함수
-├── migrate-links.ts         # Wikilink [[]] → [](path) 변환
-├── terminal/
-│   ├── TerminalView.ts      # 사이드바 터미널 (ItemView + xterm.js)
-│   ├── MarkdownLinkProvider.ts  # 3개 ILinkProvider: 마크다운, 파일경로, OSC 8
-│   ├── env.ts               # macOS PATH 보정 (Homebrew)
+├── core/                    # 플랫폼 독립 순수 로직
+│   ├── backlog.ts           # 백로그 파싱/포맷 순수 함수
+│   ├── context.ts           # 학습 컨텍스트 헬퍼 (순수 함수)
+│   ├── stats.ts             # TIL 통계 순수 함수
+│   ├── migrate-links.ts     # Wikilink [[]] → [](path) 변환
 │   ├── keyboard.ts          # Shift+Enter → \n (멀티라인 지원)
-│   └── pty.ts               # PTY 프로세스 관리 (node-pty)
-├── mcp/
-│   ├── server.ts            # MCP 서버 라이프사이클 (Streamable HTTP)
-│   ├── tools.ts             # MCP 도구 정의
-│   └── context.ts           # 학습 컨텍스트 헬퍼 (순수 함수)
-└── dashboard/
-    ├── DashboardView.ts     # 학습 대시보드 (ItemView)
-    └── stats.ts             # TIL 통계 계산
+│   ├── env.ts               # macOS PATH 보정 (Homebrew)
+│   ├── skills.ts            # 버전 비교/플레이스홀더 치환 순수 함수
+│   └── index.ts             # barrel export
+├── ports/                   # 어댑터 인터페이스
+│   ├── storage.ts           # FileStorage 인터페이스
+│   └── metadata.ts          # MetadataProvider 인터페이스
+├── adapters/                # 포트 구현체
+│   ├── fs-adapter.ts        # node:fs 기반 (standalone)
+│   └── obsidian-adapter.ts  # Obsidian App 기반
+├── mcp/                     # MCP 서버 (포트 의존, Obsidian 무관)
+│   ├── server.ts            # HTTP 서버 + Streamable HTTP 트랜스포트
+│   └── tools.ts             # MCP 도구 정의 (FileStorage + MetadataProvider 사용)
+├── cli/                     # 독립 CLI 진입점
+│   └── index.ts             # npx oh-my-til init / serve
+└── obsidian/                # Obsidian 플랫폼 어댑터
+    ├── main.ts              # 플러그인 진입점
+    ├── settings.ts          # 설정 탭 + 인터페이스
+    ├── watcher.ts           # 파일 감시 → 에디터에서 열기
+    ├── skills.ts            # 스킬/규칙 자동 설치
+    ├── terminal/
+    │   ├── TerminalView.ts  # 사이드바 터미널 (ItemView + xterm.js)
+    │   ├── MarkdownLinkProvider.ts  # 3개 ILinkProvider: 마크다운, 파일경로, OSC 8
+    │   └── pty.ts           # PTY 프로세스 관리 (node-pty)
+    └── dashboard/
+        └── DashboardView.ts # 학습 대시보드 (ItemView)
 ```
 
 ### 기술 스택
@@ -162,6 +190,7 @@ src/
 - [x] Claude Code 터미널 임베딩
 - [x] MCP 서버 내장
 - [x] 학습 대시보드 (기본 통계)
+- [x] 독립 CLI (`npx oh-my-til`) — Obsidian 없이 사용
 - [ ] 대시보드 백로그 진행률 바
 - [ ] TIL 폴더 경로 커스터마이즈
 - [ ] 리치 대시보드 — 최근 TIL 목록, 학습 스트릭, 주간 요약

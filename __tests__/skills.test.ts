@@ -31,8 +31,8 @@ function isNewerVersion(a: string, b: string): boolean {
 const SKILLS_BASE = ".claude/skills";
 const RULES_BASE = ".claude/rules";
 const OLD_SKILLS_BASE = ".claude/skills/claude-til";
-const MCP_MARKER_START = "<!-- claude-til:mcp-tools:start -->";
-const MCP_MARKER_END = "<!-- claude-til:mcp-tools:end -->";
+const MCP_MARKER_START = "<!-- oh-my-til:mcp-tools:start -->";
+const MCP_MARKER_END = "<!-- oh-my-til:mcp-tools:end -->";
 
 function escapeRegExp(str: string): string {
 	return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

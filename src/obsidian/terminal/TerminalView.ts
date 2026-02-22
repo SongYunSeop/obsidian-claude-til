@@ -5,7 +5,7 @@ import type { IPty } from "node-pty";
 import type { TILSettings } from "../settings";
 import { spawnPty } from "./pty";
 import { MarkdownLinkProvider, FilepathLinkProvider, Osc8LinkProvider } from "./MarkdownLinkProvider";
-import { handleShiftEnter } from "./keyboard";
+import { handleShiftEnter } from "../../core/keyboard";
 
 export const VIEW_TYPE_TIL_TERMINAL = "oh-my-til-terminal-view";
 

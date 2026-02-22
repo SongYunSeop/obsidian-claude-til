@@ -1,6 +1,7 @@
-import { App, TFile } from "obsidian";
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { FileStorage } from "../ports/storage";
+import type { MetadataProvider } from "../ports/metadata";
 import {
 	findPathMatches,
 	buildFileContext,
@@ -22,9 +23,9 @@ import {
 
 /**
  * MCP 도구를 서버에 등록한다.
- * 모든 도구는 Obsidian App 인스턴스를 통해 vault에 직접 접근한다.
+ * 모든 도구는 FileStorage / MetadataProvider 포트를 통해 vault에 접근한다.
  */
-export function registerTools(server: McpServer, app: App, tilPath: string): void {
+export function registerTools(server: McpServer, storage: FileStorage, metadata: MetadataProvider, tilPath: string): void {
 	// vault_read_note: 노트 내용 읽기
 	server.registerTool(
 		"vault_read_note",
@@ -36,11 +37,10 @@ export function registerTools(server: McpServer, app: App, tilPath: string): voi
 			}),
 		},
 		async ({ path }) => {
-			const file = app.vault.getAbstractFileByPath(path);
-			if (!file || !(file instanceof TFile)) {
+			const text = await storage.readFile(path);
+			if (text === null) {
 				return { content: [{ type: "text" as const, text: `Error: 파일을 찾을 수 없습니다 — ${path}` }], isError: true };
 			}
-			const text = await app.vault.read(file);
 			return { content: [{ type: "text" as const, text }] };
 		},
 	);
@@ -57,7 +57,7 @@ export function registerTools(server: McpServer, app: App, tilPath: string): voi
 			}),
 		},
 		async ({ folder, extension }) => {
-			const files = app.vault.getFiles();
+			const files = await storage.listFiles();
 			const filtered = files.filter((f) => {
 				if (folder && !f.path.startsWith(folder + "/") && f.path !== folder) return false;
 				if (extension && f.extension !== extension) return false;
@@ -79,13 +79,13 @@ export function registerTools(server: McpServer, app: App, tilPath: string): voi
 			}),
 		},
 		async ({ query }) => {
-			const files = app.vault.getFiles().filter((f) => f.extension === "md");
+			const files = (await storage.listFiles()).filter((f) => f.extension === "md");
 			const results: string[] = [];
 			const lowerQuery = query.toLowerCase();
 
 			for (const file of files) {
-				const text = await app.vault.read(file);
-				if (text.toLowerCase().includes(lowerQuery)) {
+				const text = await storage.readFile(file.path);
+				if (text !== null && text.toLowerCase().includes(lowerQuery)) {
 					results.push(file.path);
 				}
 				if (results.length >= 50) break;
@@ -105,12 +105,15 @@ export function registerTools(server: McpServer, app: App, tilPath: string): voi
 			description: "현재 에디터에서 열린 파일의 경로와 내용을 반환합니다",
 		},
 		async () => {
-			const file = app.workspace.getActiveFile();
-			if (!file) {
+			const activePath = await metadata.getActiveFilePath();
+			if (!activePath) {
 				return { content: [{ type: "text" as const, text: "현재 열린 파일이 없습니다" }] };
 			}
-			const text = await app.vault.read(file);
-			return { content: [{ type: "text" as const, text: `path: ${file.path}\n---\n${text}` }] };
+			const text = await storage.readFile(activePath);
+			if (text === null) {
+				return { content: [{ type: "text" as const, text: "현재 열린 파일이 없습니다" }] };
+			}
+			return { content: [{ type: "text" as const, text: `path: ${activePath}\n---\n${text}` }] };
 		},
 	);
 
@@ -125,7 +128,7 @@ export function registerTools(server: McpServer, app: App, tilPath: string): voi
 			}),
 		},
 		async ({ category }) => {
-			const filePaths = app.vault.getFiles()
+			const filePaths = (await storage.listFiles())
 				.filter((f) => f.path.startsWith(tilPath + "/") && f.extension === "md")
 				.map((f) => f.path);
 
@@ -155,7 +158,7 @@ export function registerTools(server: McpServer, app: App, tilPath: string): voi
 		},
 		async ({ category }) => {
 			// 백로그 파일은 til/{카테고리}/backlog.md 경로에 있다
-			const files = app.vault.getFiles().filter((f) => {
+			const files = (await storage.listFiles()).filter((f) => {
 				if (!f.path.startsWith(tilPath + "/")) return false;
 				if (f.name !== "backlog.md") return false;
 				if (category) {
@@ -168,7 +171,8 @@ export function registerTools(server: McpServer, app: App, tilPath: string): voi
 			const categories: { name: string; path: string; done: number; total: number; sections?: { heading: string; items: { displayName: string; path: string; done: boolean; sourceUrls?: string[] }[] }[] }[] = [];
 
 			for (const file of files) {
-				const content = await app.vault.read(file);
+				const content = await storage.readFile(file.path);
+				if (content === null) continue;
 				const progress = computeBacklogProgress(content);
 				const total = progress.todo + progress.done;
 				if (total > 0) {
@@ -203,7 +207,7 @@ export function registerTools(server: McpServer, app: App, tilPath: string): voi
 			}),
 		},
 		async ({ topic }) => {
-			const allFiles = app.vault.getFiles().filter((f) => f.extension === "md");
+			const allFiles = (await storage.listFiles()).filter((f) => f.extension === "md");
 			const allPaths = allFiles.map((f) => f.path);
 
 			// 1단계: 경로 매칭
@@ -217,25 +221,26 @@ export function registerTools(server: McpServer, app: App, tilPath: string): voi
 				if (pathMatchSet.has(file.path)) continue;
 				if (!file.path.startsWith(tilPath + "/")) continue;
 				if (file.name === "backlog.md") continue;
-				const text = await app.vault.read(file);
-				if (text.toLowerCase().includes(lowerTopic)) {
+				const text = await storage.readFile(file.path);
+				if (text !== null && text.toLowerCase().includes(lowerTopic)) {
 					contentMatches.push(file.path);
 				}
 				if (pathMatches.length + contentMatches.length >= 20) break;
 			}
 
-			// 3단계: metadataCache로 enrichment
-			const resolvedLinks = app.metadataCache.resolvedLinks;
+			// 3단계: metadata enrichment
+			const resolvedLinks = await metadata.getResolvedLinks();
 			const matchedFiles: TilFileContext[] = [];
 
 			for (const filePath of [...pathMatches, ...contentMatches]) {
-				const file = app.vault.getAbstractFileByPath(filePath);
-				if (!file || !(file instanceof TFile)) continue;
+				const fileMeta = await metadata.getFileMetadata(filePath);
+				// existence check: if metadata returns null and readFile also returns null, skip
+				const exists = fileMeta !== null || (await storage.readFile(filePath)) !== null;
+				if (!exists) continue;
 
-				const cache = app.metadataCache.getFileCache(file);
-				const headings = (cache?.headings ?? []).map((h) => h.heading);
-				const outgoingLinks = (cache?.links ?? []).map((l) => l.link);
-				const tags = (cache?.tags ?? []).map((t) => t.tag);
+				const headings = fileMeta?.headings ?? [];
+				const outgoingLinks = fileMeta?.outgoingLinks ?? [];
+				const tags = fileMeta?.tags ?? [];
 
 				// backlinks: resolvedLinks에서 이 파일을 참조하는 파일들
 				const backlinks: string[] = [];
@@ -252,8 +257,9 @@ export function registerTools(server: McpServer, app: App, tilPath: string): voi
 			}
 
 			// 4단계: 미작성 링크 탐색
+			const unresolvedLinks = await metadata.getUnresolvedLinks();
 			const unresolvedMentions = findUnresolvedMentions(
-				app.metadataCache.unresolvedLinks,
+				unresolvedLinks,
 				topic,
 				tilPath,
 			);
@@ -274,13 +280,13 @@ export function registerTools(server: McpServer, app: App, tilPath: string): voi
 			}),
 		},
 		async ({ days }) => {
-			const allFiles = app.vault.getFiles().filter((f) => f.extension === "md");
+			const allFiles = (await storage.listFiles()).filter((f) => f.extension === "md");
 
-			const filesWithMeta = allFiles.map((f) => {
-				const cache = app.metadataCache.getFileCache(f);
-				const headings = (cache?.headings ?? []).map((h) => h.heading);
-				return { path: f.path, mtime: f.stat.mtime, headings };
-			});
+			const filesWithMeta = await Promise.all(allFiles.map(async (f) => {
+				const fileMeta = await metadata.getFileMetadata(f.path);
+				const headings = fileMeta?.headings ?? [];
+				return { path: f.path, mtime: f.mtime, headings };
+			}));
 
 			const result = filterRecentFiles(filesWithMeta, days, tilPath);
 			return { content: [{ type: "text" as const, text: formatRecentContext(result) }] };
@@ -296,26 +302,29 @@ export function registerTools(server: McpServer, app: App, tilPath: string): voi
 		},
 		async () => {
 			// 1. vault 파일에서 EnhancedStatsFileEntry 구성 (frontmatter date 포함)
-			const files: EnhancedStatsFileEntry[] = app.vault.getFiles()
-				.filter((f) => f.extension === "md")
-				.map((f) => {
-					const cache = app.metadataCache.getFileCache(f);
-					const fmDate = cache?.frontmatter?.date;
-					const createdDate = typeof fmDate === "string" ? fmDate : undefined;
-					const fmTags = cache?.frontmatter?.tags;
-					const tags = Array.isArray(fmTags) ? fmTags.filter((t: unknown) => typeof t === "string") : undefined;
-					return {
-						path: f.path,
-						extension: f.extension,
-						mtime: f.stat.mtime,
-						ctime: f.stat.ctime,
-						createdDate,
-						tags,
-					};
-				});
+			const allFiles = await storage.listFiles();
+			const files: EnhancedStatsFileEntry[] = await Promise.all(
+				allFiles
+					.filter((f) => f.extension === "md")
+					.map(async (f) => {
+						const fileMeta = await metadata.getFileMetadata(f.path);
+						const fmDate = fileMeta?.frontmatter?.date;
+						const createdDate = typeof fmDate === "string" ? fmDate : undefined;
+						const fmTags = fileMeta?.frontmatter?.tags;
+						const tags = Array.isArray(fmTags) ? fmTags.filter((t: unknown) => typeof t === "string") : undefined;
+						return {
+							path: f.path,
+							extension: f.extension,
+							mtime: f.mtime,
+							ctime: f.ctime,
+							createdDate,
+							tags,
+						};
+					}),
+			);
 
 			// 2. backlog 파일 읽어서 BacklogProgressEntry 구성
-			const backlogFiles = app.vault.getFiles().filter((f) => {
+			const backlogFiles = allFiles.filter((f) => {
 				if (!f.path.startsWith(tilPath + "/")) return false;
 				if (f.name !== "backlog.md") return false;
 				return true;
@@ -323,7 +332,8 @@ export function registerTools(server: McpServer, app: App, tilPath: string): voi
 
 			const backlogEntries: BacklogProgressEntry[] = [];
 			for (const file of backlogFiles) {
-				const content = await app.vault.read(file);
+				const content = await storage.readFile(file.path);
+				if (content === null) continue;
 				const progress = computeBacklogProgress(content);
 				const total = progress.todo + progress.done;
 				if (total > 0) {

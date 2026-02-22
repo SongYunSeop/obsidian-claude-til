@@ -1,6 +1,6 @@
 import { ItemView, WorkspaceLeaf, setIcon } from "obsidian";
-import { computeBacklogProgress, parseBacklogItems } from "../backlog";
-import { extractCategory } from "../mcp/context";
+import { computeBacklogProgress, parseBacklogItems } from "../../core/backlog";
+import { extractCategory } from "../../core/context";
 import {
 	computeEnhancedStats,
 	selectRecentTils,
@@ -14,7 +14,7 @@ import {
 	type EnhancedCategory,
 	type DashboardBacklogProgress,
 	type RandomReviewPick,
-} from "./stats";
+} from "../../core/stats";
 
 export const VIEW_TYPE_TIL_DASHBOARD = "oh-my-til-dashboard-view";
 

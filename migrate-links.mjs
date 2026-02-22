@@ -4,7 +4,7 @@
 import * as fs from "fs";
 import * as path from "path";
 
-// src/migrate-links.ts
+// src/core/migrate-links.ts
 function parseWikilink(inner) {
   const pipeIndex = inner.search(/\\?\|/);
   if (pipeIndex === -1) {

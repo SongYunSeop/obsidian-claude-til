@@ -1,12 +1,12 @@
-# CLAUDE.md - obsidian-claude-til
+# CLAUDE.md - oh-my-til
 
 ## 프로젝트 개요
 
-Obsidian 플러그인. 사이드바에 Claude Code 터미널을 임베딩하여 TIL 학습 워크플로우를 Obsidian 안에서 실행한다. xterm.js + node-pty 기반.
+Claude Code 기반 TIL 학습 워크플로우 플러그인. Obsidian 없이 독립 CLI(`npx oh-my-til`)로 실행하거나, Obsidian 플러그인으로 사이드바에 Claude Code 터미널을 임베딩하여 사용할 수 있다. xterm.js + node-pty 기반.
 
 핵심 흐름: 커맨드 팔레트 → 터미널 열기 → Claude Code에서 `/til`, `/backlog`, `/research`, `/save`, `/dashboard`, `/migrate-links` 스킬 직접 실행 → 새 파일 감지 시 에디터에서 열기
 
-Obsidian의 역할은 "터미널 임베딩 + 파일 감시 + skill 배포 + MCP 서버 + 대시보드"로 한정하고, 워크플로우 주도권은 Claude Code에 있다.
+Obsidian의 역할은 "터미널 임베딩 + 파일 감시 + skill 배포 + MCP 서버 + 대시보드"로 한정하고, 워크플로우 주도권은 Claude Code에 있다. 독립 실행 시에는 `npx oh-my-til init`으로 스킬/규칙을 설치하고 `npx oh-my-til serve`로 MCP 서버를 띄운다.
 
 ## 프로젝트 철학
 
@@ -36,26 +36,37 @@ Obsidian은 현재 검증 환경이자 배포 채널이며, 코어 로직은 Obs
 
 ```
 src/
-├── main.ts               ← TILPlugin 진입점 (터미널 뷰 + MCP + 대시보드 + watcher + skill 설치)
-├── settings.ts           ← 설정 탭 + 인터페이스 (mcpEnabled, mcpPort 포함)
-├── skills.ts             ← Skill/Rule 버전 기반 자동 설치/업데이트 + CLAUDE.md MCP 섹션 관리
-├── watcher.ts            ← 새 TIL 파일 감지 → 에디터에서 열기
-├── backlog.ts            ← 백로그 파싱/포맷 순수 함수 (parseBacklogItems, extractTopicFromPath, parseBacklogSections, parseFrontmatterSources)
-├── migrate-links.ts      ← Wikilink [[]] → [](path) 변환 순수 함수
-├── types.d.ts            ← TypeScript 타입 정의 (Electron 모듈)
-├── terminal/
-│   ├── TerminalView.ts       ← 사이드바 터미널 (ItemView + xterm.js)
-│   ├── MarkdownLinkProvider.ts ← 3개 ILinkProvider: MarkdownLinkProvider ([text](path) + CJK), FilepathLinkProvider (til/ 경로), Osc8LinkProvider (OSC 8 하이퍼링크 + IMarker)
-│   ├── env.ts                ← ensurePath(): macOS Homebrew PATH 보정
+├── core/                     ← 플랫폼 독립 순수 로직
+│   ├── backlog.ts            ← 백로그 파싱/포맷 순수 함수 (parseBacklogItems, extractTopicFromPath, parseBacklogSections, parseFrontmatterSources)
+│   ├── context.ts            ← 학습 컨텍스트 순수 함수 (topic 매칭, 최근 활동, 포맷)
+│   ├── stats.ts              ← 대시보드 통계 순수 함수 (streak, heatmap, enhanced categories, backlog progress)
+│   ├── migrate-links.ts      ← Wikilink [[]] → [](path) 변환 순수 함수
 │   ├── keyboard.ts           ← Shift+Enter → \n 변환 순수 함수 (Claude Code multiline 지원)
-│   └── pty.ts                ← PTY 프로세스 관리 (node-pty)
-├── mcp/
-│   ├── server.ts         ← MCP 서버 라이프사이클 (HTTP + Streamable HTTP 트랜스포트)
-│   ├── tools.ts          ← MCP 도구 정의 (vault 접근, til_dashboard 포함)
-│   └── context.ts        ← 학습 컨텍스트 순수 함수 (topic 매칭, 최근 활동, 포맷)
-└── dashboard/
-    ├── DashboardView.ts  ← 학습 대시보드 (Summary Cards + Heatmap + Categories + Recent + Backlog)
-    └── stats.ts          ← 대시보드 통계 순수 함수 (streak, heatmap, enhanced categories, backlog progress)
+│   ├── env.ts                ← ensurePath(): macOS Homebrew PATH 보정
+│   ├── skills.ts             ← 버전 비교/플레이스홀더 치환 순수 함수
+│   └── index.ts              ← barrel export
+├── ports/                    ← 어댑터 인터페이스
+│   ├── storage.ts            ← FileStorage 인터페이스
+│   └── metadata.ts           ← MetadataProvider 인터페이스
+├── adapters/                 ← 포트 구현체
+│   ├── fs-adapter.ts         ← node:fs 기반 (standalone)
+│   └── obsidian-adapter.ts   ← Obsidian App 기반
+├── mcp/                      ← MCP 서버 (포트 의존, Obsidian 무관)
+│   ├── server.ts             ← HTTP 서버 + Streamable HTTP 트랜스포트
+│   └── tools.ts              ← MCP 도구 정의 (FileStorage + MetadataProvider 사용)
+├── skills-install.ts         ← Skill/Rule 버전 기반 자동 설치/업데이트 + CLAUDE.md MCP 섹션 관리 (공유)
+├── cli/                      ← 독립 CLI 진입점
+│   └── index.ts              ← npx oh-my-til init / serve
+└── obsidian/                 ← Obsidian 플랫폼 어댑터
+    ├── main.ts               ← TILPlugin 진입점 (터미널 뷰 + MCP + 대시보드 + watcher + skill 설치)
+    ├── settings.ts           ← 설정 탭 + 인터페이스 (mcpEnabled, mcpPort 포함)
+    ├── watcher.ts            ← 새 TIL 파일 감지 → 에디터에서 열기
+    ├── terminal/
+    │   ├── TerminalView.ts   ← 사이드바 터미널 (ItemView + xterm.js)
+    │   ├── MarkdownLinkProvider.ts ← 3개 ILinkProvider: MarkdownLinkProvider ([text](path) + CJK), FilepathLinkProvider (til/ 경로), Osc8LinkProvider (OSC 8 하이퍼링크 + IMarker)
+    │   └── pty.ts            ← PTY 프로세스 관리 (node-pty)
+    └── dashboard/
+        └── DashboardView.ts  ← 학습 대시보드 (Summary Cards + Heatmap + Categories + Recent + Backlog)
 
 vault-assets/             ← vault에 배포되는 파일 (esbuild text import → 런타임 설치)
 ├── skills/               ← .claude/skills/에 설치되는 스킬 소스
@@ -76,7 +87,8 @@ __tests__/
 ├── markdown-link-provider.test.ts ← 마크다운 링크 감지 + CJK 셀 너비 + OSC 8 순수 함수 테스트
 ├── shift-enter.test.ts   ← Shift+Enter 키 핸들러 순수 함수 테스트
 ├── ensure-path.test.ts   ← macOS PATH 보정 테스트
-└── migrate-links.test.ts ← Wikilink → 마크다운 링크 변환 테스트
+├── migrate-links.test.ts ← Wikilink → 마크다운 링크 변환 테스트
+└── adapters.test.ts      ← fs-adapter / obsidian-adapter 포트 구현 테스트
 ```
 
 ## 빌드
@@ -85,17 +97,27 @@ __tests__/
 npm install
 npm run rebuild-pty    # node-pty를 Obsidian Electron 버전에 맞춰 재빌드
 npm run dev            # 워치 모드
-npm run build          # 프로덕션 빌드
+npm run build          # Obsidian 플러그인 + CLI 모두 빌드
+npm run build:obsidian # Obsidian 플러그인만 빌드
+npm run build:cli      # CLI만 빌드
 npm test               # vitest 테스트 실행
 npm run deploy -- <vault-path>  # vault에 배포 (빌드 + 복사 + pty 재빌드)
 npm run deploy -- --refresh-skills <vault-path>  # 스킬/규칙 강제 재설치 포함
+```
+
+### Standalone CLI (Obsidian 없이 독립 실행)
+
+```bash
+npx oh-my-til init                              # 스킬/규칙/CLAUDE.md 설치
+npx oh-my-til serve                             # MCP 서버 독립 실행
+npx oh-my-til serve --port 3000 --til-path my-til
 ```
 
 ## 규칙
 
 - **코드 변경 시 항상 feature branch + worktree에서 작업한다**. main 브랜치에서 직접 수정하지 않는다.
 - **새 기능/워크플로우 변경 시 반드시 사용자와 방향을 먼저 논의한다**. 구현 방식이 여러 가지일 수 있는 작업은 바로 코드를 작성하지 않고, 접근 방법을 제안하고 합의한 뒤 작업한다.
-- **브랜치 격리 (git worktree)**: feature 브랜치 작업 시 `git worktree`를 사용하여 작업 디렉토리를 분리한다. 현재 브랜치에서 다른 feature 작업이 필요하면 `git worktree add ../obsidian-claude-til-<branch-name> <branch-name>`으로 별도 worktree를 생성하도록 안내한다. 같은 디렉토리에서 브랜치를 전환하지 않는다.
+- **브랜치 격리 (git worktree)**: feature 브랜치 작업 시 `git worktree`를 사용하여 작업 디렉토리를 분리한다. 현재 브랜치에서 다른 feature 작업이 필요하면 `git worktree add ../oh-my-til-<branch-name> <branch-name>`으로 별도 worktree를 생성하도록 안내한다. 같은 디렉토리에서 브랜치를 전환하지 않는다.
 - Obsidian API는 `obsidian` 모듈에서 import
 - node-pty는 `electronRequire`로 로드 (일반 import 불가, 네이티브 모듈)
 - `onload()`에서 등록한 리소스는 자동 해제됨

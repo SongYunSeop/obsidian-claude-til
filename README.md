@@ -1,14 +1,14 @@
-# Claude TIL
+# Oh My TIL
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Obsidian](https://img.shields.io/badge/Obsidian-v1.5.0+-7C3AED)](https://obsidian.md)
-[![Version](https://img.shields.io/github/v/release/SongYunSeop/obsidian-claude-til)](https://github.com/SongYunSeop/obsidian-claude-til/releases)
+[![Version](https://img.shields.io/github/v/release/SongYunSeop/oh-my-til)](https://github.com/SongYunSeop/oh-my-til/releases)
 
 **English** | [한국어](README.ko.md)
 
-An Obsidian plugin that embeds a Claude Code terminal in the sidebar and provides an AI-powered TIL (Today I Learned) learning workflow.
+A Claude Code plugin for AI-powered TIL (Today I Learned) learning workflow. Works as a standalone CLI (`npx oh-my-til`) or as an Obsidian plugin with embedded Claude Code terminal.
 
-![Claude TIL — Terminal + TIL note](docs/screenshots/terminal-til.png)
+![Oh My TIL — Terminal + TIL note](docs/screenshots/terminal-til.png)
 
 ## Features
 
@@ -29,7 +29,23 @@ Command Palette → Open Terminal → Claude Code starts
 → New file detected → opens in editor
 ```
 
-## Getting Started
+## Standalone Usage (without Obsidian)
+
+Install and run the MCP server without Obsidian using `npx`:
+
+```bash
+npx oh-my-til init                              # Install skills, rules, and CLAUDE.md section
+npx oh-my-til serve                             # Start MCP server (default port 22360)
+npx oh-my-til serve --port 3000 --til-path my-til
+```
+
+Then connect Claude Code to the MCP server:
+
+```bash
+claude mcp add --transport http oh-my-til http://localhost:22360/mcp
+```
+
+## Getting Started (Obsidian Plugin)
 
 ### Prerequisites
 
@@ -42,8 +58,8 @@ Command Palette → Open Terminal → Claude Code starts
 #### Option A: Claude Code (Recommended)
 
 ```bash
-git clone https://github.com/SongYunSeop/obsidian-claude-til.git
-cd obsidian-claude-til
+git clone https://github.com/SongYunSeop/oh-my-til.git
+cd oh-my-til
 claude
 # Then run: /install-plugin /path/to/your/vault
 ```
@@ -53,22 +69,22 @@ Claude Code automatically detects Electron version and handles native module reb
 #### Option B: Manual
 
 ```bash
-git clone https://github.com/SongYunSeop/obsidian-claude-til.git
-cd obsidian-claude-til
+git clone https://github.com/SongYunSeop/oh-my-til.git
+cd oh-my-til
 npm install
 ELECTRON_VERSION=<your-electron-version> npm run deploy -- /path/to/your/vault
 ```
 
 > To find your Electron version, open Obsidian's Developer Tools (Ctrl+Shift+I) and run `process.versions.electron`.
 
-Restart Obsidian, then enable **Claude TIL** in Settings > Community plugins.
+Restart Obsidian, then enable **Oh My TIL** in Settings > Community plugins.
 
 ### MCP Server Setup (Optional)
 
 The plugin runs an HTTP-based MCP server so Claude Code can access your vault directly:
 
 ```bash
-claude mcp add --transport http claude-til http://localhost:22360/mcp
+claude mcp add --transport http oh-my-til http://localhost:22360/mcp
 ```
 
 ## Configuration
@@ -126,25 +142,37 @@ npm run deploy -- --refresh-skills /path  # Deploy with skill/rule refresh
 
 ```
 src/
-├── main.ts                  # Plugin entry point
-├── settings.ts              # Settings tab & interface
-├── skills.ts                # Skill/rule auto-installer
-├── watcher.ts               # File watcher → open in editor
-├── backlog.ts               # Backlog parsing/formatting (pure functions)
-├── migrate-links.ts         # Wikilink [[]] → [](path) conversion
-├── terminal/
-│   ├── TerminalView.ts      # Sidebar terminal (ItemView + xterm.js)
-│   ├── MarkdownLinkProvider.ts  # 3 ILinkProviders: Markdown, Filepath, OSC 8
-│   ├── env.ts               # macOS PATH resolution (Homebrew)
+├── core/                    # Platform-independent pure logic
+│   ├── backlog.ts           # Backlog parsing/formatting (pure functions)
+│   ├── context.ts           # Learning context helpers (pure functions)
+│   ├── stats.ts             # TIL statistics (pure functions)
+│   ├── migrate-links.ts     # Wikilink [[]] → [](path) conversion
 │   ├── keyboard.ts          # Shift+Enter → \n (multiline support)
-│   └── pty.ts               # PTY process manager (node-pty)
-├── mcp/
-│   ├── server.ts            # MCP server lifecycle (Streamable HTTP)
-│   ├── tools.ts             # MCP tool definitions
-│   └── context.ts           # Learning context helpers (pure functions)
-└── dashboard/
-    ├── DashboardView.ts     # Learning dashboard (ItemView)
-    └── stats.ts             # TIL statistics
+│   ├── env.ts               # macOS PATH resolution (Homebrew)
+│   ├── skills.ts            # Version comparison / placeholder substitution
+│   └── index.ts             # Barrel export
+├── ports/                   # Adapter interfaces
+│   ├── storage.ts           # FileStorage interface
+│   └── metadata.ts          # MetadataProvider interface
+├── adapters/                # Port implementations
+│   ├── fs-adapter.ts        # node:fs based (standalone)
+│   └── obsidian-adapter.ts  # Obsidian App based
+├── mcp/                     # MCP server (port-dependent, Obsidian-free)
+│   ├── server.ts            # HTTP server + Streamable HTTP transport
+│   └── tools.ts             # MCP tool definitions (FileStorage + MetadataProvider)
+├── cli/                     # Standalone CLI entry point
+│   └── index.ts             # npx oh-my-til init / serve
+└── obsidian/                # Obsidian platform adapter
+    ├── main.ts              # Plugin entry point
+    ├── settings.ts          # Settings tab & interface
+    ├── watcher.ts           # File watcher → open in editor
+    ├── skills.ts            # Skill/rule auto-installer
+    ├── terminal/
+    │   ├── TerminalView.ts  # Sidebar terminal (ItemView + xterm.js)
+    │   ├── MarkdownLinkProvider.ts  # 3 ILinkProviders: Markdown, Filepath, OSC 8
+    │   └── pty.ts           # PTY process manager (node-pty)
+    └── dashboard/
+        └── DashboardView.ts # Learning dashboard (ItemView)
 ```
 
 ### Tech Stack
@@ -162,6 +190,7 @@ src/
 - [x] Embedded Claude Code terminal
 - [x] Built-in MCP server
 - [x] Learning dashboard (basic stats)
+- [x] Standalone CLI (`npx oh-my-til`) — use without Obsidian
 - [ ] Backlog progress bars in dashboard
 - [ ] Configurable TIL folder path
 - [ ] Rich dashboard — recent TILs, streaks, weekly summary

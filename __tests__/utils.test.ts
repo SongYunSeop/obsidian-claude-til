@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { DEFAULT_SETTINGS } from "../src/settings";
+import { DEFAULT_SETTINGS } from "../src/obsidian/settings";
 
 describe("DEFAULT_SETTINGS", () => {
 	it("기본값이 올바르게 정의되어 있다", () => {

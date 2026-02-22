@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { findMarkdownLinks, findTilFilePaths, isFullWidth, cellWidth, parseOsc8Uri } from "../src/terminal/MarkdownLinkProvider";
+import { findMarkdownLinks, findTilFilePaths, isFullWidth, cellWidth, parseOsc8Uri } from "../src/obsidian/terminal/MarkdownLinkProvider";
 
 describe("findMarkdownLinks", () => {
 	it("기본 [text](path.md) 패턴을 감지한다", () => {

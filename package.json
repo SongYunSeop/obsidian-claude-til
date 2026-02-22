@@ -1,11 +1,22 @@
 {
-	"name": "obsidian-claude-til",
+	"name": "oh-my-til",
 	"version": "0.7.0",
-	"description": "Obsidian plugin with embedded Claude Code terminal for TIL learning workflow",
+	"description": "Oh My TIL — Claude Code plugin for TIL learning workflow, with Obsidian integration",
 	"main": "main.js",
+	"bin": {
+		"oh-my-til": "./dist/cli.js"
+	},
+	"files": [
+		"dist/",
+		"main.js",
+		"manifest.json",
+		"styles.css"
+	],
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
-		"build": "node esbuild.config.mjs production",
+		"build": "node esbuild.config.mjs production && node esbuild.cli.mjs",
+		"build:obsidian": "node esbuild.config.mjs production",
+		"build:cli": "node esbuild.cli.mjs",
 		"rebuild-pty": "npx @electron/rebuild -m node_modules/node-pty -v ${ELECTRON_VERSION:?'ELECTRON_VERSION 환경변수를 설정하세요 (예: ELECTRON_VERSION=37.10.2 npm run rebuild-pty)'}",
 		"deploy": "bash scripts/deploy.sh",
 		"check": "vitest run && node esbuild.config.mjs production && tsc --noEmit",
@@ -13,24 +24,24 @@
 		"migrate-links": "npx tsx scripts/migrate-links.ts"
 	},
 	"keywords": [
-		"obsidian",
-		"obsidian-plugin",
 		"claude",
 		"claude-code",
 		"til",
 		"learning",
 		"mcp",
+		"obsidian",
+		"obsidian-plugin",
 		"terminal"
 	],
 	"author": "SongYunSeop",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/SongYunSeop/obsidian-claude-til.git"
+		"url": "https://github.com/SongYunSeop/oh-my-til.git"
 	},
-	"homepage": "https://github.com/SongYunSeop/obsidian-claude-til",
+	"homepage": "https://github.com/SongYunSeop/oh-my-til",
 	"bugs": {
-		"url": "https://github.com/SongYunSeop/obsidian-claude-til/issues"
+		"url": "https://github.com/SongYunSeop/oh-my-til/issues"
 	},
 	"dependencies": {
 		"@modelcontextprotocol/sdk": "^1.26.0",

@@ -1,7 +1,7 @@
 import type { IPty } from "node-pty";
 import * as path from "path";
 import { FileSystemAdapter, App } from "obsidian";
-import { ensurePath } from "./env";
+import { ensurePath } from "../../core/env";
 
 const electronRequire = (window as unknown as { require: NodeJS.Require }).require;
 
