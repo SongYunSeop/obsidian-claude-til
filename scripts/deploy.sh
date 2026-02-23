@@ -161,13 +161,16 @@ if [ "$REFRESH_SKILLS" = true ]; then
     echo "    설치: $DEST_DIR/SKILL.md"
   done
 
-  # vault-assets/rules/ 에서 최신 규칙 설치
-  for RULE_SRC in "$ASSETS_DIR"/rules/*.md; do
-    RULE_NAME=$(basename "$RULE_SRC")
-    mkdir -p "$RULES_DIR"
-    sed "s/__PLUGIN_VERSION__/$PLUGIN_VERSION/g" "$RULE_SRC" > "$RULES_DIR/$RULE_NAME"
-    echo "    설치: $RULES_DIR/$RULE_NAME"
-  done
+  # vault-assets/rules/ 에서 최신 규칙 설치 (디렉토리가 있을 때만)
+  if [ -d "$ASSETS_DIR/rules" ]; then
+    for RULE_SRC in "$ASSETS_DIR"/rules/*.md; do
+      [ -f "$RULE_SRC" ] || continue
+      RULE_NAME=$(basename "$RULE_SRC")
+      mkdir -p "$RULES_DIR"
+      sed "s/__PLUGIN_VERSION__/$PLUGIN_VERSION/g" "$RULE_SRC" > "$RULES_DIR/$RULE_NAME"
+      echo "    설치: $RULES_DIR/$RULE_NAME"
+    done
+  fi
 
   echo "    스킬/규칙 재설치 완료."
 fi
