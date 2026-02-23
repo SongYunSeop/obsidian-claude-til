@@ -44,6 +44,7 @@ src/
 │   ├── keyboard.ts           ← Shift+Enter → \n 변환 순수 함수 (Claude Code multiline 지원)
 │   ├── env.ts                ← ensurePath(): macOS Homebrew PATH 보정
 │   ├── skills.ts             ← 버전 비교/플레이스홀더 치환 순수 함수
+│   ├── cli.ts                ← CLI 인자 파싱 순수 함수 (parseArgs)
 │   └── index.ts              ← barrel export
 ├── ports/                    ← 어댑터 인터페이스
 │   ├── storage.ts            ← FileStorage 인터페이스
@@ -88,7 +89,8 @@ __tests__/
 ├── shift-enter.test.ts   ← Shift+Enter 키 핸들러 순수 함수 테스트
 ├── ensure-path.test.ts   ← macOS PATH 보정 테스트
 ├── migrate-links.test.ts ← Wikilink → 마크다운 링크 변환 테스트
-└── adapters.test.ts      ← fs-adapter / obsidian-adapter 포트 구현 테스트
+├── adapters.test.ts      ← fs-adapter / obsidian-adapter 포트 구현 테스트
+└── cli.test.ts           ← CLI 인자 파싱 (positional + options) 테스트
 ```
 
 ## 빌드
@@ -108,9 +110,9 @@ npm run deploy -- --refresh-skills <vault-path>  # 스킬/규칙 강제 재설�
 ### Standalone CLI (Obsidian 없이 독립 실행)
 
 ```bash
-npx oh-my-til init                              # 스킬/규칙/CLAUDE.md 설치
-npx oh-my-til serve                             # MCP 서버 독립 실행
-npx oh-my-til serve --port 3000 --til-path my-til
+npx oh-my-til init ~/my-til                     # 디렉토리 생성 + 스킬/규칙/CLAUDE.md 설치
+npx oh-my-til serve ~/my-til                    # MCP 서버 독립 실행
+npx oh-my-til serve ~/my-til --port 3000 --til-path my-til
 ```
 
 ## 규칙

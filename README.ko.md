@@ -37,32 +37,27 @@ git clone 없이 `npx`만으로 바로 시작할 수 있습니다.
 
 **요구 사항:** [Node.js](https://nodejs.org) 18 이상 / [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) (`claude`)
 
-1. **TIL 디렉토리로 이동** (없으면 새로 생성):
+1. **초기화** — 디렉토리를 생성(필요 시)하고 스킬, 규칙, CLAUDE.md 설정을 설치합니다:
 
    ```bash
-   mkdir ~/my-til && cd ~/my-til
+   npx oh-my-til init ~/my-til
    ```
 
-2. **초기화** — 현재 디렉토리에 스킬, 규칙, CLAUDE.md 설정을 설치합니다:
+2. **Claude Code 시작** — `/til`, `/research`, `/backlog` 스킬을 바로 사용할 수 있습니다:
 
    ```bash
-   npx oh-my-til init
-   ```
-
-3. **Claude Code 시작** — `/til`, `/research`, `/backlog` 스킬을 바로 사용할 수 있습니다:
-
-   ```bash
+   cd ~/my-til
    claude
    ```
 
-4. **(선택) MCP 서버 시작** — Claude Code가 TIL 파일을 조회할 수 있게 합니다:
+3. **(선택) MCP 서버 시작** — Claude Code가 TIL 파일을 조회할 수 있게 합니다:
 
    ```bash
-   npx oh-my-til serve
+   npx oh-my-til serve ~/my-til
    claude mcp add --transport http oh-my-til http://localhost:22360/mcp
    ```
 
-> **중요:** `npx oh-my-til init`은 **현재 작업 디렉토리**에 설정을 생성합니다. 반드시 TIL 노트를 관리할 폴더 안에서 실행하세요.
+> **팁:** 경로 없이 `npx oh-my-til init`을 실행하면 현재 디렉토리에 설치됩니다.
 
 ### 방법 B: Obsidian 플러그인
 

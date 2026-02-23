@@ -1,7 +1,9 @@
 import { FsStorage, FsMetadata } from "../adapters/fs-adapter";
 import { TILMcpServer } from "../mcp/server";
 import { installSkills } from "../skills-install";
+import { parseArgs } from "../core/cli";
 import * as path from "path";
+import * as fs from "fs";
 
 declare const __CLI_VERSION__: string;
 const VERSION = typeof __CLI_VERSION__ !== "undefined" ? __CLI_VERSION__ : "0.0.0";
@@ -10,26 +12,14 @@ function printUsage(): void {
 	console.log(`oh-my-til v${VERSION}
 
 Usage:
-  oh-my-til init [options]    Install skills, rules, and CLAUDE.md
-  oh-my-til serve [options]   Start MCP server
-  oh-my-til version           Print version
+  oh-my-til init [<path>]             Install skills, rules, and CLAUDE.md
+  oh-my-til serve [<path>] [options]  Start MCP server
+  oh-my-til version                   Print version
 
-Options:
+Options (serve):
   --til-path <path>  TIL folder path (default: til)
   --port <port>      MCP server port (default: 22360)
-  --base <path>      Base directory (default: current directory)
 `);
-}
-
-function parseArgs(args: string[]): Record<string, string> {
-	const result: Record<string, string> = {};
-	for (let i = 0; i < args.length; i++) {
-		const arg = args[i]!;
-		if (arg.startsWith("--") && i + 1 < args.length) {
-			result[arg.slice(2)] = args[++i]!;
-		}
-	}
-	return result;
 }
 
 async function main(): Promise<void> {
@@ -46,14 +36,18 @@ async function main(): Promise<void> {
 		process.exit(0);
 	}
 
-	const opts = parseArgs(args.slice(1));
-	const basePath = path.resolve(opts["base"] ?? process.cwd());
-	const tilPath = opts["til-path"] ?? "til";
-	const port = parseInt(opts["port"] ?? "22360", 10);
-
-	const storage = new FsStorage(basePath);
+	const parsed = parseArgs(args.slice(1));
+	const basePath = path.resolve(parsed.positional[0] ?? process.cwd());
+	const tilPath = parsed.options["til-path"] ?? "til";
+	const port = parseInt(parsed.options["port"] ?? "22360", 10);
 
 	if (command === "init") {
+		if (!fs.existsSync(basePath)) {
+			fs.mkdirSync(basePath, { recursive: true });
+			console.log(`Created directory: ${basePath}`);
+		}
+
+		const storage = new FsStorage(basePath);
 		console.log(`Initializing oh-my-til in ${basePath}...`);
 		await installSkills(storage, VERSION);
 		console.log("\nInstalled:");
@@ -62,7 +56,18 @@ async function main(): Promise<void> {
 		console.log("  - .claude/CLAUDE.md (MCP section)");
 		console.log(`\nTo start MCP server: oh-my-til serve --port ${port}`);
 		console.log(`To register with Claude Code: claude mcp add --transport http oh-my-til http://localhost:${port}/mcp`);
+
+		const obsidianDir = path.join(basePath, ".obsidian");
+		if (fs.existsSync(obsidianDir)) {
+			console.log("\nObsidian vault detected.");
+			console.log("To install the Obsidian plugin, see:");
+			console.log("  https://github.com/SongYunSeop/oh-my-til#option-b-obsidian-plugin");
+		} else {
+			console.log("\nUsing Obsidian? See plugin installation:");
+			console.log("  https://github.com/SongYunSeop/oh-my-til#option-b-obsidian-plugin");
+		}
 	} else if (command === "serve") {
+		const storage = new FsStorage(basePath);
 		const metadata = new FsMetadata(basePath);
 		const server = new TILMcpServer(storage, metadata, port, tilPath, VERSION, {
 			onError: (msg) => console.error(`Error: ${msg}`),

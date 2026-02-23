@@ -5,3 +5,4 @@ export * from "./migrate-links";
 export * from "./keyboard";
 export * from "./env";
 export * from "./skills";
+export * from "./cli";

@@ -37,32 +37,27 @@ No git clone needed. Just `npx`.
 
 **Prerequisites:** [Node.js](https://nodejs.org) 18+ / [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) (`claude`)
 
-1. **Go to your TIL directory** (create one if needed):
+1. **Initialize** — creates the directory (if needed) and installs skills, rules, and CLAUDE.md config:
 
    ```bash
-   mkdir ~/my-til && cd ~/my-til
+   npx oh-my-til init ~/my-til
    ```
 
-2. **Initialize** — installs skills, rules, and CLAUDE.md config into the current directory:
+2. **Start Claude Code** and use `/til`, `/research`, `/backlog` skills right away:
 
    ```bash
-   npx oh-my-til init
-   ```
-
-3. **Start Claude Code** and use `/til`, `/research`, `/backlog` skills right away:
-
-   ```bash
+   cd ~/my-til
    claude
    ```
 
-4. **(Optional) Start MCP server** — lets Claude Code query your TIL files:
+3. **(Optional) Start MCP server** — lets Claude Code query your TIL files:
 
    ```bash
-   npx oh-my-til serve
+   npx oh-my-til serve ~/my-til
    claude mcp add --transport http oh-my-til http://localhost:22360/mcp
    ```
 
-> **Important:** `npx oh-my-til init` writes config to the **current working directory**. Always run it inside the folder where you want to manage your TIL notes.
+> **Tip:** You can also run `npx oh-my-til init` without a path to initialize the current directory.
 
 ### Option B: Obsidian Plugin
 
