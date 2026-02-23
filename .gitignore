@@ -5,6 +5,7 @@ package-lock.json
 # Build output
 main.js
 main.js.map
+dist/
 
 # Obsidian plugin data
 data.json
