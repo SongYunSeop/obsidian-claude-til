@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { parseArgs } from "../src/core/cli";
+import { parseArgs, expandTilde } from "../src/core/cli";
+import * as os from "os";
+import * as path from "path";
 
 describe("parseArgs", () => {
 	it("positional 인자와 options를 분리한다", () => {
@@ -32,9 +34,34 @@ describe("parseArgs", () => {
 		expect(result.options).toEqual({ "til-path": "til" });
 	});
 
-	it("값 없는 -- 플래그는 무시한다", () => {
-		const result = parseArgs(["~/my-til", "--verbose"]);
+	it("알 수 없는 플래그 뒤의 positional을 소비하지 않는다", () => {
+		const result = parseArgs(["--verbose", "~/my-til"]);
 		expect(result.positional).toEqual(["~/my-til"]);
 		expect(result.options).toEqual({});
+	});
+
+	it("options 뒤의 positional 인자도 수집한다", () => {
+		const result = parseArgs(["--port", "3000", "~/my-til"]);
+		expect(result.positional).toEqual(["~/my-til"]);
+		expect(result.options).toEqual({ port: "3000" });
+	});
+});
+
+describe("expandTilde", () => {
+	it("~/로 시작하는 경로를 홈 디렉토리로 확장한다", () => {
+		expect(expandTilde("~/my-til")).toBe(path.join(os.homedir(), "my-til"));
+	});
+
+	it("~만 있으면 홈 디렉토리를 반환한다", () => {
+		expect(expandTilde("~")).toBe(os.homedir());
+	});
+
+	it("~로 시작하지 않는 경로는 그대로 반환한다", () => {
+		expect(expandTilde("/absolute/path")).toBe("/absolute/path");
+		expect(expandTilde("relative/path")).toBe("relative/path");
+	});
+
+	it("~user 형태는 확장하지 않는다", () => {
+		expect(expandTilde("~other/path")).toBe("~other/path");
 	});
 });

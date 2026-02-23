@@ -1,7 +1,7 @@
 import { FsStorage, FsMetadata } from "../adapters/fs-adapter";
 import { TILMcpServer } from "../mcp/server";
 import { installSkills } from "../skills-install";
-import { parseArgs } from "../core/cli";
+import { parseArgs, expandTilde } from "../core/cli";
 import * as path from "path";
 import * as fs from "fs";
 
@@ -37,9 +37,15 @@ async function main(): Promise<void> {
 	}
 
 	const parsed = parseArgs(args.slice(1));
-	const basePath = path.resolve(parsed.positional[0] ?? process.cwd());
+	const rawPath = parsed.positional[0];
+	const basePath = path.resolve(rawPath ? expandTilde(rawPath) : process.cwd());
 	const tilPath = parsed.options["til-path"] ?? "til";
 	const port = parseInt(parsed.options["port"] ?? "22360", 10);
+
+	if (isNaN(port) || port < 1 || port > 65535) {
+		console.error(`Invalid port: ${parsed.options["port"]}`);
+		process.exit(1);
+	}
 
 	if (command === "init") {
 		if (!fs.existsSync(basePath)) {
@@ -54,7 +60,7 @@ async function main(): Promise<void> {
 		console.log("  - .claude/skills/ (6 skills)");
 		console.log("  - .claude/rules/ (1 rule)");
 		console.log("  - .claude/CLAUDE.md (MCP section)");
-		console.log(`\nTo start MCP server: oh-my-til serve --port ${port}`);
+		console.log(`\nTo start MCP server: oh-my-til serve ${basePath}`);
 		console.log(`To register with Claude Code: claude mcp add --transport http oh-my-til http://localhost:${port}/mcp`);
 
 		const obsidianDir = path.join(basePath, ".obsidian");
