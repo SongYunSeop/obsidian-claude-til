@@ -71,17 +71,26 @@ MCP 도구를 사용할 수 없는 경우, `./til/TIL MOC.md`와 `./til/{카테�
      - 원칙: **기존 내용을 삭제하지 않고 추가/보강만 한다** (단, tldr은 전체 반영을 위해 재작성)
    - **그 외** (새 학습인데 슬러그가 겹치는 경우) → 사용자에게 덮어쓸지 확인한다
 
-### Step 4: Daily 노트 업데이트
+### Step 4: 연관 파일 병렬 업데이트
 
-해당 날짜의 Daily 노트(`./Daily/YYYY-MM-DD.md`)에 카테고리별로 그룹핑하여 링크를 추가한다.
+Step 3에서 TIL 파일이 저장되면, 파일 정보(경로, 카테고리, 제목, 슬러그, 날짜)를 확정한 뒤 3개 업데이트를 Task 도구로 **병렬 spawn**한다:
 
-### Step 5: TIL MOC 업데이트
+```
+# 하나의 메시지에서 3개 subagent를 동시에 호출
+Task(subagent_type="general-purpose", prompt="...", description="Daily 노트 업데이트")
+Task(subagent_type="general-purpose", prompt="...", description="TIL MOC 업데이트")
+Task(subagent_type="general-purpose", prompt="...", description="백로그 체크")
+```
 
-`./til/TIL MOC.md`의 해당 카테고리에 항목을 추가한다.
+각 subagent의 역할:
 
-### Step 6: 백로그 체크
+1. **Daily 노트 업데이트**: 해당 날짜의 Daily 노트(`./Daily/YYYY-MM-DD.md`)에 카테고리별로 그룹핑하여 링크를 추가한다. Daily 노트가 없으면 새로 생성한다.
+2. **TIL MOC 업데이트**: `./til/TIL MOC.md`의 해당 카테고리에 항목을 추가한다.
+3. **백로그 체크**: 해당 카테고리 백로그(`./til/{카테고리}/backlog.md`)에 항목이 있으면 `[x]`로 체크하고, 링크가 표준 마크다운 형식(`[표시명](til/{카테고리}/{slug}.md)`)이 아니면 업데이트한다.
 
-해당 카테고리 백로그(`./til/{카테고리}/backlog.md`)에 항목이 있으면 `[x]`로 체크하고, 링크가 표준 마크다운 형식(`[표시명](til/{카테고리}/{slug}.md)`)이 아니면 업데이트한다.
+3개 subagent 모두 완료된 후 Step 7로 진행한다.
+
+> **참고**: 각 subagent에게 TIL 파일 경로, 카테고리, 제목, 슬러그, 날짜 정보를 모두 전달하여 독립적으로 작업할 수 있게 한다. 각 subagent는 서로 다른 파일을 수정하므로 충돌 없이 병렬 실행 가능하다.
 
 ### Step 7: 완료 안내
 
@@ -295,12 +304,12 @@ tags:
 
 - [ ] 링크 후보 파악 완료 (기존 TIL/백로그 확인, 미존재 개념은 사용자 확인)
 - [ ] TIL 파일이 템플릿 형식에 맞게 저장됨
-- [ ] Daily 노트에 카테고리별 링크 추가됨
-- [ ] TIL MOC에 항목 추가됨
-- [ ] 백로그 항목 있으면 `[x]` 체크 + 링크 업데이트
+- [ ] 연관 파일 병렬 업데이트 완료 (Daily 노트 + TIL MOC + 백로그)
 - [ ] 저장 경로 안내함
+- [ ] 자동 품질 검증 통과 (Step 7.5)
 - [ ] 문서 리뷰 완료 (사용자 확인)
 - [ ] git commit (push 제외)
+- [ ] 사후 정합성 검증 spawn됨 (Step 10, background)
 
 ## 저장 규칙 요약 (Quick Reference)
 
@@ -314,11 +323,12 @@ tags:
 ### 저장 시 필수 업데이트 항목
 
 1. TIL 파일 저장 (frontmatter: date, category, tags[til], aliases)
-2. Daily 노트에 카테고리별(`### 카테고리`) 링크 추가
-3. TIL MOC에 항목 추가
-4. 백로그에 해당 항목 있으면 `[x]` 체크 + 링크 업데이트
-5. 저장 경로 안내
+2. 연관 파일 병렬 업데이트 (Daily 노트 + TIL MOC + 백로그) — Step 4
+3. 저장 경로 안내
+4. 자동 품질 검증 — Step 7.5
+5. 문서 리뷰 (사용자 확인) — Step 8
 6. git commit (`📝 til: {한글 제목}({영문 제목}) - {카테고리}`, push 제외)
+7. 사후 정합성 검증 (background) — Step 10
 
 ### 주의사항
 
