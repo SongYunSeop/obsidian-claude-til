@@ -172,7 +172,29 @@ if [ "$REFRESH_SKILLS" = true ]; then
     done
   fi
 
-  echo "    스킬/규칙 재설치 완료."
+  # 기존 플러그인 관리 에이전트 삭제
+  AGENTS_DIR="$VAULT_PATH/.claude/agents"
+  if [ -d "$AGENTS_DIR" ]; then
+    find "$AGENTS_DIR" -name "*.md" -type f | while read -r AGENT_FILE; do
+      if grep -q "plugin-version:" "$AGENT_FILE"; then
+        rm "$AGENT_FILE"
+        echo "    삭제: $AGENT_FILE"
+      fi
+    done
+  fi
+
+  # vault-assets/agents/ 에서 최신 에이전트 설치 (디렉토리가 있을 때만)
+  if [ -d "$ASSETS_DIR/agents" ]; then
+    for AGENT_SRC in "$ASSETS_DIR"/agents/*.md; do
+      [ -f "$AGENT_SRC" ] || continue
+      AGENT_NAME=$(basename "$AGENT_SRC")
+      mkdir -p "$AGENTS_DIR"
+      sed "s/__PLUGIN_VERSION__/$PLUGIN_VERSION/g" "$AGENT_SRC" > "$AGENTS_DIR/$AGENT_NAME"
+      echo "    설치: $AGENTS_DIR/$AGENT_NAME"
+    done
+  fi
+
+  echo "    스킬/규칙/에이전트 재설치 완료."
 fi
 
 # ── 완료 ───────────────────────────────────────────────────

@@ -9,6 +9,13 @@ import migrateLinksSkill from "../vault-assets/skills/migrate-links/SKILL.md";
 import dashboardSkill from "../vault-assets/skills/dashboard/SKILL.md";
 import claudeMdSection from "../vault-assets/claude-md-section.md";
 
+import tilResearcherAgent from "../vault-assets/agents/til-researcher.md";
+import tilFetcherAgent from "../vault-assets/agents/til-fetcher.md";
+import tilQualityCheckerAgent from "../vault-assets/agents/til-quality-checker.md";
+import tilConsistencyCheckerAgent from "../vault-assets/agents/til-consistency-checker.md";
+import tilFileUpdaterAgent from "../vault-assets/agents/til-file-updater.md";
+import tilResearchReviewerAgent from "../vault-assets/agents/til-research-reviewer.md";
+
 import {
 	resolveVersionPlaceholder,
 	extractPluginVersion,
@@ -16,6 +23,7 @@ import {
 	escapeRegExp,
 	SKILLS_BASE,
 	RULES_BASE,
+	AGENTS_BASE,
 	OLD_SKILLS_BASE,
 	MCP_MARKER_START,
 	MCP_MARKER_END,
@@ -33,6 +41,15 @@ const SKILLS: Record<string, string> = {
 };
 
 const RULES: Record<string, string> = {};
+
+const AGENTS: Record<string, string> = {
+	"til-researcher.md": tilResearcherAgent,
+	"til-fetcher.md": tilFetcherAgent,
+	"til-quality-checker.md": tilQualityCheckerAgent,
+	"til-consistency-checker.md": tilConsistencyCheckerAgent,
+	"til-file-updater.md": tilFileUpdaterAgent,
+	"til-research-reviewer.md": tilResearchReviewerAgent,
+};
 
 /**
  * 버전 관리 파일을 설치/업데이트하는 공통 로직.
@@ -78,6 +95,7 @@ async function installFiles(
 export async function installSkills(storage: FileStorage, pluginVersion: string): Promise<void> {
 	await installFiles(storage, SKILLS_BASE, SKILLS, pluginVersion, "skill");
 	await installFiles(storage, RULES_BASE, RULES, pluginVersion, "rule");
+	await installFiles(storage, AGENTS_BASE, AGENTS, pluginVersion, "agent");
 
 	await installClaudeMdSection(storage, pluginVersion);
 	await cleanupOldSkills(storage);

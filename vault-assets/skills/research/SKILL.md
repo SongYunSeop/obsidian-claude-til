@@ -38,13 +38,24 @@ plugin-version: "__PLUGIN_VERSION__"
    - 예: "Kubernetes devops" → "Pod/Container 기초", "Service/Networking", "Storage/Volume", "Deployment 전략", "모니터링/로깅"
 2. 각 소주제에 대해 Task 도구로 리서치 subagent를 **병렬 spawn**한다:
    ```
-   Task(subagent_type="general-purpose", prompt="...", description="리서치: {소주제}")
+   Task(subagent_type="til-researcher", prompt="...", description="리서치: {소주제}")
    ```
    - 각 subagent에게 전달할 프롬프트: "'{소주제}'에 대해 웹 검색으로 조사하여 다음을 정리해줘: (1) 핵심 개념 3~5개와 각 1줄 설명, (2) 관련 기술 용어, (3) 참고할 만한 URL 2~3개. 한국어로 작성하되 기술 용어는 원어 병기."
    - 모든 subagent를 **하나의 메시지에서 동시에** 호출하여 병렬 실행한다
 3. 모든 subagent 결과를 수집한 뒤, 소주제 간 의존 관계를 분석하여 Phase 2의 학습 순서 정렬에 반영한다
 
 > **참고**: 소주제가 2개 이하이거나 주제가 충분히 좁으면 병렬화 없이 직접 조사한다.
+
+### Phase 1.5: 리서치 리뷰 (조건부)
+
+Phase 1에서 분해한 **소주제가 3개 이상**일 때만 실행한다. 소주제가 2개 이하이면 이 단계를 건너뛰고 Phase 2로 바로 진행한다.
+
+```
+Task(subagent_type="til-research-reviewer", prompt="다음 리서치 결과를 3가지 페르소나(초보자/실무자/비판자)로 리뷰해줘:\n\n{Phase 1 리서치 결과}", description="리서치 리뷰: {주제}")
+```
+
+- **통과** 판정 시: 그대로 Phase 2로 진행한다
+- **보완 후 진행** 판정 시: 보완 제안을 반영하여 리서치 결과를 수정한 뒤 Phase 2로 진행한다
 
 ### Phase 2: 백로그 정리
 

@@ -52,7 +52,7 @@ MCP 도구를 사용할 수 없는 경우, `./til/TIL MOC.md`와 `./til/{카테�
 
    1. 각 URL에 대해 패치 subagent를 **병렬 spawn**한다:
       ```
-      Task(subagent_type="general-purpose", prompt="...", description="패치: {URL 도메인}")
+      Task(subagent_type="til-fetcher", prompt="...", description="패치: {URL 도메인}")
       ```
       - 각 subagent 프롬프트: "다음 URL의 내용을 WebFetch로 읽고, 학습에 필요한 핵심 내용을 한국어로 요약해줘 (기술 용어 원어 병기). 코드 예시가 있으면 포함. URL: {url}"
       - 모든 subagent를 **하나의 메시지에서 동시에** 호출한다
@@ -71,6 +71,17 @@ MCP 도구를 사용할 수 없는 경우, `./til/TIL MOC.md`와 `./til/{카테�
 3. **기존 TIL이 없으면**: 웹 검색과 문서를 통해 주제를 조사한다
 4. 핵심 개념, 예시, 관련 자료를 수집한다
 5. 수집한 내용을 사용자에게 요약해서 보여준다
+
+### Phase 1.5: 리서치 리뷰 (조건부)
+
+Phase 1에서 수집한 **핵심 개념이 3개 이상이고 소스 URL 병렬 패치를 수행했을 때**만 실행한다. 그 외에는 이 단계를 건너뛰고 Phase 2로 바로 진행한다.
+
+```
+Task(subagent_type="til-research-reviewer", prompt="다음 리서치 결과를 3가지 페르소나(초보자/실무자/비판자)로 리뷰해줘:\n\n{Phase 1 리서치 결과}", description="리서치 리뷰: {주제}")
+```
+
+- **통과** 판정 시: 그대로 Phase 2로 진행한다
+- **보완 후 진행** 판정 시: 보완 제안을 반영하여 리서치 결과를 수정한 뒤 Phase 2로 진행한다
 
 ### Phase 2: 대화형 학습
 

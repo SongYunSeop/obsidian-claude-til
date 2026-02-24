@@ -30,6 +30,7 @@ function isNewerVersion(a: string, b: string): boolean {
 
 const SKILLS_BASE = ".claude/skills";
 const RULES_BASE = ".claude/rules";
+const AGENTS_BASE = ".claude/agents";
 const OLD_SKILLS_BASE = ".claude/skills/claude-til";
 const MCP_MARKER_START = "<!-- oh-my-til:mcp-tools:start -->";
 const MCP_MARKER_END = "<!-- oh-my-til:mcp-tools:end -->";
@@ -239,6 +240,79 @@ describe("installFiles (skills)", () => {
 	it("빈 스킬 목록이면 아무것도 설치하지 않는다", async () => {
 		const installed = await installFiles(vault, SKILLS_BASE, {}, "0.2.0");
 		expect(installed).toEqual([]);
+	});
+});
+
+describe("installFiles (agents)", () => {
+	let vault: Vault;
+	const agents: Record<string, string> = {
+		"til-researcher.md": '---\nplugin-version: "__PLUGIN_VERSION__"\n---\n# til-researcher',
+		"til-fetcher.md": '---\nplugin-version: "__PLUGIN_VERSION__"\n---\n# til-fetcher',
+		"til-quality-checker.md": '---\nplugin-version: "__PLUGIN_VERSION__"\n---\n# til-quality-checker',
+		"til-consistency-checker.md": '---\nplugin-version: "__PLUGIN_VERSION__"\n---\n# til-consistency-checker',
+		"til-file-updater.md": '---\nplugin-version: "__PLUGIN_VERSION__"\n---\n# til-file-updater',
+		"til-research-reviewer.md": '---\nplugin-version: "__PLUGIN_VERSION__"\n---\n# til-research-reviewer',
+	};
+
+	beforeEach(() => {
+		vault = new Vault();
+	});
+
+	it("에이전트 파일이 없으면 새로 설치한다", async () => {
+		const installed = await installFiles(vault, AGENTS_BASE, agents, "0.2.0");
+
+		expect(installed).toContain(".claude/agents/til-researcher.md");
+		expect(installed).toContain(".claude/agents/til-fetcher.md");
+		expect(installed).toContain(".claude/agents/til-quality-checker.md");
+		expect(installed).toContain(".claude/agents/til-consistency-checker.md");
+		expect(installed).toContain(".claude/agents/til-file-updater.md");
+		expect(installed).toContain(".claude/agents/til-research-reviewer.md");
+		expect(installed).toHaveLength(6);
+
+		const content = await vault.adapter.read(".claude/agents/til-researcher.md");
+		expect(content).toContain("# til-researcher");
+		expect(content).toContain('plugin-version: "0.2.0"');
+		expect(content).not.toContain("__PLUGIN_VERSION__");
+	});
+
+	it("plugin-version이 낮은 에이전트 파일은 업데이트한다", async () => {
+		vault._setFile(
+			".claude/agents/til-fetcher.md",
+			'---\nplugin-version: "0.1.0"\n---\n# til-fetcher v1',
+		);
+
+		const installed = await installFiles(vault, AGENTS_BASE, agents, "0.2.0");
+
+		expect(installed).toContain(".claude/agents/til-fetcher.md");
+		const content = await vault.adapter.read(".claude/agents/til-fetcher.md");
+		expect(content).toContain("# til-fetcher");
+		expect(content).toContain('plugin-version: "0.2.0"');
+	});
+
+	it("같은 버전이면 건너뛴다", async () => {
+		vault._setFile(
+			".claude/agents/til-researcher.md",
+			'---\nplugin-version: "0.2.0"\n---\n# til-researcher (기존)',
+		);
+
+		const installed = await installFiles(vault, AGENTS_BASE, agents, "0.2.0");
+
+		expect(installed).not.toContain(".claude/agents/til-researcher.md");
+		const content = await vault.adapter.read(".claude/agents/til-researcher.md");
+		expect(content).toContain("기존");
+	});
+
+	it("plugin-version이 없으면 사용자 커스터마이즈로 간주하고 건너뛴다", async () => {
+		vault._setFile(
+			".claude/agents/til-researcher.md",
+			"# 사용자가 직접 작성한 에이전트",
+		);
+
+		const installed = await installFiles(vault, AGENTS_BASE, agents, "0.2.0");
+
+		expect(installed).not.toContain(".claude/agents/til-researcher.md");
+		const content = await vault.adapter.read(".claude/agents/til-researcher.md");
+		expect(content).toBe("# 사용자가 직접 작성한 에이전트");
 	});
 });
 

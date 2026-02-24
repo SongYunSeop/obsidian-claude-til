@@ -77,9 +77,9 @@ Step 3에서 TIL 파일이 저장되면, 파일 정보(경로, 카테고리, 제
 
 ```
 # 하나의 메시지에서 3개 subagent를 동시에 호출
-Task(subagent_type="general-purpose", prompt="...", description="Daily 노트 업데이트")
-Task(subagent_type="general-purpose", prompt="...", description="TIL MOC 업데이트")
-Task(subagent_type="general-purpose", prompt="...", description="백로그 체크")
+Task(subagent_type="til-file-updater", prompt="...", description="Daily 노트 업데이트")
+Task(subagent_type="til-file-updater", prompt="...", description="TIL MOC 업데이트")
+Task(subagent_type="til-file-updater", prompt="...", description="백로그 체크")
 ```
 
 각 subagent의 역할:
@@ -101,7 +101,7 @@ Task(subagent_type="general-purpose", prompt="...", description="백로그 체�
 TIL 파일 저장 직후, Task 도구로 품질 검증 subagent를 spawn하여 자동 검증한다:
 
 ```
-Task(subagent_type="general-purpose", prompt="...", description="품질 검증: {slug}")
+Task(subagent_type="til-quality-checker", prompt="...", description="품질 검증: {slug}")
 ```
 
 subagent에게 저장된 TIL 파일 경로를 전달하고, 다음 항목을 검증하도록 지시한다:
@@ -139,7 +139,7 @@ subagent에게 저장된 TIL 파일 경로를 전달하고, 다음 항목을 검
 git commit 완료 후, Task 도구로 정합성 검증 subagent를 **background spawn**하여 연관 파일 간 정합성을 확인한다:
 
 ```
-Task(subagent_type="general-purpose", prompt="...", description="정합성 검증: {slug}", run_in_background=true)
+Task(subagent_type="til-consistency-checker", prompt="...", description="정합성 검증: {slug}", run_in_background=true)
 ```
 
 subagent에게 TIL 파일 경로, 카테고리, 슬러그, 날짜를 전달하고, 다음을 검증하도록 지시한다:

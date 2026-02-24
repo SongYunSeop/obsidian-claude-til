@@ -71,6 +71,7 @@ src/
         └── DashboardView.ts  ← 학습 대시보드 (Summary Cards + Heatmap + Categories + Recent + Backlog)
 
 vault-assets/             ← vault에 배포되는 파일 (esbuild text import → 런타임 설치)
+├── agents/               ← .claude/agents/에 설치되는 커스텀 에이전트 정의
 ├── skills/               ← .claude/skills/에 설치되는 스킬 소스
 └── claude-md-section.md  ← .claude/CLAUDE.md에 삽입되는 MCP 안내
 
