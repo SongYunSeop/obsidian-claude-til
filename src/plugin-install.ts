@@ -16,7 +16,6 @@ import tilFileUpdaterAgent from "../vault-assets/agents/til-file-updater.md";
 import tilResearchReviewerAgent from "../vault-assets/agents/til-research-reviewer.md";
 import tilCrossLinkerAgent from "../vault-assets/agents/til-cross-linker.md";
 
-import sessionMemorySaveHook from "../vault-assets/hooks/session-memory-save.sh";
 import sessionMemoryLoadHook from "../vault-assets/hooks/session-memory-load.sh";
 import notifyCompleteHook from "../vault-assets/hooks/notify-complete.sh";
 import preCompactHook from "../vault-assets/hooks/pre-compact.sh";
@@ -58,7 +57,6 @@ const AGENTS: Record<string, string> = {
 };
 
 const HOOKS: Record<string, string> = {
-	"session-memory-save.sh": sessionMemorySaveHook,
 	"session-memory-load.sh": sessionMemoryLoadHook,
 	"notify-complete.sh": notifyCompleteHook,
 	"pre-compact.sh": preCompactHook,
@@ -69,9 +67,6 @@ const HOOKS: Record<string, string> = {
  * 각 hook은 .claude/hooks/ 디렉토리의 스크립트를 bash로 실행한다.
  */
 const HOOKS_CONFIG: Record<string, Array<Record<string, unknown>>> = {
-	SessionEnd: [{
-		hooks: [{ type: "command", command: "bash .claude/hooks/session-memory-save.sh", timeout: 30 }],
-	}],
 	SessionStart: [{
 		matcher: "startup|compact",
 		hooks: [{ type: "command", command: "bash .claude/hooks/session-memory-load.sh" }],
