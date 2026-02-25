@@ -55,7 +55,11 @@ $ARGUMENTS에서 bump 타입을 추출합니다: `patch`, `minor`, `major` (기�
 5. 태그 생성: `git tag v{version}`
 6. 푸시: `git push origin main --tags`
 7. 릴리스 노트 작성 (아래 템플릿 참고)
-8. GitHub Release 생성:
+8. npm 배포:
+   ```
+   npm publish
+   ```
+9. GitHub Release 생성:
    ```
    gh release create v{version} main.js manifest.json styles.css --title "v{version}" --notes "{릴리스 노트}"
    ```
