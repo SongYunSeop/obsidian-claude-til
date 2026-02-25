@@ -37,10 +37,11 @@ No git clone needed. Just `npx`.
 
 **Prerequisites:** [Node.js](https://nodejs.org) 18+ / [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) (`claude`)
 
-1. **Initialize** — creates the directory (if needed) and installs skills, rules, and CLAUDE.md config:
+1. **Initialize** — creates the directory (if needed) and installs skills, rules, and CLAUDE.md config. If an Obsidian vault is detected (`.obsidian/` exists), the plugin is auto-installed too:
 
    ```bash
    npx oh-my-til init ~/my-til
+   npx oh-my-til init ~/my-til --no-obsidian  # Skip Obsidian plugin installation
    ```
 
 2. **Start Claude Code** and use `/til`, `/research`, `/backlog` skills right away:
@@ -63,7 +64,23 @@ No git clone needed. Just `npx`.
 
 **Prerequisites:** [Obsidian](https://obsidian.md) v1.5.0+ / [Node.js](https://nodejs.org) 18+ / [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) (`claude`)
 
-#### Using Claude Code (Recommended)
+#### Using npx (Recommended)
+
+Run `init` inside your Obsidian vault — the plugin is installed automatically:
+
+```bash
+npx oh-my-til init /path/to/your/vault
+```
+
+Electron version is auto-detected on macOS. To override:
+
+```bash
+ELECTRON_VERSION=37.10.2 npx oh-my-til init /path/to/your/vault
+```
+
+> To find your Electron version, open Obsidian's Developer Tools (Ctrl+Shift+I) and run `process.versions.electron`.
+
+#### Using Claude Code
 
 ```bash
 git clone https://github.com/SongYunSeop/oh-my-til.git
@@ -72,9 +89,7 @@ claude
 # Then run: /install-plugin /path/to/your/vault
 ```
 
-Claude Code automatically detects Electron version and handles native module rebuilding.
-
-#### Manual Installation
+#### Manual Installation (from source)
 
 ```bash
 git clone https://github.com/SongYunSeop/oh-my-til.git
@@ -82,8 +97,6 @@ cd oh-my-til
 npm install
 ELECTRON_VERSION=<your-electron-version> npm run deploy -- /path/to/your/vault
 ```
-
-> To find your Electron version, open Obsidian's Developer Tools (Ctrl+Shift+I) and run `process.versions.electron`.
 
 After installation, restart Obsidian and enable **Oh My TIL** in Settings > Community plugins.
 
@@ -169,7 +182,8 @@ src/
 │   ├── server.ts            # HTTP server + Streamable HTTP transport
 │   └── tools.ts             # MCP tool definitions (FileStorage + MetadataProvider)
 ├── cli/                     # Standalone CLI entry point
-│   └── index.ts             # npx oh-my-til init / serve
+│   ├── index.ts             # npx oh-my-til init / serve
+│   └── obsidian-install.ts  # Auto-install Obsidian plugin (Electron detection, node-pty rebuild)
 └── obsidian/                # Obsidian platform adapter
     ├── main.ts              # Plugin entry point
     ├── settings.ts          # Settings tab & interface

@@ -1,6 +1,7 @@
 import { FsStorage, FsMetadata } from "../adapters/fs-adapter";
 import { TILMcpServer } from "../mcp/server";
 import { installSkills } from "../skills-install";
+import { installObsidianPlugin } from "./obsidian-install";
 import { parseArgs, expandTilde } from "../core/cli";
 import * as path from "path";
 import * as fs from "fs";
@@ -12,13 +13,19 @@ function printUsage(): void {
 	console.log(`oh-my-til v${VERSION}
 
 Usage:
-  oh-my-til init [<path>]             Install skills, rules, and CLAUDE.md
+  oh-my-til init [<path>] [options]   Install skills, rules, and CLAUDE.md
   oh-my-til serve [<path>] [options]  Start MCP server
   oh-my-til version                   Print version
+
+Options (init):
+  --no-obsidian      Skip Obsidian plugin installation
 
 Options (serve):
   --til-path <path>  TIL folder path (default: til)
   --port <port>      MCP server port (default: 22360)
+
+Environment:
+  ELECTRON_VERSION   Override Electron version for node-pty rebuild
 `);
 }
 
@@ -64,13 +71,31 @@ async function main(): Promise<void> {
 		console.log(`To register with Claude Code: claude mcp add --transport http oh-my-til http://localhost:${port}/mcp`);
 
 		const obsidianDir = path.join(basePath, ".obsidian");
-		if (fs.existsSync(obsidianDir)) {
-			console.log("\nObsidian vault detected.");
-			console.log("To install the Obsidian plugin, see:");
-			console.log("  https://github.com/SongYunSeop/oh-my-til#option-b-obsidian-plugin");
+		if (parsed.options["no-obsidian"]) {
+			console.log("\nObsidian plugin installation skipped (--no-obsidian).");
+		} else if (fs.existsSync(obsidianDir)) {
+			console.log("\nObsidian vault detected. Installing plugin...");
+			const packageRoot = path.resolve(__dirname, "..");
+			const result = installObsidianPlugin(basePath, packageRoot);
+			if (result.success) {
+				console.log(`  Plugin installed: ${result.pluginDir}`);
+				if (result.rebuilt) {
+					console.log("  node-pty rebuilt for Electron.");
+				}
+				for (const w of result.warnings) {
+					console.warn(`  Warning: ${w}`);
+				}
+				console.log("  Restart Obsidian or reload the plugin to activate.");
+			} else {
+				console.error("  Plugin installation failed:");
+				for (const w of result.warnings) {
+					console.error(`    ${w}`);
+				}
+				console.log("  You can install manually:");
+				console.log("    https://github.com/SongYunSeop/oh-my-til#option-b-obsidian-plugin");
+			}
 		} else {
-			console.log("\nUsing Obsidian? See plugin installation:");
-			console.log("  https://github.com/SongYunSeop/oh-my-til#option-b-obsidian-plugin");
+			console.log("\nUsing Obsidian? Run init inside your vault to auto-install the plugin.");
 		}
 	} else if (command === "serve") {
 		const storage = new FsStorage(basePath);

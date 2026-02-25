@@ -10,7 +10,8 @@
 		"dist/",
 		"main.js",
 		"manifest.json",
-		"styles.css"
+		"styles.css",
+		"migrate-links.mjs"
 	],
 	"scripts": {
 		"dev": "node esbuild.config.mjs",

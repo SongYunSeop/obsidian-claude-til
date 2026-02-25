@@ -58,7 +58,8 @@ src/
 │   └── tools.ts              ← MCP 도구 정의 (FileStorage + MetadataProvider 사용)
 ├── skills-install.ts         ← Skill 버전 기반 자동 설치/업데이트 + CLAUDE.md MCP 섹션 관리 (공유)
 ├── cli/                      ← 독립 CLI 진입점
-│   └── index.ts              ← npx oh-my-til init / serve
+│   ├── index.ts              ← npx oh-my-til init / serve
+│   └── obsidian-install.ts   ← Obsidian 플러그인 자동 설치 (Electron 감지, node-pty 재빌드)
 └── obsidian/                 ← Obsidian 플랫폼 어댑터
     ├── main.ts               ← TILPlugin 진입점 (터미널 뷰 + MCP + 대시보드 + watcher + skill 설치)
     ├── settings.ts           ← 설정 탭 + 인터페이스 (mcpEnabled, mcpPort 포함)
@@ -91,7 +92,8 @@ __tests__/
 ├── ensure-path.test.ts   ← macOS PATH 보정 테스트
 ├── migrate-links.test.ts ← Wikilink → 마크다운 링크 변환 테스트
 ├── adapters.test.ts      ← fs-adapter / obsidian-adapter 포트 구현 테스트
-└── cli.test.ts           ← CLI 인자 파싱 (positional + options) 테스트
+├── cli.test.ts           ← CLI 인자 파싱 (positional + options + boolean 플래그) 테스트
+└── obsidian-install.test.ts ← Obsidian 플러그인 설치 순수 함수 (아티팩트, 버전 검증) 테스트
 ```
 
 ## 빌드
@@ -111,9 +113,11 @@ npm run deploy -- --refresh-skills <vault-path>  # 스킬/규칙 강제 재설�
 ### Standalone CLI (Obsidian 없이 독립 실행)
 
 ```bash
-npx oh-my-til init ~/my-til                     # 디렉토리 생성 + 스킬/규칙/CLAUDE.md 설치
+npx oh-my-til init ~/my-til                     # 디렉토리 생성 + 스킬/규칙/CLAUDE.md 설치 (.obsidian 감지 시 플러그인 자동 설치)
+npx oh-my-til init ~/my-til --no-obsidian       # Obsidian 플러그인 설치 건너뛰기
 npx oh-my-til serve ~/my-til                    # MCP 서버 독립 실행
 npx oh-my-til serve ~/my-til --port 3000 --til-path my-til
+ELECTRON_VERSION=37.10.2 npx oh-my-til init ~/vault  # Electron 버전 수동 지정
 ```
 
 ## 규칙

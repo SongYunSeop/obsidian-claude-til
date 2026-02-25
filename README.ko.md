@@ -37,10 +37,11 @@ git clone 없이 `npx`만으로 바로 시작할 수 있습니다.
 
 **요구 사항:** [Node.js](https://nodejs.org) 18 이상 / [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) (`claude`)
 
-1. **초기화** — 디렉토리를 생성(필요 시)하고 스킬, 규칙, CLAUDE.md 설정을 설치합니다:
+1. **초기화** — 디렉토리를 생성(필요 시)하고 스킬, 규칙, CLAUDE.md 설정을 설치합니다. Obsidian vault가 감지되면(`.obsidian/` 존재) 플러그인도 자동 설치됩니다:
 
    ```bash
    npx oh-my-til init ~/my-til
+   npx oh-my-til init ~/my-til --no-obsidian  # Obsidian 플러그인 설치 건너뛰기
    ```
 
 2. **Claude Code 시작** — `/til`, `/research`, `/backlog` 스킬을 바로 사용할 수 있습니다:
@@ -63,7 +64,23 @@ git clone 없이 `npx`만으로 바로 시작할 수 있습니다.
 
 **요구 사항:** [Obsidian](https://obsidian.md) v1.5.0 이상 / [Node.js](https://nodejs.org) 18 이상 / [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) (`claude`)
 
-#### Claude Code로 설치 (권장)
+#### npx로 설치 (권장)
+
+Obsidian vault 안에서 `init`을 실행하면 플러그인이 자동 설치됩니다:
+
+```bash
+npx oh-my-til init /path/to/your/vault
+```
+
+macOS에서는 Electron 버전이 자동 감지됩니다. 수동 지정:
+
+```bash
+ELECTRON_VERSION=37.10.2 npx oh-my-til init /path/to/your/vault
+```
+
+> Electron 버전 확인: Obsidian 개발자 도구(Ctrl+Shift+I)에서 `process.versions.electron` 실행
+
+#### Claude Code로 설치
 
 ```bash
 git clone https://github.com/SongYunSeop/oh-my-til.git
@@ -72,9 +89,7 @@ claude
 # 실행 후: /install-plugin /path/to/your/vault
 ```
 
-Claude Code가 Electron 버전을 자동 감지하고 네이티브 모듈 재빌드를 처리합니다.
-
-#### 수동 설치
+#### 수동 설치 (소스에서)
 
 ```bash
 git clone https://github.com/SongYunSeop/oh-my-til.git
@@ -82,8 +97,6 @@ cd oh-my-til
 npm install
 ELECTRON_VERSION=<Electron-버전> npm run deploy -- /path/to/your/vault
 ```
-
-> Electron 버전 확인: Obsidian 개발자 도구(Ctrl+Shift+I)에서 `process.versions.electron` 실행
 
 설치 후 Obsidian을 재시작하고, 설정 > Community plugins에서 **Oh My TIL**을 활성화합니다.
 
@@ -169,7 +182,8 @@ src/
 │   ├── server.ts            # HTTP 서버 + Streamable HTTP 트랜스포트
 │   └── tools.ts             # MCP 도구 정의 (FileStorage + MetadataProvider 사용)
 ├── cli/                     # 독립 CLI 진입점
-│   └── index.ts             # npx oh-my-til init / serve
+│   ├── index.ts             # npx oh-my-til init / serve
+│   └── obsidian-install.ts  # Obsidian 플러그인 자동 설치 (Electron 감지, node-pty 재빌드)
 └── obsidian/                # Obsidian 플랫폼 어댑터
     ├── main.ts              # 플러그인 진입점
     ├── settings.ts          # 설정 탭 + 인터페이스

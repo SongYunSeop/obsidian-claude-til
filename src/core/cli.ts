@@ -2,6 +2,7 @@ import * as path from "path";
 import * as os from "os";
 
 const VALUE_OPTIONS = new Set(["port", "til-path"]);
+const BOOLEAN_OPTIONS = new Set(["no-obsidian"]);
 
 /**
  * CLI argument parsing — pure function, no side effects.
@@ -13,6 +14,8 @@ export function parseArgs(args: string[]): { positional: string[]; options: Reco
 		const arg = args[i]!;
 		if (arg.startsWith("--") && VALUE_OPTIONS.has(arg.slice(2)) && i + 1 < args.length) {
 			options[arg.slice(2)] = args[++i]!;
+		} else if (arg.startsWith("--") && BOOLEAN_OPTIONS.has(arg.slice(2))) {
+			options[arg.slice(2)] = "true";
 		} else if (!arg.startsWith("--")) {
 			positional.push(arg);
 		}

@@ -45,6 +45,18 @@ describe("parseArgs", () => {
 		expect(result.positional).toEqual(["~/my-til"]);
 		expect(result.options).toEqual({ port: "3000" });
 	});
+
+	it("--no-obsidian boolean 플래그를 수집한다", () => {
+		const result = parseArgs(["~/my-til", "--no-obsidian"]);
+		expect(result.positional).toEqual(["~/my-til"]);
+		expect(result.options).toEqual({ "no-obsidian": "true" });
+	});
+
+	it("알 수 없는 boolean 플래그는 무시한다", () => {
+		const result = parseArgs(["--verbose", "--no-obsidian", "~/my-til"]);
+		expect(result.positional).toEqual(["~/my-til"]);
+		expect(result.options).toEqual({ "no-obsidian": "true" });
+	});
 });
 
 describe("expandTilde", () => {
