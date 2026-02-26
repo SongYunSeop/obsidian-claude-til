@@ -45,6 +45,7 @@ src/
 │   ├── env.ts                ← ensurePath(): macOS Homebrew PATH 보정
 │   ├── skills.ts             ← 버전 비교/플레이스홀더 치환 순수 함수
 │   ├── cli.ts                ← CLI 인자 파싱 순수 함수 (parseArgs)
+│   ├── config.ts             ← 설정 파일 파싱/로딩 순수 함수
 │   ├── markdown.ts           ← 마크다운 → HTML 변환 순수 함수 (외부 의존성 없음)
 │   ├── profile.ts            ← 정적 사이트 페이지 생성 (프로필, TIL 페이지, 카테고리 인덱스)
 │   └── index.ts              ← barrel export
@@ -75,6 +76,7 @@ src/
 
 vault-assets/             ← vault에 배포되는 파일 (esbuild text import → 런타임 설치)
 ├── agents/               ← .claude/agents/에 설치되는 커스텀 에이전트 정의
+├── hooks/                ← .claude/hooks/에 설치되는 Claude Code hook 스크립트
 ├── skills/               ← .claude/skills/에 설치되는 스킬 소스
 └── claude-md-section.md  ← .claude/CLAUDE.md에 삽입되는 MCP 안내
 
