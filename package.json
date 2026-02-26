@@ -1,6 +1,6 @@
 {
 	"name": "oh-my-til",
-	"version": "0.11.0",
+	"version": "0.11.1",
 	"description": "Oh My TIL — Claude Code plugin for TIL learning workflow, with Obsidian integration",
 	"main": "main.js",
 	"bin": {
