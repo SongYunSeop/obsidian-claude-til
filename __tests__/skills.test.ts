@@ -1,4 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
+import { readFileSync, readdirSync } from "fs";
+import { join } from "path";
 import { Vault } from "./mock-obsidian";
 
 // --- 순수 함수 테스트 (skills.ts에서 로직만 복사) ---
@@ -426,5 +428,25 @@ describe("cleanupOldSkills", () => {
 	it("이전 경로에 파일이 없으면 아무것도 하지 않는다", async () => {
 		const removed = await cleanupOldSkills(vault);
 		expect(removed).toEqual([]);
+	});
+});
+
+describe("vault-assets/skills SKILL.md frontmatter 유효성", () => {
+	const skillsDir = join(__dirname, "..", "vault-assets", "skills");
+	const skillDirs = readdirSync(skillsDir, { withFileTypes: true })
+		.filter((d) => d.isDirectory())
+		.map((d) => d.name);
+
+	it.each(skillDirs)("%s/SKILL.md에 plugin-version 플레이스홀더가 있다", (dir) => {
+		const content = readFileSync(join(skillsDir, dir, "SKILL.md"), "utf8");
+		const version = extractPluginVersion(content);
+		expect(version).toBe("__PLUGIN_VERSION__");
+	});
+
+	it.each(skillDirs)("%s/SKILL.md에 name 필드가 있다", (dir) => {
+		const content = readFileSync(join(skillsDir, dir, "SKILL.md"), "utf8");
+		const match = content.match(/^---\n([\s\S]*?)\n---/);
+		expect(match).not.toBeNull();
+		expect(match![1]).toMatch(/^name:\s*.+/m);
 	});
 });
