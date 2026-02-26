@@ -10,6 +10,7 @@ export interface TILSettings {
 	tilPath: string;
 	autoOpenNewTIL: boolean;
 	openDashboardOnStartup: boolean;
+	claudeArgs: string;
 	mcpEnabled: boolean;
 	mcpPort: number;
 }
@@ -26,6 +27,7 @@ export const DEFAULT_SETTINGS: TILSettings = {
 	tilPath: "til",
 	autoOpenNewTIL: true,
 	openDashboardOnStartup: false,
+	claudeArgs: "",
 	mcpEnabled: true,
 	mcpPort: 22360,
 };
@@ -75,6 +77,19 @@ export class TILSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.resumeLastSession)
 					.onChange(async (value) => {
 						this.plugin.settings.resumeLastSession = value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Claude 추가 인자")
+			.setDesc("Claude Code 실행 시 추가할 CLI 인자 (예: --model sonnet --verbose)")
+			.addText((text) =>
+				text
+					.setPlaceholder("--model sonnet")
+					.setValue(this.plugin.settings.claudeArgs)
+					.onChange(async (value) => {
+						this.plugin.settings.claudeArgs = value;
 						await this.plugin.saveSettings();
 					})
 			);

@@ -228,8 +228,12 @@ export class TerminalView extends ItemView {
 
 			// claude 자동 실행
 			if (this.settings.autoLaunchClaude) {
-				const cmd = this.settings.resumeLastSession
-					? "clear && claude --continue\r"
+				const args = [
+					this.settings.resumeLastSession ? "--continue" : "",
+					this.settings.claudeArgs?.trim() ?? "",
+				].filter(Boolean).join(" ");
+				const cmd = args
+					? `clear && claude ${args}\r`
 					: "clear && claude\r";
 				setTimeout(() => {
 					this.ptyProcess?.write(cmd);
