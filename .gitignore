@@ -27,5 +27,8 @@ npm-debug.log*
 .env
 .env.local
 
+# Local files
+*.local.md
+
 # OMC
 .omc/
