@@ -174,6 +174,9 @@ async function main(): Promise<void> {
 			process.exit(0);
 		}
 
+		// 존재하는 TIL 파일 경로 Set (missing-link 판별용)
+		const existingTilPaths = new Set(tilFiles.map((f) => f.path));
+
 		const config: ProfileConfig = {
 			title: siteTitle,
 			description: "", // generated 카운트 확정 후 설정
@@ -216,7 +219,7 @@ async function main(): Promise<void> {
 			const fmDate = meta?.frontmatter?.["date"];
 			const createdDate = typeof fmDate === "string" ? fmDate.slice(0, 10) : new Date(file.ctime).toISOString().slice(0, 10);
 
-			const contentHtml = rewriteTilLinks(renderMarkdown(content));
+			const contentHtml = rewriteTilLinks(renderMarkdown(content), existingTilPaths);
 			const summary = extractSummary(content);
 
 			tilPageEntries.push({ title, category, slug, createdDate, contentHtml, summary });

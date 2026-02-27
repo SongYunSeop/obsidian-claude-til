@@ -233,4 +233,33 @@ describe("rewriteTilLinks", () => {
 		const html = '<a href="notes/readme.md">Notes</a>';
 		expect(rewriteTilLinks(html)).toBe(html);
 	});
+
+	describe("existingFiles로 missing-link 처리", () => {
+		const existing = new Set(["til/anki/spaced-repetition.md", "til/react/hooks.md"]);
+
+		it("존재하는 파일은 정상 링크로 변환한다", () => {
+			const html = '<a href="til/anki/spaced-repetition.md">Spaced Repetition</a>';
+			expect(rewriteTilLinks(html, existing)).toBe('<a href="../anki/spaced-repetition.html">Spaced Repetition</a>');
+		});
+
+		it("존재하지 않는 파일은 missing-link 클래스를 부여한다", () => {
+			const html = '<a href="til/anki/unknown-topic.md">Unknown</a>';
+			const result = rewriteTilLinks(html, existing);
+			expect(result).toBe('<a class="missing-link" title="아직 작성되지 않은 문서">Unknown</a>');
+			expect(result).not.toContain("href");
+		});
+
+		it("혼합 링크에서 존재하는 것만 활성 링크로 변환한다", () => {
+			const html = '<a href="til/react/hooks.md">Hooks</a> and <a href="til/vue/reactivity.md">Reactivity</a>';
+			const result = rewriteTilLinks(html, existing);
+			expect(result).toContain('href="../react/hooks.html"');
+			expect(result).toContain('class="missing-link"');
+			expect(result).toContain("Reactivity");
+		});
+
+		it("existingFiles 없이 호출하면 모든 링크를 변환한다 (하위 호환)", () => {
+			const html = '<a href="til/any/page.md">Page</a>';
+			expect(rewriteTilLinks(html)).toBe('<a href="../any/page.html">Page</a>');
+		});
+	});
 });

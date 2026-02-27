@@ -175,6 +175,7 @@ h1, h2, h3, h4, h5, h6 { font-weight: 700; line-height: 1.3; letter-spacing: -0.
 }
 .til-content li { margin-bottom: 4px; }
 .til-content a { color: var(--accent-light); }
+.til-content a.missing-link { color: var(--text-secondary); text-decoration: underline dotted; cursor: default; }
 .til-content hr {
   border: none;
   border-top: 1px solid var(--border);

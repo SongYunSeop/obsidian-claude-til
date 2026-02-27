@@ -265,10 +265,20 @@ export function renderMarkdown(md: string): string {
  * 정적 사이트용 내부 링크 변환.
  * HTML 내 `til/{category}/{slug}.md` 링크를 `../{category}/{slug}.html`로 변환한다.
  * TIL 페이지가 `{category}/{slug}.html`에 위치하므로 `../`로 루트까지 올라간 뒤 재진입.
+ *
+ * `existingFiles`가 주어지면 해당 Set에 없는 문서의 링크는 비활성 처리한다.
+ * Set 값은 `til/{category}/{slug}.md` 형식이어야 한다.
  */
-export function rewriteTilLinks(html: string): string {
+export function rewriteTilLinks(html: string, existingFiles?: Set<string>): string {
 	return html.replace(
-		/href="til\/([^"]+)\.md"/g,
-		(_match, pathWithoutExt: string) => `href="../${pathWithoutExt}.html"`,
+		/<a href="til\/([^"]+\.md)">([\s\S]*?)<\/a>/g,
+		(_match, tilPath: string, text: string) => {
+			const fullPath = `til/${tilPath}`;
+			if (existingFiles && !existingFiles.has(fullPath)) {
+				return `<a class="missing-link" title="아직 작성되지 않은 문서">${text}</a>`;
+			}
+			const pathWithoutExt = tilPath.replace(/\.md$/, "");
+			return `<a href="../${pathWithoutExt}.html">${text}</a>`;
+		},
 	);
 }
