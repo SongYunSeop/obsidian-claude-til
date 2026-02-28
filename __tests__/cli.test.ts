@@ -57,6 +57,24 @@ describe("parseArgs", () => {
 		expect(result.positional).toEqual(["~/my-til"]);
 		expect(result.options).toEqual({ "no-obsidian": "true" });
 	});
+
+	it("--mode 옵션을 파싱한다", () => {
+		const result = parseArgs(["~/my-til", "--mode", "slim"]);
+		expect(result.positional).toEqual(["~/my-til"]);
+		expect(result.options).toEqual({ mode: "slim" });
+	});
+
+	it("--mode standard를 파싱한다", () => {
+		const result = parseArgs(["--mode", "standard"]);
+		expect(result.positional).toEqual([]);
+		expect(result.options).toEqual({ mode: "standard" });
+	});
+
+	it("--mode와 --no-obsidian을 함께 파싱한다", () => {
+		const result = parseArgs(["~/my-til", "--mode", "slim", "--no-obsidian"]);
+		expect(result.positional).toEqual(["~/my-til"]);
+		expect(result.options).toEqual({ mode: "slim", "no-obsidian": "true" });
+	});
 });
 
 describe("expandTilde", () => {

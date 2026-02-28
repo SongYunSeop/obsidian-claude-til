@@ -152,7 +152,7 @@ if [ "$REFRESH_SKILLS" = true ]; then
     done
   fi
 
-  # vault-assets/skills/ 에서 최신 스킬 설치
+  # 스킬 설치
   for SKILL_SRC in "$ASSETS_DIR"/skills/*/SKILL.md; do
     SKILL_NAME=$(basename "$(dirname "$SKILL_SRC")")
     DEST_DIR="$SKILLS_DIR/$SKILL_NAME"

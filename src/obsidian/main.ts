@@ -7,6 +7,7 @@ import { TILWatcher } from "./watcher";
 import { TILMcpServer } from "../mcp/server";
 import { installPlugin } from "../plugin-install";
 import { parseBacklogItems, extractTopicFromPath } from "../core/backlog";
+import { loadOmtConfig } from "../core/config";
 import { ObsidianStorage, ObsidianMetadata } from "../adapters/obsidian-adapter";
 
 export default class TILPlugin extends Plugin {
@@ -47,7 +48,9 @@ export default class TILPlugin extends Plugin {
 
 		// 플러그인 에셋 자동 설치/업데이트 (skills, agents, CLAUDE.md)
 		const storage = new ObsidianStorage(this.app);
-		installPlugin(storage, this.manifest.version);
+		const vaultBasePath = (this.app.vault.adapter as unknown as { basePath?: string }).basePath ?? "";
+		const omtConfig = loadOmtConfig(vaultBasePath);
+		installPlugin(storage, this.manifest.version, omtConfig.mode ?? "standard");
 
 		// 시작 시 대시보드 자동 열기 (워크스페이스 복원 이후 포커스 확보)
 		if (this.settings.openDashboardOnStartup) {

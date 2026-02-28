@@ -8,14 +8,10 @@ import saveSkill from "../vault-assets/skills/save/SKILL.md";
 import migrateLinksSkill from "../vault-assets/skills/migrate-links/SKILL.md";
 import dashboardSkill from "../vault-assets/skills/dashboard/SKILL.md";
 import setupPagesSkill from "../vault-assets/skills/setup-pages/SKILL.md";
+import omtSetupSkill from "../vault-assets/skills/omt-setup/SKILL.md";
 import claudeMdSection from "../vault-assets/claude-md-section.md";
 
-import tilResearcherAgent from "../vault-assets/agents/til-researcher.md";
 import tilFetcherAgent from "../vault-assets/agents/til-fetcher.md";
-import tilQualityCheckerAgent from "../vault-assets/agents/til-quality-checker.md";
-import tilFileUpdaterAgent from "../vault-assets/agents/til-file-updater.md";
-import tilResearchReviewerAgent from "../vault-assets/agents/til-research-reviewer.md";
-import tilCrossLinkerAgent from "../vault-assets/agents/til-cross-linker.md";
 
 import notifyCompleteHook from "../vault-assets/hooks/notify-complete.sh";
 
@@ -43,17 +39,13 @@ const SKILLS: Record<string, string> = {
 	"migrate-links/SKILL.md": migrateLinksSkill,
 	"dashboard/SKILL.md": dashboardSkill,
 	"setup-pages/SKILL.md": setupPagesSkill,
+	"omt-setup/SKILL.md": omtSetupSkill,
 };
 
 const RULES: Record<string, string> = {};
 
 const AGENTS: Record<string, string> = {
-	"til-researcher.md": tilResearcherAgent,
 	"til-fetcher.md": tilFetcherAgent,
-	"til-quality-checker.md": tilQualityCheckerAgent,
-	"til-file-updater.md": tilFileUpdaterAgent,
-	"til-research-reviewer.md": tilResearchReviewerAgent,
-	"til-cross-linker.md": tilCrossLinkerAgent,
 };
 
 const HOOKS: Record<string, string> = {
@@ -106,7 +98,7 @@ async function installFiles(
 
 				// plugin-version이 없으면 사용자 커스터마이즈 → 건너뜀
 				if (!installedVersion) return;
-				// 현재 버전이 더 높지 않으면 건너뜀
+				// 현재 버전이 더 높지 않을 때 건너뜀
 				if (!isNewerVersion(pluginVersion, installedVersion)) return;
 			}
 

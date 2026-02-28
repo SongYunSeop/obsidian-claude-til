@@ -12,8 +12,9 @@ plugin-version: "__PLUGIN_VERSION__"
 
 ## 역할
 
-- `/til` 스킬의 Phase 1에서 sourceUrls 병렬 패치 subagent로 사용된다
-- 주어진 URL을 WebFetch로 읽고 학습에 필요한 핵심 내용을 요약한다
+- `/til` 스킬의 Phase 1에서 sourceUrls 패치 subagent로 사용된다
+- 주어진 URL(1개 또는 여러 개)을 WebFetch로 순차 읽고 학습에 필요한 핵심 내용을 요약한다
+- 여러 URL이 전달되면 각각 패치 후 통합 요약을 반환한다
 
 ## 출력 형식
 

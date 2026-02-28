@@ -23,8 +23,6 @@ import * as fs from "fs";
 declare const __CLI_VERSION__: string;
 const VERSION = typeof __CLI_VERSION__ !== "undefined" ? __CLI_VERSION__ : "0.0.0";
 
-import { loadSiteConfig } from "../core/config";
-
 function printUsage(): void {
 	console.log(`oh-my-til v${VERSION}
 
@@ -91,8 +89,9 @@ async function main(): Promise<void> {
 		const storage = new FsStorage(basePath);
 		console.log(`Initializing oh-my-til in ${basePath}...`);
 		await installPlugin(storage, VERSION);
+
 		console.log("\nInstalled:");
-		console.log("  - .claude/skills/ (6 skills)");
+		console.log("  - .claude/skills/ (8 skills)");
 		console.log("  - .claude/rules/ (1 rule)");
 		console.log("  - .claude/CLAUDE.md (MCP section)");
 		console.log(`\nTo start MCP server: oh-my-til serve ${basePath}`);
@@ -148,8 +147,9 @@ async function main(): Promise<void> {
 		console.log(`TIL path: ${tilPath}`);
 		console.log("Press Ctrl+C to stop");
 	} else if (command === "deploy") {
-		const siteConfig = loadSiteConfig(basePath);
-		const dc = siteConfig.deploy ?? {};
+		const { loadOmtConfig } = await import("../core/config");
+		const omtConfig = loadOmtConfig(basePath);
+		const dc = omtConfig.deploy ?? {};
 		// CLI 옵션이 설정 파일보다 우선
 		const deployTilPath = parsed.options["til-path"] ?? dc["til-path"] ?? tilPath;
 		const outDir = parsed.options["out"] ?? dc.out ?? "_site";

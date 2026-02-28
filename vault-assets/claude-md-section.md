@@ -1,48 +1,23 @@
 ## 학습 워크플로우
 
-스킬을 사용한 학습 흐름:
+1. `/research <주제>` — 리서치 → 백로그 생성
+2. `/backlog [카테고리]` — 백로그 진행 확인
+3. `/til <주제>` — 리서치 → 대화형 학습 → 저장
+4. `/save` — TIL 저장 (Daily/MOC/백로그 자동 업데이트)
 
-1. `/research <주제>` — 주제를 리서치하고 학습 백로그(로드맵)를 생성
-2. `/backlog [카테고리]` — 백로그 진행 상황 확인
-3. `/til <주제>` — 개별 주제를 깊이 학습 (리서치 → 대화형 학습 → 저장)
-4. `/save` — 학습 결과를 TIL 파일로 저장 (Daily/MOC/백로그 자동 업데이트)
+## MCP 도구
 
-처음이라면 `/research`로 학습 로드맵을 만들고, `/backlog`로 확인한 뒤, `/til`로 하나씩 학습하세요.
+- `vault_read_note` — 노트 읽기
+- `vault_list_files` — 파일 목록
+- `vault_search` — 텍스트 검색
+- `vault_get_active_file` — 현재 파일
+- `til_list` — TIL 목록 + 카테고리 분류
+- `til_get_context` — 주제 관련 컨텍스트
+- `til_recent_context` — 최근 학습 흐름
+- `til_backlog_status` — 백로그 진행률
+- `til_dashboard` — 학습 통계
 
-## MCP 도구 (oh-my-til 플러그인)
-
-Obsidian 플러그인이 MCP 서버를 통해 vault 접근 도구를 제공합니다.
-
-| 도구 | 설명 | 활용 |
-|------|------|------|
-| `vault_read_note` | 노트 내용 읽기 | 특정 TIL 내용 확인 |
-| `vault_list_files` | 폴더 내 파일 목록 | TIL 폴더 구조 파악 |
-| `vault_search` | vault 전체 텍스트 검색 | 관련 노트 찾기, 링크 후보 탐색 |
-| `vault_get_active_file` | 현재 열린 파일 경로 + 내용 | 사용자가 보고 있는 파일 확인 |
-| `til_list` | TIL 파일 목록 + 카테고리별 분류 (JSON: `{ totalCount, categories: [{ name, count, files }] }`) | 중복 확인, 전체 현황 파악 |
-| `til_get_context` | 주제 관련 기존 학습 컨텍스트 (파일, 링크 관계, 미작성 주제) | `/til`, `/save`에서 관련 TIL·백로그 파악 |
-| `til_recent_context` | 최근 학습 흐름 (시간순) | 최근 학습 맥락 파악 |
-| `til_backlog_status` | 백로그 진행률 요약 (JSON: `{ totalDone, totalItems, categories: [{ name, path, done, total }] }`) | 학습 진행 상황 확인 |
-| `til_dashboard` | 학습 대시보드 통계 (JSON: `{ summary, heatmap, categories, backlog }`) | `/dashboard` 스킬에서 종합 현황 표시 |
-
-### 활용 팁
-
-- `/til` 실행 전 `til_get_context`로 관련 기존 TIL과 백로그를 한 번에 파악
-- `til_list`로 기존 TIL 확인하여 중복 방지
-- `vault_search`로 관련 노트를 찾아 마크다운 링크 연결
-- `vault_get_active_file`로 사용자가 보고 있는 파일 컨텍스트 파악
-
-### 터미널 링크 출력 규칙
-
-Obsidian 터미널은 `[text](path)` 표준 마크다운 링크를 감지하여 클릭 가능한 링크로 표시합니다. 대화 중 vault에 있는 노트를 언급할 때는 반드시 `[표시명](경로.md)` 형태로 출력하세요.
-
-- 기존 TIL 언급: `[클로저](til/javascript/closure.md)에 대한 TIL이 이미 있습니다`
-- 백로그 언급: `[React 백로그](til/react/backlog.md)를 확인해보세요`
-- 관련 노트 추천: `이 내용은 [제네릭](til/typescript/generics.md)과 관련 있습니다`
-
-이렇게 하면 사용자가 터미널에서 바로 클릭하여 해당 노트로 이동할 수 있습니다.
-
-### MCP 연결
+### 연결
 
 ```bash
 claude mcp add --transport http oh-my-til http://localhost:22360/mcp

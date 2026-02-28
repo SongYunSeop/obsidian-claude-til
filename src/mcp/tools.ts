@@ -311,6 +311,7 @@ export function registerTools(server: McpServer, storage: FileStorage, metadata:
 		{
 			title: "Dashboard Stats",
 			description: "학습 대시보드 통계를 반환합니다 (요약, 히트맵, 카테고리, 백로그)",
+			inputSchema: z.object({}),
 		},
 		async () => {
 			// 1. vault 파일에서 EnhancedStatsFileEntry 구성 (frontmatter date 포함)

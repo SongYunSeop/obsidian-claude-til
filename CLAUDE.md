@@ -4,7 +4,7 @@
 
 Claude Code 기반 TIL 학습 워크플로우 플러그인. Obsidian 없이 독립 CLI(`npx oh-my-til`)로 실행하거나, Obsidian 플러그인으로 사이드바에 Claude Code 터미널을 임베딩하여 사용할 수 있다. xterm.js + node-pty 기반.
 
-핵심 흐름: 커맨드 팔레트 → 터미널 열기 → Claude Code에서 `/til`, `/backlog`, `/research`, `/save`, `/dashboard`, `/migrate-links` 스킬 직접 실행 → 새 파일 감지 시 에디터에서 열기
+핵심 흐름: 커맨드 팔레트 → 터미널 열기 → Claude Code에서 `/til`, `/backlog`, `/research`, `/save`, `/dashboard`, `/migrate-links`, `/omt-setup` 스킬 직접 실행 → 새 파일 감지 시 에디터에서 열기
 
 Obsidian의 역할은 "터미널 임베딩 + 파일 감시 + skill 배포 + MCP 서버 + 대시보드"로 한정하고, 워크플로우 주도권은 Claude Code에 있다. 독립 실행 시에는 `npx oh-my-til init`으로 스킬/규칙을 설치하고 `npx oh-my-til serve`로 MCP 서버를 띄운다.
 
@@ -75,7 +75,7 @@ src/
         └── DashboardView.ts  ← 학습 대시보드 (Summary Cards + Heatmap + Categories + Recent + Backlog)
 
 vault-assets/             ← vault에 배포되는 파일 (esbuild text import → 런타임 설치)
-├── agents/               ← .claude/agents/에 설치되는 커스텀 에이전트 정의
+├── agents/               ← .claude/agents/에 설치되는 커스텀 에이전트 (til-fetcher만)
 ├── hooks/                ← .claude/hooks/에 설치되는 Claude Code hook 스크립트
 ├── skills/               ← .claude/skills/에 설치되는 스킬 소스
 └── claude-md-section.md  ← .claude/CLAUDE.md에 삽입되는 MCP 안내
@@ -97,6 +97,7 @@ __tests__/
 ├── migrate-links.test.ts ← Wikilink → 마크다운 링크 변환 테스트
 ├── adapters.test.ts      ← fs-adapter / obsidian-adapter 포트 구현 테스트
 ├── cli.test.ts           ← CLI 인자 파싱 (positional + options + boolean 플래그) 테스트
+├── config.test.ts        ← 설정 파일 파싱/로딩 테스트
 ├── obsidian-install.test.ts ← Obsidian 플러그인 설치 순수 함수 (아티팩트, 버전 검증) 테스트
 ├── markdown.test.ts      ← 마크다운 → HTML 변환 순수 함수 테스트
 └── profile.test.ts       ← 정적 사이트 페이지 생성 (프로필, TIL, 카테고리 인덱스) 테스트
