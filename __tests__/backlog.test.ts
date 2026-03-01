@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseBacklogItems, extractTopicFromPath, computeBacklogProgress, formatProgressBar, formatBacklogTable, parseBacklogSections, parseFrontmatterSources, type BacklogCategoryStatus } from "../src/backlog";
+import { parseBacklogItems, extractTopicFromPath, computeBacklogProgress, formatProgressBar, formatBacklogTable, parseBacklogSections, parseFrontmatterSources, checkBacklogItem, type BacklogCategoryStatus } from "../src/backlog";
 
 describe("parseBacklogItems", () => {
 	it("미완료 항목 [name](path.md) 을 파싱한다", () => {
@@ -383,5 +383,77 @@ updated: 2026-02-21
 ---`;
 
 		expect(parseFrontmatterSources(content)).toEqual({});
+	});
+});
+
+describe("checkBacklogItem", () => {
+	it("slug에 매칭되는 미완료 항목을 [x]로 체크한다", () => {
+		const content = `## 핵심 개념
+- [ ] [제네릭](til/typescript/generics.md) - 타입 매개변수
+- [ ] [매핑된 타입](til/typescript/mapped-types.md)`;
+
+		const result = checkBacklogItem(content, "generics");
+		expect(result.found).toBe(true);
+		expect(result.alreadyDone).toBe(false);
+		expect(result.content).toContain("- [x] [제네릭](til/typescript/generics.md)");
+		expect(result.content).toContain("- [ ] [매핑된 타입](til/typescript/mapped-types.md)");
+	});
+
+	it("이미 완료된 항목이면 alreadyDone을 반환한다", () => {
+		const content = `## 핵심 개념
+- [x] [제네릭](til/typescript/generics.md)
+- [ ] [타입](til/typescript/types.md)`;
+
+		const result = checkBacklogItem(content, "generics");
+		expect(result.found).toBe(true);
+		expect(result.alreadyDone).toBe(true);
+	});
+
+	it("[X] 대문자 완료도 alreadyDone으로 인식한다", () => {
+		const content = `## 테스트
+- [X] [항목](til/test/item.md)`;
+
+		const result = checkBacklogItem(content, "item");
+		expect(result.found).toBe(true);
+		expect(result.alreadyDone).toBe(true);
+	});
+
+	it("slug가 매칭되지 않으면 found=false를 반환한다", () => {
+		const content = `## 테스트
+- [ ] [제네릭](til/typescript/generics.md)`;
+
+		const result = checkBacklogItem(content, "nonexistent");
+		expect(result.found).toBe(false);
+		expect(result.alreadyDone).toBe(false);
+		expect(result.content).toBe(content);
+	});
+
+	it("확장자 없는 경로에서도 slug를 매칭한다", () => {
+		const content = `## 테스트
+- [ ] [항목](til/test/my-item)`;
+
+		const result = checkBacklogItem(content, "my-item");
+		expect(result.found).toBe(true);
+		expect(result.alreadyDone).toBe(false);
+		expect(result.content).toContain("- [x] [항목](til/test/my-item)");
+	});
+
+	it("첫 번째 매칭 항목만 체크한다", () => {
+		const content = `## 섹션1
+- [ ] [A](til/a/slug.md)
+## 섹션2
+- [ ] [B](til/b/slug.md)`;
+
+		const result = checkBacklogItem(content, "slug");
+		expect(result.found).toBe(true);
+		// 첫 번째만 체크됨
+		const lines = result.content.split("\n");
+		expect(lines.find((l) => l.includes("til/a/slug.md"))).toContain("[x]");
+		expect(lines.find((l) => l.includes("til/b/slug.md"))).toContain("[ ]");
+	});
+
+	it("빈 내용이면 found=false를 반환한다", () => {
+		const result = checkBacklogItem("", "slug");
+		expect(result.found).toBe(false);
 	});
 });

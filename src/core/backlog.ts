@@ -195,6 +195,46 @@ export function parseBacklogSections(content: string): BacklogSection[] {
 	return sections.filter((s) => s.items.length > 0);
 }
 
+export interface CheckBacklogResult {
+	/** 변환된 백로그 내용 (변경 없으면 원본 그대로) */
+	content: string;
+	/** 체크 성공 여부 */
+	found: boolean;
+	/** 이미 완료된 항목이었는지 */
+	alreadyDone: boolean;
+}
+
+/**
+ * 백로그 내용에서 slug에 매칭되는 항목을 `[x]`로 체크한다.
+ * 링크 경로의 마지막 세그먼트(확장자 제외)가 slug와 일치하면 매칭.
+ * 순수 함수 — 부수효과 없음.
+ */
+export function checkBacklogItem(content: string, slug: string): CheckBacklogResult {
+	const lines = content.split("\n");
+	let found = false;
+	let alreadyDone = false;
+
+	for (let i = 0; i < lines.length; i++) {
+		const match = lines[i]!.match(/^(-\s+\[)([ xX])(\]\s+\[[^\[\]]*\]\()([^()]+)(\).*)/);
+		if (!match) continue;
+
+		const rawPath = match[4]!.trim();
+		const pathSlug = rawPath.replace(/\.md$/, "").split("/").pop() ?? "";
+		if (pathSlug !== slug) continue;
+
+		found = true;
+		if (match[2] !== " ") {
+			alreadyDone = true;
+			break;
+		}
+
+		lines[i] = `${match[1]}x${match[3]}${match[4]}${match[5]}`;
+		break;
+	}
+
+	return { content: lines.join("\n"), found, alreadyDone };
+}
+
 export function extractTopicFromPath(
 	filePath: string,
 	tilPath: string,

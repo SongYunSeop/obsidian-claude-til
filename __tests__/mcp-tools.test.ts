@@ -383,126 +383,69 @@ sources:
 	});
 });
 
-describe("til_backlog_status (slim)", () => {
+describe("til_list (search)", () => {
 	const tilPath = "til";
+	const files = {
+		"til/typescript/generics.md": "",
+		"til/typescript/types.md": "",
+		"til/react/hooks.md": "",
+		"til/llm/function-calling.md": "",
+		"til/TIL MOC.md": "",
+	};
 
-	it("slim 모드에서 sections의 sourceUrls가 제거된다", async () => {
-		const backlogContent = `---
-tags:
-  - backlog
-sources:
-  generics:
-    - https://example.com/generics
----
+	it("search 파라미터로 경로를 필터링한다", () => {
+		const app = createApp(files);
+		const allPaths = app.vault.getFiles()
+			.filter((f: TFile) => f.path.startsWith(tilPath + "/") && f.extension === "md")
+			.map((f: TFile) => f.path);
 
-## 핵심 개념
-- [ ] [제네릭](til/typescript/generics.md) - 타입 매개변수
-- [ ] [타입](til/typescript/types.md) - 기본 타입`;
+		const lowerSearch = "function";
+		const filtered = allPaths.filter((p: string) => p.toLowerCase().includes(lowerSearch));
+		const result = groupFilesByCategory(filtered, tilPath);
 
-		const app = createApp({
-			"til/typescript/backlog.md": backlogContent,
-		});
-
-		const result = await tilBacklogStatus(app, tilPath, "typescript");
-		expect(result.categories[0]!.sections).toBeDefined();
-
-		// slim 모드 시뮬레이션: sourceUrls 제거
-		const slimSections = result.categories[0]!.sections!.map((s) => ({
-			...s,
-			items: s.items.map(({ sourceUrls: _su, ...rest }) => rest),
-		}));
-
-		for (const section of slimSections) {
-			for (const item of section.items) {
-				expect(item).not.toHaveProperty("sourceUrls");
-			}
-		}
-	});
-});
-
-describe("til_get_context (slim)", () => {
-	const tilPath = "til";
-
-	it("slim 모드에서 headings/backlinks가 빈 배열이 된다", () => {
-		const fileContext = buildFileContext(
-			"til/typescript/generics.md",
-			tilPath,
-			"path",
-			["Generics", "제약 조건"],
-			["types"],
-			["til/react/hooks.md"],
-			["#typescript"],
-		);
-
-		// slim 변환
-		const { headings: _h, backlinks: _b, ...rest } = fileContext;
-		const slimFile = { ...rest, headings: [] as string[], backlinks: [] as string[] };
-
-		expect(slimFile.headings).toEqual([]);
-		expect(slimFile.backlinks).toEqual([]);
-		expect(slimFile.category).toBe("typescript");
-		expect(slimFile.tags).toEqual(["#typescript"]);
+		const allFiles = Object.values(result).flat();
+		expect(allFiles).toHaveLength(1);
+		expect(allFiles).toContain("til/llm/function-calling.md");
 	});
 
-	it("slim 모드에서 unresolvedMentions가 최대 5개로 제한된다", () => {
-		const mentions = Array.from({ length: 10 }, (_, i) => ({
-			name: `mention-${i}`,
-			mentionedIn: [`til/test/file-${i}.md`],
-		}));
+	it("search가 대소문자를 무시한다", () => {
+		const app = createApp(files);
+		const allPaths = app.vault.getFiles()
+			.filter((f: TFile) => f.path.startsWith(tilPath + "/") && f.extension === "md")
+			.map((f: TFile) => f.path);
 
-		const slimMentions = mentions.slice(0, 5);
-		expect(slimMentions).toHaveLength(5);
-		expect(slimMentions[0]!.name).toBe("mention-0");
-		expect(slimMentions[4]!.name).toBe("mention-4");
-	});
-});
+		const lowerSearch = "typescript";
+		const filtered = allPaths.filter((p: string) => p.toLowerCase().includes(lowerSearch));
+		const result = groupFilesByCategory(filtered, tilPath);
 
-describe("til_dashboard (slim)", () => {
-	it("slim 모드에서 heatmap cells가 30일로 제한된다", () => {
-		const now = new Date("2026-02-18");
-		const cells = Array.from({ length: 90 }, (_, i) => {
-			const d = new Date(now);
-			d.setDate(d.getDate() - i);
-			return { date: d.toISOString().slice(0, 10), count: 1 };
-		});
-
-		// slim 필터링 로직 재현
-		const thirtyDaysAgo = new Date(now);
-		thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-		const cutoff = thirtyDaysAgo.toISOString().slice(0, 10);
-		const slimCells = cells.filter((c) => c.date >= cutoff);
-
-		expect(slimCells.length).toBeLessThanOrEqual(31);
-		expect(slimCells.every((c) => c.date >= cutoff)).toBe(true);
+		expect(result["typescript"]).toHaveLength(2);
 	});
 
-	it("slim 모드에서 categories의 files가 빈 배열이 된다", () => {
-		const categories = [
-			{ name: "typescript", count: 5, files: ["a.md", "b.md", "c.md", "d.md", "e.md"] },
-			{ name: "react", count: 3, files: ["x.md", "y.md", "z.md"] },
-		];
+	it("search + category 조합 필터링", () => {
+		const app = createApp(files);
+		const allPaths = app.vault.getFiles()
+			.filter((f: TFile) => f.path.startsWith(tilPath + "/") && f.extension === "md")
+			.map((f: TFile) => f.path);
 
-		const slimCategories = categories.map((c) => ({
-			name: c.name,
-			count: c.count,
-			files: [] as string[],
-		}));
+		const lowerSearch = "gen";
+		const filtered = allPaths.filter((p: string) => p.toLowerCase().includes(lowerSearch));
+		const result = groupFilesByCategory(filtered, tilPath, "typescript");
 
-		expect(slimCategories[0]!.files).toEqual([]);
-		expect(slimCategories[0]!.count).toBe(5);
-		expect(slimCategories[1]!.files).toEqual([]);
-		expect(slimCategories[1]!.count).toBe(3);
+		expect(Object.keys(result)).toEqual(["typescript"]);
+		expect(result["typescript"]).toEqual(["til/typescript/generics.md"]);
 	});
 
-	it("slim 모드에서 weeklyTrend가 4주로 제한된다", () => {
-		const weeklyTrend = Array.from({ length: 12 }, (_, i) => ({
-			week: `2026-W${String(i + 1).padStart(2, "0")}`,
-			count: i + 1,
-		}));
+	it("매칭 결과가 없으면 빈 객체를 반환한다", () => {
+		const app = createApp(files);
+		const allPaths = app.vault.getFiles()
+			.filter((f: TFile) => f.path.startsWith(tilPath + "/") && f.extension === "md")
+			.map((f: TFile) => f.path);
 
-		const slimTrend = weeklyTrend.slice(-4);
-		expect(slimTrend).toHaveLength(4);
-		expect(slimTrend[0]!.week).toBe("2026-W09");
+		const lowerSearch = "nonexistent-xyz";
+		const filtered = allPaths.filter((p: string) => p.toLowerCase().includes(lowerSearch));
+		const result = groupFilesByCategory(filtered, tilPath);
+
+		expect(Object.keys(result)).toHaveLength(0);
 	});
 });
 

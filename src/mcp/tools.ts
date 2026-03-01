@@ -14,7 +14,7 @@ import {
 	type TilFileContext,
 	type TopicContextResult,
 } from "./context";
-import { computeBacklogProgress, parseBacklogSections } from "../backlog";
+import { computeBacklogProgress, parseBacklogSections, checkBacklogItem } from "../backlog";
 import {
 	computeEnhancedStats,
 	type EnhancedStatsFileEntry,
@@ -139,15 +139,21 @@ export function registerTools(server: McpServer, storage: FileStorage, metadata:
 		"til_list",
 		{
 			title: "List TILs",
-			description: "TIL 파일 목록과 카테고리별 분류를 반환합니다",
+			description: "TIL 파일 목록과 카테고리별 분류를 반환합니다. search로 파일명/경로 필터링 가능.",
 			inputSchema: z.object({
 				category: z.string().optional().describe("특정 카테고리만 필터링"),
+				search: z.string().optional().describe("파일 경로/이름에서 검색 (대소문자 무시)"),
 			}),
 		},
-		async ({ category }) => {
-			const filePaths = (await storage.listFiles())
+		async ({ category, search }) => {
+			let filePaths = (await storage.listFiles())
 				.filter((f) => f.path.startsWith(tilPath + "/") && f.extension === "md")
 				.map((f) => f.path);
+
+			if (search) {
+				const lowerSearch = search.toLowerCase();
+				filePaths = filePaths.filter((p) => p.toLowerCase().includes(lowerSearch));
+			}
 
 			const byCategory = groupFilesByCategory(filePaths, tilPath, category);
 			const totalCount = Object.values(byCategory).reduce((sum, paths) => sum + paths.length, 0);
@@ -494,6 +500,97 @@ export function registerTools(server: McpServer, storage: FileStorage, metadata:
 					}),
 				}],
 			};
+		},
+	);
+
+	// til_exists: TIL 파일 존재 여부 확인
+	server.registerTool(
+		"til_exists",
+		{
+			title: "Check TIL Exists",
+			description: "TIL 파일이 이미 존재하는지 확인합니다",
+			inputSchema: z.object({
+				category: z.string().describe("카테고리 (예: typescript, react)"),
+				slug: z.string().describe("파일명 slug (예: generics, hooks)"),
+			}),
+		},
+		async ({ category, slug }) => {
+			const path = `${tilPath}/${category}/${slug}.md`;
+			const exists = await storage.exists(path);
+			const data = { exists, path };
+			return { content: [{ type: "text" as const, text: JSON.stringify(data) }] };
+		},
+	);
+
+	// til_save_note: TIL 노트 저장 (frontmatter + 경로 규칙 보장)
+	server.registerTool(
+		"til_save_note",
+		{
+			title: "Save TIL Note",
+			description: "TIL 노트를 저장합니다. frontmatter 형식과 경로 규칙을 서버가 보장합니다.",
+			inputSchema: z.object({
+				category: z.string().describe("카테고리 (예: typescript, react)"),
+				slug: z.string().describe("파일명 slug (예: generics, hooks)"),
+				title: z.string().describe("노트 제목"),
+				content: z.string().describe("노트 본문 (마크다운)"),
+				tags: z.array(z.string()).optional().describe("태그 목록 (예: [\"typescript\", \"basics\"])"),
+				date: z.string().optional().describe("작성일 (YYYY-MM-DD, 생략 시 오늘)"),
+			}),
+		},
+		async ({ category, slug, title, content, tags, date }) => {
+			const path = `${tilPath}/${category}/${slug}.md`;
+			const noteDate = date || new Date().toISOString().slice(0, 10);
+
+			// frontmatter 생성
+			const fmLines = ["---", `title: "${title.replace(/"/g, '\\"')}"`, `date: ${noteDate}`];
+			if (tags && tags.length > 0) {
+				fmLines.push("tags:");
+				for (const tag of tags) {
+					fmLines.push(`  - ${tag}`);
+				}
+			}
+			fmLines.push("---", "");
+
+			const fullContent = fmLines.join("\n") + content;
+
+			// 디렉토리 생성 + 파일 저장
+			await storage.mkdir(`${tilPath}/${category}`);
+			const existed = await storage.exists(path);
+			await storage.writeFile(path, fullContent);
+
+			const data = { path, created: !existed, category, slug, title };
+			return { content: [{ type: "text" as const, text: JSON.stringify(data) }] };
+		},
+	);
+
+	// til_backlog_check: 백로그 항목 완료 처리
+	server.registerTool(
+		"til_backlog_check",
+		{
+			title: "Check Backlog Item",
+			description: "백로그 항목을 완료([x]) 처리합니다",
+			inputSchema: z.object({
+				category: z.string().describe("카테고리 (예: typescript, react)"),
+				slug: z.string().describe("체크할 항목의 slug (예: generics)"),
+			}),
+		},
+		async ({ category, slug }) => {
+			const backlogPath = `${tilPath}/${category}/backlog.md`;
+			const content = await storage.readFile(backlogPath);
+			if (content === null) {
+				return { content: [{ type: "text" as const, text: JSON.stringify({ error: `백로그 파일을 찾을 수 없습니다 — ${backlogPath}` }) }], isError: true };
+			}
+
+			const result = checkBacklogItem(content, slug);
+			if (!result.found) {
+				return { content: [{ type: "text" as const, text: JSON.stringify({ error: `"${slug}" 항목을 찾을 수 없습니다`, backlogPath }) }], isError: true };
+			}
+			if (result.alreadyDone) {
+				return { content: [{ type: "text" as const, text: JSON.stringify({ alreadyDone: true, slug, backlogPath }) }] };
+			}
+
+			await storage.writeFile(backlogPath, result.content);
+			return { content: [{ type: "text" as const, text: JSON.stringify({ checked: true, slug, backlogPath }) }] };
 		},
 	);
 }
