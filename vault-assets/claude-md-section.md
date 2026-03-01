@@ -4,6 +4,7 @@
 2. `/backlog [카테고리]` — 백로그 진행 확인
 3. `/til <주제>` — 리서치 → 대화형 학습 → 저장
 4. `/save` — TIL 저장 (Daily/MOC/백로그 자동 업데이트)
+5. `/recall [카테고리]` — SRS 기반 간격 반복 복습
 
 ## MCP 도구
 
@@ -16,6 +17,8 @@
 - `til_recent_context` — 최근 학습 흐름
 - `til_backlog_status` — 백로그 진행률
 - `til_dashboard` — 학습 통계
+- `til_review_list` — 복습 대상 카드 목록 + 통계
+- `til_review_update` — 복습 결과 기록 또는 복습 해제
 
 ### 연결
 

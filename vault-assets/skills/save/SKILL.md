@@ -72,7 +72,12 @@ aliases: ["한글 제목", "영문 제목"]
 
 저장된 TIL 전체 내용 표시 → `AskUserQuestion`으로 확인 ("확인 완료" / "수정 필요").
 
-## Step 6: git commit
+## Step 6: 복습 등록
+
+`AskUserQuestion`으로 "이 TIL을 복습 대상에 추가할까요?" 질문.
+사용자 동의 시 `til_review_update` (action: "review", grade: 4) 호출하여 SRS 메타데이터 생성.
+
+## Step 7: git commit
 
 `📝 til: {한글 제목}({영문 제목}) - {카테고리}` (push 안 함)
 
