@@ -20,6 +20,18 @@ import {
 	type EnhancedStatsFileEntry,
 	type BacklogProgressEntry,
 } from "../core/stats";
+import {
+	filterDueCards,
+	computeReviewStats,
+	parseSrsMetadata,
+	createDefaultSrsMetadata,
+	computeNextReview,
+	updateFrontmatterSrs,
+	removeFrontmatterSrs,
+	isDueForReview,
+	type SrsFileEntry,
+	type ReviewGrade,
+} from "../core/srs";
 
 /**
  * MCP 도구를 서버에 등록한다.
@@ -310,12 +322,15 @@ export function registerTools(server: McpServer, storage: FileStorage, metadata:
 		"til_dashboard",
 		{
 			title: "Dashboard Stats",
-			description: "학습 대시보드 통계를 반환합니다 (요약, 히트맵, 카테고리, 백로그)",
+			description: "학습 대시보드 통계를 반환합니다 (요약, 히트맵, 카테고리, 백로그, 복습)",
 			inputSchema: z.object({}),
 		},
 		async () => {
 			// 1. vault 파일에서 EnhancedStatsFileEntry 구성 (frontmatter date 포함)
 			const allFiles = await storage.listFiles();
+
+			// 1. vault 파일에서 EnhancedStatsFileEntry 구성 + 복습 카운트 (병렬 메타데이터 조회)
+			let reviewDueCount = 0;
 			const files: EnhancedStatsFileEntry[] = await Promise.all(
 				allFiles
 					.filter((f) => f.extension === "md")
@@ -325,6 +340,15 @@ export function registerTools(server: McpServer, storage: FileStorage, metadata:
 						const createdDate = typeof fmDate === "string" ? fmDate : undefined;
 						const fmTags = fileMeta?.frontmatter?.tags;
 						const tags = Array.isArray(fmTags) ? fmTags.filter((t: unknown) => typeof t === "string") : undefined;
+
+						// 복습 대상 카운트 (이미 가져온 frontmatter 재활용)
+						if (f.path.startsWith(tilPath + "/") && f.name !== "backlog.md") {
+							const nextReview = fileMeta?.frontmatter?.next_review;
+							if (typeof nextReview === "string" && isDueForReview(nextReview)) {
+								reviewDueCount++;
+							}
+						}
+
 						return {
 							path: f.path,
 							extension: f.extension,
@@ -360,13 +384,115 @@ export function registerTools(server: McpServer, storage: FileStorage, metadata:
 			}
 
 			// 3. computeEnhancedStats 호출
-			const stats = computeEnhancedStats(files, tilPath, backlogEntries);
+			const stats = computeEnhancedStats(files, tilPath, backlogEntries, undefined, reviewDueCount);
 
-			// 4. JSON + 텍스트 반환
+			// 5. JSON 반환
 			return {
 				content: [
 					{ type: "text" as const, text: JSON.stringify(stats) },
 				],
+			};
+		},
+	);
+
+	// til_review_list: 복습 대상 카드 목록
+	server.registerTool(
+		"til_review_list",
+		{
+			title: "Review List",
+			description: "오늘 복습할 TIL 카드 목록과 통계를 반환합니다",
+			inputSchema: z.object({
+				category: z.string().optional().describe("특정 카테고리만 필터링"),
+				limit: z.number().min(1).max(100).optional().describe("최대 카드 수 (기본 20)"),
+			}),
+		},
+		async ({ category, limit }) => {
+			const allFiles = await storage.listFiles();
+			const srsFiles: SrsFileEntry[] = [];
+
+			for (const f of allFiles) {
+				if (!f.path.startsWith(tilPath + "/")) continue;
+				if (f.extension !== "md") continue;
+				if (f.name === "backlog.md") continue;
+				if (category) {
+					const cat = extractCategory(f.path, tilPath);
+					if (cat !== category) continue;
+				}
+
+				const fileMeta = await metadata.getFileMetadata(f.path);
+				if (!fileMeta) continue;
+
+				const headings = fileMeta.headings ?? [];
+				const title = headings.length > 0 ? headings[0]! : f.name.replace(/\.md$/, "");
+
+				srsFiles.push({
+					path: f.path,
+					extension: f.extension,
+					title,
+					frontmatter: fileMeta.frontmatter ?? {},
+				});
+			}
+
+			const effectiveLimit = limit ?? 20;
+			const cards = filterDueCards(srsFiles, tilPath, undefined, effectiveLimit);
+			const stats = computeReviewStats(srsFiles, tilPath);
+			const remaining = Math.max(0, stats.dueToday - cards.length);
+
+			const data = { cards, stats, remaining };
+			return { content: [{ type: "text" as const, text: JSON.stringify(data) }] };
+		},
+	);
+
+	// til_review_update: 복습 결과 기록 또는 복습 해제
+	server.registerTool(
+		"til_review_update",
+		{
+			title: "Update Review",
+			description: "TIL 파일의 복습 결과를 기록하거나 복습 대상에서 제거합니다",
+			inputSchema: z.object({
+				path: z.string().describe("TIL 파일 경로"),
+				grade: z.number().min(0).max(5).optional().describe("SM-2 등급 (0-5, action=review 시 필수)"),
+				action: z.enum(["review", "remove"]).optional().describe("review(기본): 복습 기록, remove: 복습 해제"),
+			}),
+		},
+		async ({ path, grade, action }) => {
+			const effectiveAction = action ?? "review";
+
+			const content = await storage.readFile(path);
+			if (content === null) {
+				return { content: [{ type: "text" as const, text: `Error: 파일을 찾을 수 없습니다 — ${path}` }], isError: true };
+			}
+
+			if (effectiveAction === "remove") {
+				const updated = removeFrontmatterSrs(content);
+				await storage.writeFile(path, updated);
+				return { content: [{ type: "text" as const, text: JSON.stringify({ path, removed: true }) }] };
+			}
+
+			// action === "review"
+			if (grade === undefined) {
+				return { content: [{ type: "text" as const, text: "Error: action=review 시 grade(0-5)가 필요합니다" }], isError: true };
+			}
+
+			const fileMeta = await metadata.getFileMetadata(path);
+			const fm = fileMeta?.frontmatter ?? {};
+			const currentSrs = parseSrsMetadata(fm) ?? createDefaultSrsMetadata();
+			const newSrs = computeNextReview(currentSrs, grade as ReviewGrade);
+			const updated = updateFrontmatterSrs(content, newSrs);
+			await storage.writeFile(path, updated);
+
+			return {
+				content: [{
+					type: "text" as const,
+					text: JSON.stringify({
+						path,
+						grade,
+						next_review: newSrs.next_review,
+						interval: newSrs.interval,
+						ease_factor: newSrs.ease_factor,
+						repetitions: newSrs.repetitions,
+					}),
+				}],
 			};
 		},
 	);

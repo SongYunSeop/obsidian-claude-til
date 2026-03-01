@@ -15,6 +15,7 @@ import {
 	type DashboardBacklogProgress,
 	type RandomReviewPick,
 } from "../../core/stats";
+import { isDueForReview } from "../../core/srs";
 
 export const VIEW_TYPE_TIL_DASHBOARD = "oh-my-til-dashboard-view";
 
@@ -124,7 +125,21 @@ export class DashboardView extends ItemView {
 		const backlogEntries = await this.gatherBacklogEntries();
 		this.cachedFiles = files;
 		this.cachedIncompleteBacklogItems = await this.gatherIncompleteBacklogItems();
-		const stats = computeEnhancedStats(files, this.tilPath, backlogEntries);
+
+		// 복습 대상 카운트 (frontmatter next_review 기반)
+		let reviewDueCount = 0;
+		for (const f of this.app.vault.getFiles()) {
+			if (!f.path.startsWith(this.tilPath + "/")) continue;
+			if (f.extension !== "md") continue;
+			if (f.name === "backlog.md") continue;
+			const cache = this.app.metadataCache.getFileCache(f);
+			const nextReview = cache?.frontmatter?.next_review;
+			if (typeof nextReview === "string" && isDueForReview(nextReview)) {
+				reviewDueCount++;
+			}
+		}
+
+		const stats = computeEnhancedStats(files, this.tilPath, backlogEntries, undefined, reviewDueCount);
 
 		this.renderHeader(content);
 		this.renderSummaryCards(content, stats.summary);
@@ -270,6 +285,10 @@ export class DashboardView extends ItemView {
 			{ value: String(summary.thisWeekCount), label: "This Week" },
 			{ value: `${summary.streak}d`, label: "Streak" },
 		];
+
+		if (summary.reviewDueCount !== undefined && summary.reviewDueCount > 0) {
+			cards.push({ value: String(summary.reviewDueCount), label: "Review Due" });
+		}
 
 		for (const card of cards) {
 			const el = row.createDiv({ cls: "oh-my-til-dashboard-card" });

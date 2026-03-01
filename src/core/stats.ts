@@ -31,6 +31,7 @@ export interface SummaryCards {
 	categoryCount: number;
 	thisWeekCount: number;
 	streak: number;
+	reviewDueCount?: number;
 }
 
 export interface HeatmapCell {
@@ -538,6 +539,7 @@ export function computeEnhancedStats(
 	tilPath: string,
 	backlogEntries: BacklogProgressEntry[],
 	now?: number,
+	reviewDueCount?: number,
 ): EnhancedTILStats {
 	const tilFiles = filterTilFiles(files, tilPath);
 	const categories = computeEnhancedCategories(files, tilPath, tilFiles);
@@ -547,6 +549,7 @@ export function computeEnhancedStats(
 		categoryCount: categories.length,
 		thisWeekCount: computeWeeklyCount(files, tilPath, now, tilFiles),
 		streak: computeStreak(files, tilPath, now, tilFiles),
+		...(reviewDueCount !== undefined && reviewDueCount > 0 ? { reviewDueCount } : {}),
 	};
 
 	return {
@@ -609,6 +612,9 @@ export function formatDashboardText(stats: EnhancedTILStats): string {
 	lines.push(`| 카테고리 | ${s.categoryCount}개 |`);
 	lines.push(`| 이번 주 | ${s.thisWeekCount}개 |`);
 	lines.push(`| 연속 학습 | ${s.streak}일 |`);
+	if (s.reviewDueCount !== undefined && s.reviewDueCount > 0) {
+		lines.push(`| 복습 예정 | ${s.reviewDueCount}개 |`);
+	}
 
 	// Heatmap sparkline (주단위)
 	if (stats.heatmap.cells.length > 0) {

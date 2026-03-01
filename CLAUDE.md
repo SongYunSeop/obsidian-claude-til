@@ -4,7 +4,7 @@
 
 Claude Code 기반 TIL 학습 워크플로우 플러그인. Obsidian 없이 독립 CLI(`npx oh-my-til`)로 실행하거나, Obsidian 플러그인으로 사이드바에 Claude Code 터미널을 임베딩하여 사용할 수 있다. xterm.js + node-pty 기반.
 
-핵심 흐름: 커맨드 팔레트 → 터미널 열기 → Claude Code에서 `/til`, `/backlog`, `/research`, `/save`, `/dashboard`, `/migrate-links`, `/omt-setup` 스킬 직접 실행 → 새 파일 감지 시 에디터에서 열기
+핵심 흐름: 커맨드 팔레트 → 터미널 열기 → Claude Code에서 `/til`, `/backlog`, `/research`, `/save`, `/recall`, `/dashboard`, `/migrate-links`, `/omt-setup` 스킬 직접 실행 → 새 파일 감지 시 에디터에서 열기
 
 Obsidian의 역할은 "터미널 임베딩 + 파일 감시 + skill 배포 + MCP 서버 + 대시보드"로 한정하고, 워크플로우 주도권은 Claude Code에 있다. 독립 실행 시에는 `npx oh-my-til init`으로 스킬/규칙을 설치하고 `npx oh-my-til serve`로 MCP 서버를 띄운다.
 
@@ -39,7 +39,8 @@ src/
 ├── core/                     ← 플랫폼 독립 순수 로직
 │   ├── backlog.ts            ← 백로그 파싱/포맷 순수 함수 (parseBacklogItems, extractTopicFromPath, parseBacklogSections, parseFrontmatterSources)
 │   ├── context.ts            ← 학습 컨텍스트 순수 함수 (topic 매칭, 최근 활동, 포맷)
-│   ├── stats.ts              ← 대시보드 통계 순수 함수 (streak, heatmap, enhanced categories, backlog progress)
+│   ├── stats.ts              ← 대시보드 통계 순수 함수 (streak, heatmap, enhanced categories, backlog progress, review due count)
+│   ├── srs.ts                ← SRS(간격 반복) 순수 함수 (SM-2 알고리즘, 복습 카드 필터/정렬/통계)
 │   ├── migrate-links.ts      ← Wikilink [[]] → [](path) 변환 순수 함수
 │   ├── keyboard.ts           ← Shift+Enter → \n 변환 순수 함수 (Claude Code multiline 지원)
 │   ├── env.ts                ← ensurePath(): macOS Homebrew PATH 보정
@@ -86,6 +87,7 @@ __tests__/
 ├── skills.test.ts        ← skill/rule 버전 기반 설치/업데이트 로직 테스트
 ├── watcher.test.ts       ← 파일 감시 필터링 로직 테스트
 ├── stats.test.ts         ← 대시보드 통계 (기본 + streak, heatmap, enhanced categories, backlog) 테스트
+├── srs.test.ts           ← SRS 간격 반복 (SM-2 알고리즘, frontmatter 파싱/업데이트, 카드 필터/통계) 테스트
 ├── mcp-tools.test.ts     ← MCP 도구 필터링/집계 로직 테스트
 ├── context.test.ts       ← 학습 컨텍스트 순수 함수 테스트
 ├── mcp-server.test.ts    ← MCP 서버 HTTP 라우팅/CORS/라이프사이클 테스트
