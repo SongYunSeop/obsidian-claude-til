@@ -1,5 +1,5 @@
 ---
-name: review
+name: til-review
 description: "SRS 기반 TIL 복습 세션 (간격 반복 학습)"
 argument-hint: "[카테고리]"
 plugin-version: "__PLUGIN_VERSION__"

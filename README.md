@@ -15,7 +15,7 @@ A Claude Code plugin for AI-powered TIL (Today I Learned) learning workflow. Wor
 - **Embedded Terminal** — Claude Code terminal in Obsidian sidebar (xterm.js + node-pty)
 - **Built-in MCP Server** — Claude Code can directly access your vault via HTTP
 - **Learning Dashboard** — TIL statistics and category breakdown at a glance
-- **Auto-installed Skills** — `/til`, `/research`, `/backlog`, `/save`, `/review`, `/dashboard`, `/migrate-links` commands ready out of the box
+- **Auto-installed Skills** — `/til`, `/research`, `/backlog`, `/save`, `/til-review`, `/dashboard`, `/migrate-links` commands ready out of the box
 - **Spaced Repetition (SRS)** — SM-2 algorithm-based review scheduling for TIL notes
 - **Markdown Link Detection** — `[text](path)` links in terminal are clickable and open notes (CJK-aware)
 - **Backlog-to-TIL Trigger** — Click an empty backlog link to start a TIL session
@@ -25,7 +25,7 @@ A Claude Code plugin for AI-powered TIL (Today I Learned) learning workflow. Wor
 
 ```
 Command Palette → Open Terminal → Claude Code starts
-→ Run /til, /backlog, /research, /save, /review, /dashboard, /migrate-links skills
+→ Run /til, /backlog, /research, /save, /til-review, /dashboard, /migrate-links skills
 → Claude researches → interactive learning → saves TIL markdown
 → New file detected → opens in editor
 ```
@@ -151,7 +151,7 @@ The plugin auto-installs these skills to `.claude/skills/`:
 | **research** | `/research <topic> [category]` | Research a topic and create a learning backlog |
 | **backlog** | `/backlog [category]` | View learning backlog and progress |
 | **save** | *(auto-invoked by /til)* | Save TIL markdown with Daily note, MOC, and backlog updates |
-| **review** | `/review [category]` | SRS-based spaced repetition review session (SM-2 algorithm) |
+| **til-review** | `/til-review [category]` | SRS-based spaced repetition review session (SM-2 algorithm) |
 | **migrate-links** | `/migrate-links` | Batch-convert `[[wikilinks]]` to standard markdown links |
 
 ## Development

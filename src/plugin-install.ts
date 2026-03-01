@@ -9,7 +9,7 @@ import migrateLinksSkill from "../vault-assets/skills/migrate-links/SKILL.md";
 import dashboardSkill from "../vault-assets/skills/dashboard/SKILL.md";
 import setupPagesSkill from "../vault-assets/skills/setup-pages/SKILL.md";
 import omtSetupSkill from "../vault-assets/skills/omt-setup/SKILL.md";
-import reviewSkill from "../vault-assets/skills/review/SKILL.md";
+import tilReviewSkill from "../vault-assets/skills/til-review/SKILL.md";
 import claudeMdSection from "../vault-assets/claude-md-section.md";
 
 import tilFetcherAgent from "../vault-assets/agents/til-fetcher.md";
@@ -41,7 +41,7 @@ const SKILLS: Record<string, string> = {
 	"dashboard/SKILL.md": dashboardSkill,
 	"setup-pages/SKILL.md": setupPagesSkill,
 	"omt-setup/SKILL.md": omtSetupSkill,
-	"review/SKILL.md": reviewSkill,
+	"til-review/SKILL.md": tilReviewSkill,
 };
 
 const RULES: Record<string, string> = {};

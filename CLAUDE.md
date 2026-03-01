@@ -4,7 +4,7 @@
 
 Claude Code 기반 TIL 학습 워크플로우 플러그인. Obsidian 없이 독립 CLI(`npx oh-my-til`)로 실행하거나, Obsidian 플러그인으로 사이드바에 Claude Code 터미널을 임베딩하여 사용할 수 있다. xterm.js + node-pty 기반.
 
-핵심 흐름: 커맨드 팔레트 → 터미널 열기 → Claude Code에서 `/til`, `/backlog`, `/research`, `/save`, `/review`, `/dashboard`, `/migrate-links`, `/omt-setup` 스킬 직접 실행 → 새 파일 감지 시 에디터에서 열기
+핵심 흐름: 커맨드 팔레트 → 터미널 열기 → Claude Code에서 `/til`, `/backlog`, `/research`, `/save`, `/til-review`, `/dashboard`, `/migrate-links`, `/omt-setup` 스킬 직접 실행 → 새 파일 감지 시 에디터에서 열기
 
 Obsidian의 역할은 "터미널 임베딩 + 파일 감시 + skill 배포 + MCP 서버 + 대시보드"로 한정하고, 워크플로우 주도권은 Claude Code에 있다. 독립 실행 시에는 `npx oh-my-til init`으로 스킬/규칙을 설치하고 `npx oh-my-til serve`로 MCP 서버를 띄운다.
 
