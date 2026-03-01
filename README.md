@@ -15,7 +15,8 @@ A Claude Code plugin for AI-powered TIL (Today I Learned) learning workflow. Wor
 - **Embedded Terminal** — Claude Code terminal in Obsidian sidebar (xterm.js + node-pty)
 - **Built-in MCP Server** — Claude Code can directly access your vault via HTTP
 - **Learning Dashboard** — TIL statistics and category breakdown at a glance
-- **Auto-installed Skills** — `/til`, `/research`, `/backlog`, `/save`, `/migrate-links` commands ready out of the box
+- **Auto-installed Skills** — `/til`, `/research`, `/backlog`, `/save`, `/recall`, `/dashboard`, `/migrate-links` commands ready out of the box
+- **Spaced Repetition (SRS)** — SM-2 algorithm-based review scheduling for TIL notes
 - **Markdown Link Detection** — `[text](path)` links in terminal are clickable and open notes (CJK-aware)
 - **Backlog-to-TIL Trigger** — Click an empty backlog link to start a TIL session
 - **File Watcher** — Newly created TIL files open automatically in the editor
@@ -24,7 +25,7 @@ A Claude Code plugin for AI-powered TIL (Today I Learned) learning workflow. Wor
 
 ```
 Command Palette → Open Terminal → Claude Code starts
-→ Run /til, /backlog, /research, /save, /dashboard, /migrate-links skills
+→ Run /til, /backlog, /research, /save, /recall, /dashboard, /migrate-links skills
 → Claude researches → interactive learning → saves TIL markdown
 → New file detected → opens in editor
 ```
@@ -136,6 +137,9 @@ When the MCP server is connected, Claude Code can use these tools:
 | `til_backlog_status` | Backlog progress summary with checkbox counts |
 | `til_get_context` | Get existing knowledge context for a topic (files, links, unresolved mentions) |
 | `til_recent_context` | Recent learning activity grouped by date |
+| `til_dashboard` | Learning statistics summary |
+| `til_review_list` | Due review cards list + stats (SRS) |
+| `til_review_update` | Record review result or remove from review |
 
 ## Claude Skills
 
@@ -147,6 +151,7 @@ The plugin auto-installs these skills to `.claude/skills/`:
 | **research** | `/research <topic> [category]` | Research a topic and create a learning backlog |
 | **backlog** | `/backlog [category]` | View learning backlog and progress |
 | **save** | *(auto-invoked by /til)* | Save TIL markdown with Daily note, MOC, and backlog updates |
+| **recall** | `/recall [category]` | SRS-based spaced repetition review session (SM-2 algorithm) |
 | **migrate-links** | `/migrate-links` | Batch-convert `[[wikilinks]]` to standard markdown links |
 
 ## Development
@@ -167,6 +172,7 @@ src/
 │   ├── backlog.ts           # Backlog parsing/formatting (pure functions)
 │   ├── context.ts           # Learning context helpers (pure functions)
 │   ├── stats.ts             # TIL statistics (pure functions)
+│   ├── srs.ts               # Spaced repetition (SM-2 algorithm, review cards/stats)
 │   ├── migrate-links.ts     # Wikilink [[]] → [](path) conversion
 │   ├── keyboard.ts          # Shift+Enter → \n (multiline support)
 │   ├── env.ts               # macOS PATH resolution (Homebrew)
@@ -213,6 +219,7 @@ src/
 - [x] Built-in MCP server
 - [x] Learning dashboard (basic stats)
 - [x] Standalone CLI (`npx oh-my-til`) — use without Obsidian
+- [x] Spaced Repetition (SRS) — SM-2 based review scheduling
 - [ ] Backlog progress bars in dashboard
 - [ ] Configurable TIL folder path
 - [ ] Rich dashboard — recent TILs, streaks, weekly summary
