@@ -133,8 +133,11 @@ When the MCP server is connected, Claude Code can use these tools:
 | `vault_list_files` | List files in a folder with optional filtering |
 | `vault_search` | Full-text search across the vault |
 | `vault_get_active_file` | Get the currently open file |
-| `til_list` | List TIL files grouped by category |
+| `til_list` | List TIL files grouped by category (supports `search` filter) |
+| `til_exists` | Check if a TIL file exists by category + slug |
+| `til_save_note` | Save a TIL note with validated frontmatter and path conventions |
 | `til_backlog_status` | Backlog progress summary with checkbox counts |
+| `til_backlog_check` | Mark a backlog item as done by slug |
 | `til_get_context` | Get existing knowledge context for a topic (files, links, unresolved mentions) |
 | `til_recent_context` | Recent learning activity grouped by date |
 | `til_dashboard` | Learning statistics summary |

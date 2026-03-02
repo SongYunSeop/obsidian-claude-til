@@ -133,8 +133,11 @@ MCP 서버 연결 시 Claude Code에서 사용할 수 있는 도구:
 | `vault_list_files` | 폴더 내 파일 목록 (필터링 가능) |
 | `vault_search` | vault 전체 텍스트 검색 |
 | `vault_get_active_file` | 현재 열린 파일 가져오기 |
-| `til_list` | 카테고리별 TIL 파일 목록 |
+| `til_list` | 카테고리별 TIL 파일 목록 (`search` 필터 지원) |
+| `til_exists` | category + slug로 TIL 파일 존재 여부 확인 |
+| `til_save_note` | frontmatter 형식/경로 규칙을 보장하는 TIL 노트 저장 |
 | `til_backlog_status` | 백로그 진행률 요약 (체크박스 카운트) |
+| `til_backlog_check` | 백로그 항목을 slug로 완료 처리 |
 | `til_get_context` | 주제 관련 기존 학습 컨텍스트 (파일, 링크 관계, 미작성 주제) |
 | `til_recent_context` | 최근 학습 활동을 날짜별로 조회 |
 | `til_dashboard` | 학습 통계 요약 |

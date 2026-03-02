@@ -12,10 +12,13 @@
 - `vault_list_files` — 파일 목록
 - `vault_search` — 텍스트 검색
 - `vault_get_active_file` — 현재 파일
-- `til_list` — TIL 목록 + 카테고리 분류
+- `til_list` — TIL 목록 + 카테고리 분류 (search 필터 지원)
+- `til_exists` — TIL 파일 존재 여부 확인
+- `til_save_note` — TIL 노트 저장 (frontmatter/경로 규칙 보장)
 - `til_get_context` — 주제 관련 컨텍스트
 - `til_recent_context` — 최근 학습 흐름
 - `til_backlog_status` — 백로그 진행률
+- `til_backlog_check` — 백로그 항목 완료 처리
 - `til_dashboard` — 학습 통계
 - `til_review_list` — 복습 대상 카드 목록 + 통계
 - `til_review_update` — 복습 결과 기록 또는 복습 해제
