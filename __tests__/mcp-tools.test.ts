@@ -14,7 +14,6 @@ import {
 import { computeBacklogProgress, parseBacklogSections } from "../src/backlog";
 import {
 	filterDueCards,
-	computeReviewStats,
 	type SrsFileEntry,
 } from "../src/core/srs";
 
