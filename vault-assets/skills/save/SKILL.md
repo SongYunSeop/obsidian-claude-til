@@ -13,15 +13,13 @@ plugin-version: "__PLUGIN_VERSION__"
 
 - `til_get_context`: 관련 TIL·백로그 파악
 - `til_list`: 기존 TIL 중복 확인
-- `til_exists`: TIL 파일 존재 여부 빠른 확인
-- `til_save_note`: TIL 노트 저장 (frontmatter/경로 규칙 서버 보장)
-- `til_backlog_check`: 백로그 항목 완료 처리
+- `til_save_note`: TIL 노트 저장 (frontmatter/경로 규칙 서버 보장, auto_check_backlog로 백로그 자동 체크)
 - `vault_get_active_file`: 사용자 파일 컨텍스트
 
 ## Step 1: 컨텍스트 확인
 
 1. 주제·카테고리 파악. 불명확하면 사용자에게 질문.
-2. `til_exists(category, slug)`로 동일 슬러그 파일 존재 여부 빠른 확인.
+2. `Read`로 `til/{category}/{slug}.md` 파일 존재 여부 확인.
 
 ## Step 2: 링크 후보 파악
 
@@ -36,7 +34,7 @@ plugin-version: "__PLUGIN_VERSION__"
 **새 파일 저장**: `til_save_note` MCP 도구로 저장. frontmatter(title, date, category, tags, aliases)와 경로 규칙을 서버가 보장한다.
 
 ```
-til_save_note(category, slug, title, content, tags, date, fmCategory, aliases)
+til_save_note(category, slug, title, content, tags, date, fmCategory, aliases, auto_check_backlog: true)
 ```
 
 - `date`: `date +%Y-%m-%dT%H:%M:%S` 명령으로 로컬 시각을 조회하여 전달
@@ -44,7 +42,7 @@ til_save_note(category, slug, title, content, tags, date, fmCategory, aliases)
 - `aliases`: ["한글 제목", "영문 제목"]
 - `content`: frontmatter 제외한 본문 마크다운
 
-**동일 슬러그 파일 있을 때** (Step 1에서 `til_exists`로 감지):
+**동일 슬러그 파일 있을 때** (Step 1에서 `Read`로 감지):
 - `/til` 심화 학습이 연속된 경우만 자동 병합 (기존 내용 유지 + 보강, `updated` 추가)
 - 그 외: 사용자에게 병합/덮어쓰기 확인
 - 병합 시에는 `til_save_note` 대신 직접 Read→Edit으로 기존 내용에 보강
@@ -72,7 +70,7 @@ til_save_note(category, slug, title, content, tags, date, fmCategory, aliases)
 
 1. Daily 노트 (`./Daily/YYYY-MM-DD.md`): 카테고리별 TIL 링크 추가 (없으면 생성)
 2. TIL MOC (`./til/TIL MOC.md`): 카테고리 섹션에 항목 추가 (없으면 생성)
-3. 백로그: `til_backlog_check(category, slug)` MCP 도구로 해당 항목 완료 처리
+3. 백로그: `til_save_note`의 `auto_check_backlog: true`로 이미 처리됨 (별도 호출 불필요)
 
 Daily/MOC: Read → 위치 확인 → Edit. 파일 없으면 생성.
 
