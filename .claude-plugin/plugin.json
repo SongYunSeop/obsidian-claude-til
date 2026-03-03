@@ -1,0 +1,17 @@
+{
+	"name": "oh-my-til",
+	"version": "0.14.0",
+	"description": "Claude Code 기반 TIL 학습 워크플로우 플러그인 — 리서치, 백로그, 간격 반복 복습, 대시보드",
+	"author": {
+		"name": "SongYunSeop",
+		"url": "https://github.com/SongYunSeop"
+	},
+	"homepage": "https://github.com/SongYunSeop/oh-my-til",
+	"repository": "https://github.com/SongYunSeop/oh-my-til",
+	"license": "MIT",
+	"keywords": ["til", "learning", "srs", "spaced-repetition", "backlog", "mcp"],
+	"skills": "./skills/",
+	"agents": "./agents/",
+	"hooks": "./hooks/hooks.json",
+	"mcpServers": "./.mcp.json"
+}

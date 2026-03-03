@@ -34,6 +34,7 @@ Usage:
   oh-my-til serve [<path>] [options]   Start MCP server (HTTP)
   oh-my-til mcp [<path>] [options]     Start MCP server (stdio)
   oh-my-til deploy [<path>] [options]  Generate static site from TIL files
+  oh-my-til plugin-path                Print Claude Code Plugin directory path
   oh-my-til version                    Print version
 
 Options (init):
@@ -73,6 +74,16 @@ async function main(): Promise<void> {
 
 	if (command === "version" || command === "--version" || command === "-v") {
 		console.log(VERSION);
+		process.exit(0);
+	}
+
+	if (command === "plugin-path") {
+		const pluginDir = path.resolve(__dirname, "..", "dist", "claude-plugin");
+		if (!fs.existsSync(pluginDir)) {
+			console.error("Plugin not built yet. Run: npm run build:plugin");
+			process.exit(1);
+		}
+		console.log(pluginDir);
 		process.exit(0);
 	}
 
