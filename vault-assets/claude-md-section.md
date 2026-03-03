@@ -26,5 +26,9 @@
 ### 연결
 
 ```bash
+# HTTP (Obsidian 플러그인 또는 oh-my-til serve 사용 시)
 claude mcp add --transport http oh-my-til http://localhost:22360/mcp
+
+# stdio (Obsidian 없이 독립 실행, Claude Desktop scheduled task 등)
+claude mcp add oh-my-til -- npx oh-my-til mcp /path/to/vault
 ```

@@ -55,8 +55,12 @@ git clone 없이 `npx`만으로 바로 시작할 수 있습니다.
 3. **(선택) MCP 서버 시작** — Claude Code가 TIL 파일을 조회할 수 있게 합니다:
 
    ```bash
+   # HTTP 모드 — 상주 서버 실행
    npx oh-my-til serve ~/my-til
    claude mcp add --transport http oh-my-til http://localhost:22360/mcp
+
+   # stdio 모드 — 필요 시 자동 실행 (서버 불필요, Claude Desktop 호환)
+   claude mcp add oh-my-til -- npx oh-my-til mcp ~/my-til
    ```
 
 > **팁:** 경로 없이 `npx oh-my-til init`을 실행하면 현재 디렉토리에 설치됩니다.

@@ -1,5 +1,8 @@
 import { FsStorage, FsMetadata } from "../adapters/fs-adapter";
 import { TILMcpServer } from "../mcp/server";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { registerTools } from "../mcp/tools";
 import { installPlugin } from "../plugin-install";
 import { installObsidianPlugin } from "./obsidian-install";
 import { parseArgs, expandTilde } from "../core/cli";
@@ -28,7 +31,8 @@ function printUsage(): void {
 
 Usage:
   oh-my-til init [<path>] [options]    Install skills, rules, and CLAUDE.md
-  oh-my-til serve [<path>] [options]   Start MCP server
+  oh-my-til serve [<path>] [options]   Start MCP server (HTTP)
+  oh-my-til mcp [<path>] [options]     Start MCP server (stdio)
   oh-my-til deploy [<path>] [options]  Generate static site from TIL files
   oh-my-til version                    Print version
 
@@ -38,6 +42,9 @@ Options (init):
 Options (serve):
   --til-path <path>  TIL folder path (default: til)
   --port <port>      MCP server port (default: 22360)
+
+Options (mcp):
+  --til-path <path>  TIL folder path (default: til)
 
 Options (deploy):
   --til-path <path>  TIL folder path (default: til)
@@ -124,6 +131,27 @@ async function main(): Promise<void> {
 		} else {
 			console.log("\nUsing Obsidian? Run init inside your vault to auto-install the plugin.");
 		}
+	} else if (command === "mcp") {
+		const storage = new FsStorage(basePath);
+		const metadata = new FsMetadata(basePath);
+		const mcpServer = new McpServer({
+			name: "oh-my-til",
+			version: VERSION,
+		});
+		registerTools(mcpServer, storage, metadata, tilPath);
+
+		const transport = new StdioServerTransport();
+		await mcpServer.connect(transport);
+
+		// stdout is used by stdio transport — log to stderr
+		process.stderr.write(`oh-my-til MCP server running (stdio, tilPath=${tilPath})\n`);
+
+		const shutdown = async () => {
+			await mcpServer.close();
+			process.exit(0);
+		};
+		process.on("SIGINT", shutdown);
+		process.on("SIGTERM", shutdown);
 	} else if (command === "serve") {
 		const storage = new FsStorage(basePath);
 		const metadata = new FsMetadata(basePath);

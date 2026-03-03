@@ -55,8 +55,12 @@ No git clone needed. Just `npx`.
 3. **(Optional) Start MCP server** — lets Claude Code query your TIL files:
 
    ```bash
+   # HTTP mode — runs a persistent server
    npx oh-my-til serve ~/my-til
    claude mcp add --transport http oh-my-til http://localhost:22360/mcp
+
+   # stdio mode — spawned on demand (no server needed, works with Claude Desktop)
+   claude mcp add oh-my-til -- npx oh-my-til mcp ~/my-til
    ```
 
 > **Tip:** You can also run `npx oh-my-til init` without a path to initialize the current directory.
