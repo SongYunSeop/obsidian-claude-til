@@ -38,82 +38,6 @@ import {
  * 모든 도구는 FileStorage / MetadataProvider 포트를 통해 vault에 접근한다.
  */
 export function registerTools(server: McpServer, storage: FileStorage, metadata: MetadataProvider, tilPath: string): void {
-	// vault_read_note: 노트 내용 읽기
-	server.registerTool(
-		"vault_read_note",
-		{
-			title: "Read Note",
-			description: "Vault에서 노트 내용을 읽습니다",
-			inputSchema: z.object({
-				path: z.string().describe("노트 파일 경로 (예: til/typescript/generics.md)"),
-			}),
-		},
-		async ({ path }) => {
-			const text = await storage.readFile(path);
-			if (text === null) {
-				return { content: [{ type: "text" as const, text: `Error: 파일을 찾을 수 없습니다 — ${path}` }], isError: true };
-			}
-			return { content: [{ type: "text" as const, text }] };
-		},
-	);
-
-	// vault_list_files: 폴더 내 파일 목록
-	server.registerTool(
-		"vault_list_files",
-		{
-			title: "List Files",
-			description: "Vault 폴더 내 파일 목록을 반환합니다",
-			inputSchema: z.object({
-				folder: z.string().optional().describe("폴더 경로 (생략 시 루트)"),
-				extension: z.string().optional().describe("필터링할 확장자 (예: md)"),
-			}),
-		},
-		async ({ folder, extension }) => {
-			const files = await storage.listFiles();
-			const filtered = files.filter((f) => {
-				if (folder && !f.path.startsWith(folder + "/") && f.path !== folder) return false;
-				if (extension && f.extension !== extension) return false;
-				return true;
-			});
-			const list = filtered.map((f) => f.path).join("\n");
-			return { content: [{ type: "text" as const, text: list || "(파일 없음)" }] };
-		},
-	);
-
-	// vault_search: vault 전체 텍스트 검색
-	server.registerTool(
-		"vault_search",
-		{
-			title: "Search Vault",
-			description: "Vault 전체에서 텍스트를 검색합니다",
-			inputSchema: z.object({
-				query: z.string().describe("검색할 텍스트"),
-			}),
-		},
-		async ({ query }) => {
-			const files = (await storage.listFiles()).filter((f) => f.extension === "md");
-			const results: string[] = [];
-			const lowerQuery = query.toLowerCase();
-
-			const BATCH_SIZE = 20;
-			for (let i = 0; i < files.length && results.length < 50; i += BATCH_SIZE) {
-				const batch = files.slice(i, i + BATCH_SIZE);
-				const texts = await Promise.all(batch.map((f) => storage.readFile(f.path)));
-				for (let j = 0; j < batch.length; j++) {
-					const text = texts[j];
-					if (text !== null && text.toLowerCase().includes(lowerQuery)) {
-						results.push(batch[j]!.path);
-					}
-					if (results.length >= 50) break;
-				}
-			}
-			const text = results.length > 0
-				? `${results.length}개 파일에서 발견:\n${results.join("\n")}`
-				: `"${query}"에 대한 검색 결과가 없습니다`;
-			return { content: [{ type: "text" as const, text }] };
-		},
-	);
-
 	// vault_get_active_file: 현재 열린 파일 경로 + 내용
 	server.registerTool(
 		"vault_get_active_file",
@@ -406,7 +330,7 @@ export function registerTools(server: McpServer, storage: FileStorage, metadata:
 		"til_review_list",
 		{
 			title: "Review List",
-			description: "오늘 복습할 TIL 카드 목록과 통계를 반환합니다. include_content=true로 노트 내용을 함께 가져오면 vault_read_note 호출을 줄일 수 있습니다.",
+			description: "오늘 복습할 TIL 카드 목록과 통계를 반환합니다. include_content=true로 노트 내용을 함께 가져오면 별도 파일 읽기를 줄일 수 있습니다.",
 			inputSchema: z.object({
 				category: z.string().optional().describe("특정 카테고리만 필터링"),
 				limit: z.number().min(1).max(100).optional().describe("최대 카드 수 (기본 20)"),
@@ -514,31 +438,12 @@ export function registerTools(server: McpServer, storage: FileStorage, metadata:
 		},
 	);
 
-	// til_exists: TIL 파일 존재 여부 확인
-	server.registerTool(
-		"til_exists",
-		{
-			title: "Check TIL Exists",
-			description: "TIL 파일이 이미 존재하는지 확인합니다",
-			inputSchema: z.object({
-				category: z.string().describe("카테고리 (예: typescript, react)"),
-				slug: z.string().describe("파일명 slug (예: generics, hooks)"),
-			}),
-		},
-		async ({ category, slug }) => {
-			const path = `${tilPath}/${category}/${slug}.md`;
-			const exists = await storage.exists(path);
-			const data = { exists, path };
-			return { content: [{ type: "text" as const, text: JSON.stringify(data) }] };
-		},
-	);
-
 	// til_save_note: TIL 노트 저장 (frontmatter + 경로 규칙 보장)
 	server.registerTool(
 		"til_save_note",
 		{
 			title: "Save TIL Note",
-			description: "TIL 노트를 저장합니다. frontmatter 형식과 경로 규칙을 서버가 보장합니다.",
+			description: "TIL 노트를 저장합니다. frontmatter 형식과 경로 규칙을 서버가 보장합니다. auto_check_backlog=true로 저장 후 백로그 자동 체크.",
 			inputSchema: z.object({
 				category: z.string().describe("카테고리 (예: typescript, react)"),
 				slug: z.string().describe("파일명 slug (예: generics, hooks)"),
@@ -548,9 +453,10 @@ export function registerTools(server: McpServer, storage: FileStorage, metadata:
 				date: z.string().optional().describe("작성일 (YYYY-MM-DD, 생략 시 오늘)"),
 				fmCategory: z.string().optional().describe("frontmatter category 값 (생략 시 category 파라미터 사용)"),
 				aliases: z.array(z.string()).optional().describe("aliases 목록 (예: [\"한글 제목\", \"English Title\"])"),
+				auto_check_backlog: z.boolean().optional().describe("true면 저장 후 백로그 항목을 자동으로 완료 처리 (기본 false)"),
 			}),
 		},
-		async ({ category, slug, title, content, tags, date, fmCategory, aliases }) => {
+		async ({ category, slug, title, content, tags, date, fmCategory, aliases, auto_check_backlog }) => {
 			const path = `${tilPath}/${category}/${slug}.md`;
 			const noteDate = date || new Date().toISOString().slice(0, 10);
 
@@ -576,7 +482,23 @@ export function registerTools(server: McpServer, storage: FileStorage, metadata:
 			const existed = await storage.exists(path);
 			await storage.writeFile(path, fullContent);
 
-			const data = { path, created: !existed, category, slug, title };
+			const data: { path: string; created: boolean; category: string; slug: string; title: string; backlog_checked?: boolean; backlog_already_done?: boolean } = { path, created: !existed, category, slug, title };
+
+			// auto_check_backlog: 저장 후 백로그 자동 체크
+			if (auto_check_backlog) {
+				const backlogPath = `${tilPath}/${category}/backlog.md`;
+				const backlogContent = await storage.readFile(backlogPath);
+				if (backlogContent !== null) {
+					const result = checkBacklogItem(backlogContent, slug);
+					if (result.found && !result.alreadyDone) {
+						await storage.writeFile(backlogPath, result.content);
+						data.backlog_checked = true;
+					} else if (result.alreadyDone) {
+						data.backlog_already_done = true;
+					}
+				}
+			}
+
 			return { content: [{ type: "text" as const, text: JSON.stringify(data) }] };
 		},
 	);

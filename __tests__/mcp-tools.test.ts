@@ -11,7 +11,7 @@ import {
 	type TilFileContext,
 	type TopicContextResult,
 } from "../src/mcp/context";
-import { computeBacklogProgress, parseBacklogSections } from "../src/backlog";
+import { computeBacklogProgress, parseBacklogSections, checkBacklogItem } from "../src/backlog";
 import {
 	filterDueCards,
 	type SrsFileEntry,
@@ -40,41 +40,6 @@ function createApp(files: Record<string, string>): App {
 }
 
 // --- tools.ts 로직을 그대로 재현한 헬퍼 함수들 ---
-
-function vaultReadNote(app: App, path: string): { text: string; isError?: boolean } {
-	const file = app.vault.getAbstractFileByPath(path);
-	if (!file || !(file instanceof TFile)) {
-		return { text: `Error: 파일을 찾을 수 없습니다 — ${path}`, isError: true };
-	}
-	// 동기 테스트를 위해 vault.read는 별도 호출
-	return { text: file.path };
-}
-
-function vaultListFiles(app: App, folder?: string, extension?: string): string[] {
-	const files = app.vault.getFiles();
-	return files
-		.filter((f) => {
-			if (folder && !f.path.startsWith(folder + "/") && f.path !== folder) return false;
-			if (extension && f.extension !== extension) return false;
-			return true;
-		})
-		.map((f) => f.path);
-}
-
-async function vaultSearch(app: App, query: string): Promise<string[]> {
-	const files = app.vault.getFiles().filter((f) => f.extension === "md");
-	const results: string[] = [];
-	const lowerQuery = query.toLowerCase();
-
-	for (const file of files) {
-		const text = await app.vault.read(file);
-		if (text.toLowerCase().includes(lowerQuery)) {
-			results.push(file.path);
-		}
-		if (results.length >= 50) break;
-	}
-	return results;
-}
 
 function tilList(app: App, tilPath: string, category?: string): Record<string, string[]> {
 	const filePaths = app.vault.getFiles()
@@ -121,96 +86,6 @@ async function tilBacklogStatus(
 }
 
 // --- 테스트 ---
-
-describe("vault_read_note", () => {
-	it("존재하는 노트를 읽는다", async () => {
-		const app = createApp({ "til/typescript/generics.md": "# Generics\n내용" });
-		const result = vaultReadNote(app, "til/typescript/generics.md");
-		expect(result.isError).toBeUndefined();
-
-		const file = app.vault.getAbstractFileByPath("til/typescript/generics.md") as TFile;
-		const content = await app.vault.read(file);
-		expect(content).toBe("# Generics\n내용");
-	});
-
-	it("존재하지 않는 경로에서 에러를 반환한다", () => {
-		const app = createApp({});
-		const result = vaultReadNote(app, "nonexistent.md");
-		expect(result.isError).toBe(true);
-		expect(result.text).toContain("Error");
-	});
-});
-
-describe("vault_list_files", () => {
-	const files = {
-		"til/ts/a.md": "",
-		"til/ts/b.md": "",
-		"til/react/c.md": "",
-		"notes/d.md": "",
-		"notes/e.txt": "",
-	};
-
-	it("폴더 필터링 — 특정 폴더만 반환한다", () => {
-		const app = createApp(files);
-		const result = vaultListFiles(app, "til/ts");
-		expect(result).toEqual(["til/ts/a.md", "til/ts/b.md"]);
-	});
-
-	it("확장자 필터링 — md만 반환한다", () => {
-		const app = createApp(files);
-		const result = vaultListFiles(app, "notes", "md");
-		expect(result).toEqual(["notes/d.md"]);
-	});
-
-	it("폴더+확장자 조합 필터링", () => {
-		const app = createApp(files);
-		const result = vaultListFiles(app, "til", "md");
-		expect(result).toHaveLength(3);
-	});
-
-	it("필터 없이 전체 파일 반환", () => {
-		const app = createApp(files);
-		const result = vaultListFiles(app);
-		expect(result).toHaveLength(5);
-	});
-
-	it("빈 vault에서 빈 배열 반환", () => {
-		const app = createApp({});
-		const result = vaultListFiles(app, "til");
-		expect(result).toEqual([]);
-	});
-});
-
-describe("vault_search", () => {
-	it("대소문자 무시하고 검색한다", async () => {
-		const app = createApp({
-			"til/ts/generics.md": "TypeScript generics are powerful",
-			"til/react/hooks.md": "React hooks pattern",
-			"til/ts/types.md": "Advanced typescript types",
-		});
-
-		const results = await vaultSearch(app, "TypeScript");
-		expect(results).toHaveLength(2);
-		expect(results).toContain("til/ts/generics.md");
-		expect(results).toContain("til/ts/types.md");
-	});
-
-	it("md 파일만 검색한다", async () => {
-		const app = createApp({
-			"config.json": '{"typescript": true}',
-			"til/ts/a.md": "typescript content",
-		});
-
-		const results = await vaultSearch(app, "typescript");
-		expect(results).toEqual(["til/ts/a.md"]);
-	});
-
-	it("결과가 없으면 빈 배열을 반환한다", async () => {
-		const app = createApp({ "til/a.md": "hello world" });
-		const results = await vaultSearch(app, "nonexistent");
-		expect(results).toEqual([]);
-	});
-});
 
 describe("til_list", () => {
 	const tilPath = "til";
@@ -450,6 +325,31 @@ describe("til_list (search)", () => {
 		const result = groupFilesByCategory(filtered, tilPath);
 
 		expect(Object.keys(result)).toHaveLength(0);
+	});
+});
+
+// --- til_save_note auto_check_backlog 로직 재현 ---
+
+describe("til_save_note (auto_check_backlog)", () => {
+	it("auto_check_backlog=true일 때 백로그 항목이 체크된다", () => {
+		const backlogContent = "- [ ] [제네릭](til/typescript/generics.md) - 타입 매개변수\n- [ ] [타입](til/typescript/types.md)";
+		const result = checkBacklogItem(backlogContent, "generics");
+		expect(result.found).toBe(true);
+		expect(result.alreadyDone).toBe(false);
+		expect(result.content).toContain("[x]");
+	});
+
+	it("이미 체크된 항목은 alreadyDone=true를 반환한다", () => {
+		const backlogContent = "- [x] [제네릭](til/typescript/generics.md) - 타입 매개변수";
+		const result = checkBacklogItem(backlogContent, "generics");
+		expect(result.found).toBe(true);
+		expect(result.alreadyDone).toBe(true);
+	});
+
+	it("백로그에 항목이 없으면 found=false를 반환한다", () => {
+		const backlogContent = "- [ ] [타입](til/typescript/types.md)";
+		const result = checkBacklogItem(backlogContent, "generics");
+		expect(result.found).toBe(false);
 	});
 });
 
