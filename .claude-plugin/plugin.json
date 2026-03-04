@@ -10,8 +10,8 @@
 	"repository": "https://github.com/SongYunSeop/oh-my-til",
 	"license": "MIT",
 	"keywords": ["til", "learning", "srs", "spaced-repetition", "backlog", "mcp"],
-	"skills": "./skills/",
-	"agents": "./agents/",
-	"hooks": "./hooks/hooks.json",
-	"mcpServers": "./.mcp.json"
+	"skills": "./vault-assets/skills/",
+	"agents": ["./vault-assets/agents/til-fetcher.md"],
+	"hooks": "./vault-assets/plugin/hooks.json",
+	"mcpServers": "./vault-assets/plugin/mcp.json"
 }
