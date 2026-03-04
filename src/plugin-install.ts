@@ -1,20 +1,20 @@
 import type { FileStorage } from "./ports/storage";
 
 // esbuild의 text loader로 번들에 포함
-import tilSkill from "../vault-assets/skills/til/SKILL.md";
-import backlogSkill from "../vault-assets/skills/backlog/SKILL.md";
-import researchSkill from "../vault-assets/skills/research/SKILL.md";
-import saveSkill from "../vault-assets/skills/save/SKILL.md";
-import migrateLinksSkill from "../vault-assets/skills/migrate-links/SKILL.md";
-import dashboardSkill from "../vault-assets/skills/dashboard/SKILL.md";
-import setupPagesSkill from "../vault-assets/skills/setup-pages/SKILL.md";
-import omtSetupSkill from "../vault-assets/skills/omt-setup/SKILL.md";
-import tilReviewSkill from "../vault-assets/skills/til-review/SKILL.md";
+import tilSkill from "../skills/til/SKILL.md";
+import backlogSkill from "../skills/backlog/SKILL.md";
+import researchSkill from "../skills/research/SKILL.md";
+import saveSkill from "../skills/save/SKILL.md";
+import migrateLinksSkill from "../skills/migrate-links/SKILL.md";
+import dashboardSkill from "../skills/dashboard/SKILL.md";
+import setupPagesSkill from "../skills/setup-pages/SKILL.md";
+import omtSetupSkill from "../skills/omt-setup/SKILL.md";
+import tilReviewSkill from "../skills/til-review/SKILL.md";
 import claudeMdSection from "../vault-assets/claude-md-section.md";
 
-import tilFetcherAgent from "../vault-assets/agents/til-fetcher.md";
+import tilFetcherAgent from "../agents/til-fetcher.md";
 
-import notifyCompleteHook from "../vault-assets/hooks/notify-complete.sh";
+import notifyCompleteHook from "../hooks/notify-complete.sh";
 
 import {
 	resolveVersionPlaceholder,

@@ -258,8 +258,8 @@ cd "$WORKTREE_PATH" && npm test && npm run build
 | `src/obsidian/terminal/**` | 터미널 렌더링/PTY |
 | `src/mcp/server.ts`, `src/mcp/tools.ts` | MCP 서버 런타임 |
 | `src/obsidian/dashboard/**` | 대시보드 UI |
-| `vault-assets/skills/**` | 스킬 프롬프트 (Claude Code 동작) |
-| `vault-assets/rules/**` | 규칙 프롬프트 |
+| `skills/**` | 스킬 프롬프트 (Claude Code 동작) |
+| `rules/**` | 규칙 프롬프트 |
 | `styles.css` | UI 스타일 |
 
 해당 파일이 있으면:

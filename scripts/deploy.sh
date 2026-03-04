@@ -129,7 +129,7 @@ if [ "$REFRESH_SKILLS" = true ]; then
   echo "==> 스킬/규칙 파일 강제 재설치 중..."
   SKILLS_DIR="$VAULT_PATH/.claude/skills"
   RULES_DIR="$VAULT_PATH/.claude/rules"
-  ASSETS_DIR="$PROJECT_DIR/vault-assets"
+  ASSETS_DIR="$PROJECT_DIR"
   PLUGIN_VERSION=$(node -p "require('$PROJECT_DIR/manifest.json').version")
 
   # 기존 플러그인 관리 스킬 삭제 (plugin-version이 있는 파일만 자동 탐색)
@@ -161,7 +161,7 @@ if [ "$REFRESH_SKILLS" = true ]; then
     echo "    설치: $DEST_DIR/SKILL.md"
   done
 
-  # vault-assets/rules/ 에서 최신 규칙 설치 (디렉토리가 있을 때만)
+  # rules/ 에서 최신 규칙 설치 (디렉토리가 있을 때만)
   if [ -d "$ASSETS_DIR/rules" ]; then
     for RULE_SRC in "$ASSETS_DIR"/rules/*.md; do
       [ -f "$RULE_SRC" ] || continue
@@ -183,7 +183,7 @@ if [ "$REFRESH_SKILLS" = true ]; then
     done
   fi
 
-  # vault-assets/agents/ 에서 최신 에이전트 설치 (디렉토리가 있을 때만)
+  # agents/ 에서 최신 에이전트 설치 (디렉토리가 있을 때만)
   if [ -d "$ASSETS_DIR/agents" ]; then
     for AGENT_SRC in "$ASSETS_DIR"/agents/*.md; do
       [ -f "$AGENT_SRC" ] || continue

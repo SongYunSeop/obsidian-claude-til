@@ -1,6 +1,7 @@
 ---
-description: Obsidian vault에 Oh My TIL 플러그인을 설치하거나 업데이트합니다
-plugin-version: __PLUGIN_VERSION__
+name: setup-obsidian
+description: "Obsidian vault에 Oh My TIL 플러그인을 설치하거나 업데이트합니다"
+plugin-version: "__PLUGIN_VERSION__"
 ---
 
 # setup-obsidian

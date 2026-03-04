@@ -421,8 +421,8 @@ describe("cleanupOldSkills", () => {
 	});
 });
 
-describe("vault-assets/skills SKILL.md frontmatter 유효성", () => {
-	const skillsDir = join(__dirname, "..", "vault-assets", "skills");
+describe("skills/ SKILL.md frontmatter 유효성", () => {
+	const skillsDir = join(__dirname, "..", "skills");
 	const skillDirs = readdirSync(skillsDir, { withFileTypes: true })
 		.filter((d) => d.isDirectory())
 		.map((d) => d.name);

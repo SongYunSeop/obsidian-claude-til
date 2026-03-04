@@ -1,18 +1,18 @@
 {
-	"name": "oh-my-til",
-	"owner": {
-		"name": "SongYunSeop",
-		"email": "songyunseop@gmail.com"
-	},
-	"metadata": {
-		"description": "AI-powered TIL learning workflow plugin for Claude Code"
-	},
-	"plugins": [
-		{
-			"name": "oh-my-til",
-			"source": "./",
-			"description": "Claude Code 기반 TIL 학습 워크플로우 플러그인 — 리서치, 백로그, 간격 반복 복습, 대시보드",
-			"category": "learning"
-		}
-	]
+  "name": "oh-my-til",
+  "owner": {
+    "name": "SongYunSeop",
+    "email": "dbstjq91@gmail.com"
+  },
+  "metadata": {
+    "description": "AI-powered TIL learning workflow plugin for Claude Code"
+  },
+  "plugins": [
+    {
+      "name": "oh-my-til",
+      "source": "./",
+      "description": "Claude Code 기반 TIL 학습 워크플로우 플러그인 — 리서치, 백로그, 간격 반복 복습, 대시보드",
+      "category": "learning"
+    }
+  ]
 }
