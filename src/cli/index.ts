@@ -59,6 +59,7 @@ Config file (oh-my-til.json):
   { "deploy": { "title": "...", "subtitle": "...", "github": "..." } }
 
 Environment:
+  TIL_VAULT_PATH     TIL vault directory (fallback when no path argument given)
   ELECTRON_VERSION   Override Electron version for node-pty rebuild
 `);
 }
@@ -89,7 +90,10 @@ async function main(): Promise<void> {
 
 	const parsed = parseArgs(args.slice(1));
 	const rawPath = parsed.positional[0];
-	const basePath = path.resolve(rawPath ? expandTilde(rawPath) : process.cwd());
+	const envPath = process.env["TIL_VAULT_PATH"];
+	const basePath = path.resolve(
+		rawPath ? expandTilde(rawPath) : envPath ? expandTilde(envPath) : process.cwd(),
+	);
 	const tilPath = parsed.options["til-path"] ?? "til";
 	const port = parseInt(parsed.options["port"] ?? "22360", 10);
 

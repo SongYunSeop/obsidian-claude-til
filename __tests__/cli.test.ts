@@ -1,7 +1,10 @@
 import { describe, it, expect } from "vitest";
+import { execSync } from "child_process";
 import { parseArgs, expandTilde } from "../src/core/cli";
 import * as os from "os";
 import * as path from "path";
+
+const ROOT = path.resolve(__dirname, "..");
 
 describe("parseArgs", () => {
 	it("positional 인자와 options를 분리한다", () => {
@@ -93,5 +96,28 @@ describe("expandTilde", () => {
 
 	it("~user 형태는 확장하지 않는다", () => {
 		expect(expandTilde("~other/path")).toBe("~other/path");
+	});
+});
+
+describe("TIL_VAULT_PATH environment variable", () => {
+	it("TIL_VAULT_PATH가 설정되면 basePath로 사용된다", () => {
+		// init 커맨드에 경로 인수 없이, TIL_VAULT_PATH만 설정하면 해당 경로를 사용
+		// init은 디렉토리가 없으면 생성하므로 /tmp 하위를 사용
+		const vaultPath = "/tmp/test-til-vault-env";
+		const result = execSync(
+			`node dist/cli.js init 2>&1 || true`,
+			{ cwd: ROOT, encoding: "utf-8", env: { ...process.env, TIL_VAULT_PATH: vaultPath } },
+		);
+		expect(result).toContain(vaultPath);
+	});
+
+	it("명시적 경로 인수가 TIL_VAULT_PATH보다 우선한다", () => {
+		const explicitPath = "/tmp/test-til-explicit";
+		const result = execSync(
+			`node dist/cli.js init ${explicitPath} 2>&1 || true`,
+			{ cwd: ROOT, encoding: "utf-8", env: { ...process.env, TIL_VAULT_PATH: "/tmp/should-not-use" } },
+		);
+		expect(result).toContain(explicitPath);
+		expect(result).not.toContain("should-not-use");
 	});
 });
