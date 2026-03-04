@@ -248,8 +248,9 @@
           <h3>Claude Code Plugin</h3>
           <p>Skills, MCP server, and hooks auto-registered. Recommended.</p>
           <div class="code-block">
-            <pre><code><span class="c-comment"># Load as Claude Code plugin</span>
-claude --plugin-dir $(npx oh-my-til plugin-path)</code></pre>
+            <pre><code><span class="c-comment"># Add marketplace &amp; install plugin</span>
+claude plugin marketplace add https://github.com/SongYunSeop/oh-my-til.git --scope project
+claude plugin install oh-my-til@oh-my-til --scope project</code></pre>
           </div>
         </div>
         <div class="install-card">

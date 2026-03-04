@@ -39,11 +39,11 @@ Install directly as a Claude Code plugin — skills, MCP server, and hooks are a
 **Prerequisites:** [Node.js](https://nodejs.org) 18+ / [Claude Code](https://docs.anthropic.com/en/docs/claude-code) v1.0.33+
 
 ```bash
-# Load from npm
-claude --plugin-dir $(npx oh-my-til plugin-path)
+# Add marketplace (project scope recommended — only active in this TIL vault)
+claude plugin marketplace add https://github.com/SongYunSeop/oh-my-til.git --scope project
 
-# Or load from local clone
-claude --plugin-dir ./dist/claude-plugin
+# Install plugin
+claude plugin install oh-my-til@oh-my-til --scope project
 ```
 
 Skills are namespaced: `/oh-my-til:til`, `/oh-my-til:research`, `/oh-my-til:backlog`, etc.
@@ -178,7 +178,6 @@ The plugin auto-installs these skills to `.claude/skills/`:
 ```bash
 npm run dev              # Watch mode (esbuild)
 npm test                 # Run tests (vitest)
-npm run build:plugin     # Build Claude Code Plugin (dist/claude-plugin/)
 npm run rebuild-pty      # Rebuild node-pty for Obsidian's Electron
 npm run deploy -- /path  # Deploy to vault
 npm run deploy -- --refresh-skills /path  # Deploy with skill/rule refresh

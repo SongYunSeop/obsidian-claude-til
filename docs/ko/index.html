@@ -248,8 +248,9 @@
           <h3>Claude Code Plugin</h3>
           <p>스킬, MCP 서버, 훅 자동 등록. 권장 방법.</p>
           <div class="code-block">
-            <pre><code><span class="c-comment"># Claude Code 플러그인으로 로드</span>
-claude --plugin-dir $(npx oh-my-til plugin-path)</code></pre>
+            <pre><code><span class="c-comment"># marketplace 등록 &amp; 플러그인 설치</span>
+claude plugin marketplace add https://github.com/SongYunSeop/oh-my-til.git --scope project
+claude plugin install oh-my-til@oh-my-til --scope project</code></pre>
           </div>
         </div>
         <div class="install-card">

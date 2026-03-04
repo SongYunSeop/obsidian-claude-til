@@ -6,7 +6,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/notify-complete.sh",
+						"command": "bash ${CLAUDE_PLUGIN_ROOT}/vault-assets/hooks/notify-complete.sh",
 						"async": true
 					}
 				]
