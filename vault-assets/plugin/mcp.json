@@ -1,0 +1,7 @@
+{
+	"oh-my-til": {
+		"command": "npx",
+		"args": ["oh-my-til", "mcp"],
+		"env": {}
+	}
+}

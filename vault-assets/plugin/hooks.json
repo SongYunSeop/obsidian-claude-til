@@ -1,0 +1,16 @@
+{
+	"hooks": {
+		"Notification": [
+			{
+				"matcher": "idle_prompt",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/notify-complete.sh",
+						"async": true
+					}
+				]
+			}
+		]
+	}
+}

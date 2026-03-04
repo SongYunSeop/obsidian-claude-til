@@ -32,7 +32,23 @@ Command Palette → Open Terminal → Claude Code starts
 
 ## Installation
 
-### Option A: Standalone CLI (without Obsidian)
+### Option A: Claude Code Plugin (Recommended)
+
+Install directly as a Claude Code plugin — skills, MCP server, and hooks are auto-registered.
+
+**Prerequisites:** [Node.js](https://nodejs.org) 18+ / [Claude Code](https://docs.anthropic.com/en/docs/claude-code) v1.0.33+
+
+```bash
+# Load from npm
+claude --plugin-dir $(npx oh-my-til plugin-path)
+
+# Or load from local clone
+claude --plugin-dir ./dist/claude-plugin
+```
+
+Skills are namespaced: `/oh-my-til:til`, `/oh-my-til:research`, `/oh-my-til:backlog`, etc.
+
+### Option B: Standalone CLI (without Obsidian)
 
 No git clone needed. Just `npx`.
 
@@ -65,7 +81,7 @@ No git clone needed. Just `npx`.
 
 > **Tip:** You can also run `npx oh-my-til init` without a path to initialize the current directory.
 
-### Option B: Obsidian Plugin
+### Option C: Obsidian Plugin
 
 **Prerequisites:** [Obsidian](https://obsidian.md) v1.5.0+ / [Node.js](https://nodejs.org) 18+ / [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) (`claude`)
 
@@ -162,6 +178,7 @@ The plugin auto-installs these skills to `.claude/skills/`:
 ```bash
 npm run dev              # Watch mode (esbuild)
 npm test                 # Run tests (vitest)
+npm run build:plugin     # Build Claude Code Plugin (dist/claude-plugin/)
 npm run rebuild-pty      # Rebuild node-pty for Obsidian's Electron
 npm run deploy -- /path  # Deploy to vault
 npm run deploy -- --refresh-skills /path  # Deploy with skill/rule refresh

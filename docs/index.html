@@ -245,6 +245,14 @@
       <h2>Get started in seconds</h2>
       <div class="install-options">
         <div class="install-card">
+          <h3>Claude Code Plugin</h3>
+          <p>Skills, MCP server, and hooks auto-registered. Recommended.</p>
+          <div class="code-block">
+            <pre><code><span class="c-comment"># Load as Claude Code plugin</span>
+claude --plugin-dir $(npx oh-my-til plugin-path)</code></pre>
+          </div>
+        </div>
+        <div class="install-card">
           <h3>Standalone CLI</h3>
           <p>No Obsidian needed. Just Node.js and Claude Code.</p>
           <div class="code-block">
@@ -252,10 +260,7 @@
 npx oh-my-til init ~/my-til
 
 <span class="c-comment"># Start learning</span>
-cd ~/my-til && claude
-
-<span class="c-comment"># (Optional) MCP server</span>
-npx oh-my-til serve ~/my-til</code></pre>
+cd ~/my-til && claude</code></pre>
           </div>
         </div>
         <div class="install-card">
@@ -263,10 +268,7 @@ npx oh-my-til serve ~/my-til</code></pre>
           <p>Embedded terminal + file watcher + dashboard.</p>
           <div class="code-block">
             <pre><code><span class="c-comment"># Auto-installs plugin</span>
-npx oh-my-til init ~/vault
-
-<span class="c-comment"># Enable in Obsidian settings</span>
-<span class="c-comment"># Open terminal from palette</span></code></pre>
+npx oh-my-til init ~/vault</code></pre>
           </div>
         </div>
       </div>

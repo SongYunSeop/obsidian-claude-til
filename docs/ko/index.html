@@ -245,6 +245,14 @@
       <h2>몇 초 만에 시작하기</h2>
       <div class="install-options">
         <div class="install-card">
+          <h3>Claude Code Plugin</h3>
+          <p>스킬, MCP 서버, 훅 자동 등록. 권장 방법.</p>
+          <div class="code-block">
+            <pre><code><span class="c-comment"># Claude Code 플러그인으로 로드</span>
+claude --plugin-dir $(npx oh-my-til plugin-path)</code></pre>
+          </div>
+        </div>
+        <div class="install-card">
           <h3>독립 CLI</h3>
           <p>Obsidian 없이 사용. Node.js와 Claude Code만 있으면 됩니다.</p>
           <div class="code-block">
@@ -252,10 +260,7 @@
 npx oh-my-til init ~/my-til
 
 <span class="c-comment"># 학습 시작</span>
-cd ~/my-til && claude
-
-<span class="c-comment"># (선택) MCP 서버</span>
-npx oh-my-til serve ~/my-til</code></pre>
+cd ~/my-til && claude</code></pre>
           </div>
         </div>
         <div class="install-card">
@@ -263,10 +268,7 @@ npx oh-my-til serve ~/my-til</code></pre>
           <p>임베디드 터미널 + 파일 감시 + 대시보드.</p>
           <div class="code-block">
             <pre><code><span class="c-comment"># 플러그인 자동 설치</span>
-npx oh-my-til init ~/vault
-
-<span class="c-comment"># Obsidian 설정에서 활성화</span>
-<span class="c-comment"># 커맨드 팔레트로 터미널 열기</span></code></pre>
+npx oh-my-til init ~/vault</code></pre>
           </div>
         </div>
       </div>
