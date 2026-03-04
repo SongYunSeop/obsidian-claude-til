@@ -1,5 +1,17 @@
 {
 	"hooks": {
+		"SessionStart": [
+			{
+				"matcher": "",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "bash ${CLAUDE_PLUGIN_ROOT}/vault-assets/hooks/check-obsidian.sh",
+						"async": true
+					}
+				]
+			}
+		],
 		"Notification": [
 			{
 				"matcher": "idle_prompt",
