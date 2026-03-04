@@ -33,6 +33,7 @@ Usage:
   oh-my-til init [<path>] [options]    Install skills, rules, and CLAUDE.md
   oh-my-til serve [<path>] [options]   Start MCP server (HTTP)
   oh-my-til mcp [<path>] [options]     Start MCP server (stdio)
+  oh-my-til install-obsidian [<path>]   Install Obsidian desktop plugin only
   oh-my-til deploy [<path>] [options]  Generate static site from TIL files
   oh-my-til version                    Print version
 
@@ -178,6 +179,31 @@ async function main(): Promise<void> {
 		console.log(`MCP server running on http://localhost:${port}/mcp`);
 		console.log(`TIL path: ${tilPath}`);
 		console.log("Press Ctrl+C to stop");
+	} else if (command === "install-obsidian") {
+		const obsidianDir = path.join(basePath, ".obsidian");
+		if (!fs.existsSync(obsidianDir)) {
+			console.error("No .obsidian/ folder found. Run this command inside an Obsidian vault.");
+			process.exit(1);
+		}
+		console.log("Installing Obsidian plugin...");
+		const packageRoot = path.resolve(__dirname, "..");
+		const result = installObsidianPlugin(basePath, packageRoot);
+		if (result.success) {
+			console.log(`Plugin installed: ${result.pluginDir}`);
+			if (result.rebuilt) {
+				console.log("node-pty rebuilt for Electron.");
+			}
+			for (const w of result.warnings) {
+				console.warn(`Warning: ${w}`);
+			}
+			console.log("Restart Obsidian or reload the plugin to activate.");
+		} else {
+			console.error("Plugin installation failed:");
+			for (const w of result.warnings) {
+				console.error(`  ${w}`);
+			}
+			process.exit(1);
+		}
 	} else if (command === "deploy") {
 		const { loadOmtConfig } = await import("../core/config");
 		const omtConfig = loadOmtConfig(basePath);

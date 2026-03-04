@@ -206,7 +206,7 @@ src/
 │   └── tools.ts             # MCP tool definitions (FileStorage + MetadataProvider)
 ├── plugin-install.ts        # Plugin asset auto-install/update (skills, agents, CLAUDE.md section)
 ├── cli/                     # Standalone CLI entry point
-│   ├── index.ts             # npx oh-my-til init / serve / mcp / deploy
+│   ├── index.ts             # npx oh-my-til init / serve / mcp / install-obsidian / deploy
 │   └── obsidian-install.ts  # Auto-install Obsidian plugin (Electron detection, node-pty rebuild)
 └── obsidian/                # Obsidian platform adapter
     ├── main.ts              # Plugin entry point

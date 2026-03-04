@@ -18,8 +18,10 @@ Install or update the Oh My TIL Obsidian plugin in the current directory.
 Run the following command:
 
 ```bash
-npx oh-my-til init "$(pwd)"
+npx oh-my-til install-obsidian "$(pwd)"
 ```
+
+This installs **only** the Obsidian desktop plugin (main.js, manifest.json, styles.css, node-pty). It does NOT install skills, agents, or CLAUDE.md — those are managed by the Claude Code Plugin.
 
 ## After Completion
 
