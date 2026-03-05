@@ -97,14 +97,14 @@ export class FsStorage implements FileStorage {
 	}
 }
 
-/** scanLinks 결과 캐시 (동일 MCP 요청 내 중복 스캔 방지) */
+/** Cached scanLinks result to avoid duplicate scans within the same MCP request */
 interface LinkScanCache {
 	resolved: Record<string, Record<string, number>>;
 	unresolved: Record<string, Record<string, number>>;
 	expiresAt: number;
 }
 
-const LINK_SCAN_TTL_MS = 5_000; // 5초 TTL
+const LINK_SCAN_TTL_MS = 5_000; // 5s TTL
 
 export class FsMetadata implements MetadataProvider {
 	private readonly resolvedBase: string;
@@ -156,9 +156,9 @@ export class FsMetadata implements MetadataProvider {
 	}
 
 	/**
-	 * 전체 md 파일을 스캔하여 resolved/unresolved links를 구축한다.
-	 * resolved: source → { target → count } (target 파일이 존재)
-	 * unresolved: source → { linkName → count } (target 파일이 존재하지 않음)
+	 * Scan all md files to build resolved/unresolved link maps.
+	 * resolved: source → { target → count } (target file exists)
+	 * unresolved: source → { linkName → count } (target file does not exist)
 	 */
 	private async scanLinks(): Promise<{
 		resolved: Record<string, Record<string, number>>;
@@ -167,7 +167,7 @@ export class FsMetadata implements MetadataProvider {
 		const files = await this.storage.listFiles();
 		const mdFiles = files.filter((f) => f.extension === "md");
 		const existingPaths = new Set(files.map((f) => f.path));
-		// .md 확장자 없는 경로도 매칭할 수 있도록 확장자 제거 버전도 등록
+		// Also register paths without .md extension for matching
 		const existingPathsNoExt = new Set<string>();
 		for (const f of files) {
 			if (f.extension === "md") {
@@ -188,10 +188,10 @@ export class FsMetadata implements MetadataProvider {
 			const sourceDir = file.path.substring(0, file.path.lastIndexOf("/"));
 
 			for (const link of links) {
-				// 외부 URL은 건너뜀
+				// Skip external URLs
 				if (link.startsWith("http://") || link.startsWith("https://")) continue;
 
-				// 링크 resolve: 상대 경로 → 절대 경로
+				// Resolve link: relative path → absolute path
 				const targetCandidates = this.resolveLinkTarget(link, sourceDir);
 				let resolvedTarget: string | null = null;
 
@@ -206,7 +206,7 @@ export class FsMetadata implements MetadataProvider {
 					if (!resolved[file.path]) resolved[file.path] = {};
 					resolved[file.path]![resolvedTarget] = (resolved[file.path]![resolvedTarget] ?? 0) + 1;
 				} else {
-					// wikilink 이름 또는 링크 경로를 키로 사용
+					// Use wikilink name or link path as key
 					const linkName = link.replace(/\.md$/, "").split("/").pop()!;
 					if (!unresolved[file.path]) unresolved[file.path] = {};
 					unresolved[file.path]![linkName] = (unresolved[file.path]![linkName] ?? 0) + 1;
@@ -218,24 +218,24 @@ export class FsMetadata implements MetadataProvider {
 	}
 
 	/**
-	 * 링크 문자열로부터 파일 경로 후보를 생성한다.
+	 * Generate file path candidates from a link string.
 	 */
 	private resolveLinkTarget(link: string, sourceDir: string): string[] {
 		const candidates: string[] = [];
 
-		// anchor fragment 제거
+		// Strip anchor fragment
 		const cleanLink = link.split("#")[0]!;
 		if (!cleanLink) return candidates;
 
 		if (cleanLink.startsWith("/")) {
-			// 절대 경로
+			// Absolute path
 			const abs = cleanLink.slice(1);
 			candidates.push(abs);
 			if (!abs.endsWith(".md")) candidates.push(abs + ".md");
 		} else if (cleanLink.includes("/")) {
-			// 상대 경로 (슬래시 포함)
+			// Relative path (contains slash)
 			const resolved = sourceDir ? `${sourceDir}/${cleanLink}` : cleanLink;
-			// path.normalize 상당의 간단한 정규화
+			// Simple normalization (equivalent to path.normalize)
 			const normalized = resolved.split("/").reduce<string[]>((acc, seg) => {
 				if (seg === "..") acc.pop();
 				else if (seg !== ".") acc.push(seg);
@@ -243,11 +243,11 @@ export class FsMetadata implements MetadataProvider {
 			}, []).join("/");
 			candidates.push(normalized);
 			if (!normalized.endsWith(".md")) candidates.push(normalized + ".md");
-			// 루트 기준으로도 시도
+			// Also try from root
 			candidates.push(cleanLink);
 			if (!cleanLink.endsWith(".md")) candidates.push(cleanLink + ".md");
 		} else {
-			// wikilink 또는 단순 이름: 같은 디렉토리 → 루트 기준
+			// Wikilink or plain name: same directory → root
 			if (sourceDir) {
 				candidates.push(`${sourceDir}/${cleanLink}`);
 				if (!cleanLink.endsWith(".md")) candidates.push(`${sourceDir}/${cleanLink}.md`);
