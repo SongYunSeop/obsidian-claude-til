@@ -1,7 +1,7 @@
 import { App, TFile, EventRef } from "obsidian";
 
 /**
- * til/ 폴더 아래에 새 .md 파일이 생성되면 에디터에서 자동으로 여는 watcher.
+ * Watches for new .md files created under the til/ folder and auto-opens them in the editor.
  */
 export class TILWatcher {
 	private app: App;
@@ -19,7 +19,7 @@ export class TILWatcher {
 			if (!file.path.startsWith(this.tilPath + "/")) return;
 			if (file.extension !== "md") return;
 
-			// 약간의 지연 후 열기 (파일 쓰기 완료 대기)
+			// Delay slightly to wait for file write to complete
 			setTimeout(() => {
 				const leaf = this.app.workspace.getLeaf(false);
 				leaf.openFile(file);

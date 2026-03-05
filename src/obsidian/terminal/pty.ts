@@ -13,8 +13,8 @@ export interface PtyOptions {
 }
 
 /**
- * node-pty를 electronRequire로 로드하여 PTY 프로세스를 생성/관리한다.
- * 플러그인 디렉토리의 node_modules/node-pty를 우선 시도하고, 실패 시 글로벌 fallback.
+ * Loads node-pty via electronRequire and manages PTY processes.
+ * Tries the plugin directory's node_modules/node-pty first, falls back to global.
  */
 export function loadNodePty(app: App): typeof import("node-pty") {
 	const adapter = app.vault.adapter as FileSystemAdapter;

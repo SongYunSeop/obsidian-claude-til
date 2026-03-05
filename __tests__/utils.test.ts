@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { DEFAULT_SETTINGS } from "../src/obsidian/settings";
 
 describe("DEFAULT_SETTINGS", () => {
-	it("기본값이 올바르게 정의되어 있다", () => {
+	it("default values are correctly defined", () => {
 		expect(DEFAULT_SETTINGS.autoLaunchClaude).toBe(true);
 		expect(DEFAULT_SETTINGS.resumeLastSession).toBe(false);
 		expect(DEFAULT_SETTINGS.fontSize).toBe(13);
@@ -14,7 +14,7 @@ describe("DEFAULT_SETTINGS", () => {
 		expect(DEFAULT_SETTINGS.claudeArgs).toBe("");
 	});
 
-	it("shellPath가 문자열이다", () => {
+	it("shellPath is a string", () => {
 		expect(typeof DEFAULT_SETTINGS.shellPath).toBe("string");
 		expect(DEFAULT_SETTINGS.shellPath.length).toBeGreaterThan(0);
 	});

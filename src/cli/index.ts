@@ -208,7 +208,7 @@ async function main(): Promise<void> {
 		const { loadOmtConfig } = await import("../core/config");
 		const omtConfig = loadOmtConfig(basePath);
 		const dc = omtConfig.deploy ?? {};
-		// CLI 옵션이 설정 파일보다 우선
+		// CLI options take precedence over config file values
 		const deployTilPath = parsed.options["til-path"] ?? dc["til-path"] ?? tilPath;
 		const outDir = parsed.options["out"] ?? dc.out ?? "_site";
 		const siteTitle = parsed.options["title"] ?? dc.title ?? "TIL";
@@ -219,7 +219,7 @@ async function main(): Promise<void> {
 		const metadata = new FsMetadata(basePath);
 		const files = await storage.listFiles();
 
-		// tilPath 하위 .md 파일 수집 (backlog.md 제외)
+		// Collect .md files under tilPath (excluding backlog.md)
 		const tilFiles = files.filter((f) => {
 			if (!f.path.startsWith(deployTilPath + "/")) return false;
 			if (f.extension !== "md") return false;
@@ -232,22 +232,22 @@ async function main(): Promise<void> {
 			process.exit(0);
 		}
 
-		// 존재하는 TIL 파일 경로 Set (missing-link 판별용)
+		// Set of existing TIL file paths (used to detect missing links)
 		const existingTilPaths = new Set(tilFiles.map((f) => f.path));
 
 		const config: ProfileConfig = {
 			title: siteTitle,
-			description: "", // generated 카운트 확정 후 설정
+			description: "", // set after generated count is finalized
 			githubUrl,
 			subtitle,
 		};
 
-		// 카테고리별 데이터 수집
+		// Collect per-category data
 		const categoryMap = new Map<string, CategoryPageData["tils"]>();
 		const statsEntries: EnhancedStatsFileEntry[] = [];
 		let generated = 0;
 
-		// 1차: 데이터 수집 (카테고리 맵, 히트맵 엔트리, 페이지 데이터)
+		// Pass 1: data collection (category map, heatmap entries, page data)
 		const tilPageEntries: Array<{
 			title: string; category: string; slug: string;
 			createdDate: string; contentHtml: string; summary: string;
@@ -259,7 +259,7 @@ async function main(): Promise<void> {
 
 			const meta = await metadata.getFileMetadata(file.path);
 
-			// 태그 필터링: tags:til 필수, tags:moc 제외 (Dashboard와 동일)
+			// Tag filtering: tags:til required, tags:moc excluded (same as Dashboard)
 			const fmTags = meta?.frontmatter?.["tags"];
 			const tags: string[] = Array.isArray(fmTags) ? fmTags.filter((t: unknown) => typeof t === "string") : [];
 			if (!tags.includes("til")) continue;
@@ -294,7 +294,7 @@ async function main(): Promise<void> {
 			});
 		}
 
-		// 2차: 개별 TIL 페이지 생성 (같은 카테고리의 다른 TIL 포함)
+		// Pass 2: generate individual TIL pages (including sibling TILs in the same category)
 		for (const entry of tilPageEntries) {
 			const siblings = categoryMap.get(entry.category) ?? [];
 			const relatedTils = siblings
@@ -310,26 +310,26 @@ async function main(): Promise<void> {
 			generated++;
 		}
 
-		// 카테고리 인덱스 페이지 생성
+		// Generate category index pages
 		for (const [category, tils] of categoryMap) {
-			// 날짜 역순 정렬
+			// Sort by date descending
 			tils.sort((a, b) => b.createdDate.localeCompare(a.createdDate));
 			const catHtml = generateCategoryIndexHtml({ category, tils }, config);
 			await storage.writeFile(path.join(outDir, category, "index.html"), catHtml);
 		}
 
-		// 히트맵 데이터 계산 (statsEntries는 이미 TIL 파일만 포함하므로 _prefilteredFiles로 전달)
+		// Compute heatmap data (statsEntries already contains only TIL files, so pass as _prefilteredFiles)
 		const heatmapData = computeHeatmapData(statsEntries, deployTilPath, undefined, statsEntries);
 		const streak = computeStreak(statsEntries, deployTilPath, undefined, statsEntries);
 		const heatmapHtml = renderHeatmapHtml(heatmapData.cells, streak, generated);
 
-		// This Week 카운트: 최근 7일 내 생성된 TIL 수
+		// This Week count: number of TILs created within the last 7 days
 		const oneWeekAgo = new Date();
 		oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 		const oneWeekAgoStr = oneWeekAgo.toISOString().slice(0, 10);
 		const thisWeekCount = statsEntries.filter((e) => (e.createdDate ?? "") >= oneWeekAgoStr).length;
 
-		// 최근 5개 TIL (createdDate 역순)
+		// Most recent 5 TILs (sorted by createdDate descending)
 		const allTilsSorted = Array.from(categoryMap.entries()).flatMap(([cat, tils]) =>
 			tils.map((t) => ({ ...t, category: cat })),
 		);
@@ -342,7 +342,7 @@ async function main(): Promise<void> {
 			summary: t.summary,
 		}));
 
-		// 프로필 페이지 생성 (전체 TIL 목록 + 히트맵 + 요약 카드 + 최근 TIL 포함)
+		// Generate profile page (includes full TIL list + heatmap + summary cards + recent TILs)
 		config.description = `${generated} TILs`;
 		const allCategories: CategoryTilGroup[] = Array.from(categoryMap.entries())
 			.map(([name, tils]) => ({ name, tils }))

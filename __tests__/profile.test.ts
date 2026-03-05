@@ -17,7 +17,7 @@ const config: ProfileConfig = {
 };
 
 describe("getProfileCss", () => {
-	it("CSS 문자열을 반환한다", () => {
+	it("returns a CSS string", () => {
 		const css = getProfileCss();
 		expect(css).toContain("--bg-primary");
 		expect(css).toContain("--accent");
@@ -33,39 +33,39 @@ describe("generateTilPageHtml", () => {
 		contentHtml: "<h2>Introduction</h2><p>Hello world</p>",
 	};
 
-	it("완전한 HTML 문서를 반환한다", () => {
+	it("returns a complete HTML document", () => {
 		const html = generateTilPageHtml(data, config);
 		expect(html).toContain("<!DOCTYPE html>");
 		expect(html).toContain("</html>");
 	});
 
-	it("제목을 포함한다", () => {
+	it("includes the title", () => {
 		const html = generateTilPageHtml(data, config);
 		expect(html).toContain("Async Await Patterns");
 		expect(html).toContain("<title>Async Await Patterns — My TIL</title>");
 	});
 
-	it("카테고리 뱃지를 포함한다", () => {
+	it("includes category badge", () => {
 		const html = generateTilPageHtml(data, config);
 		expect(html).toContain('class="badge"');
 		expect(html).toContain("typescript");
 	});
 
-	it("날짜를 포함한다", () => {
+	it("includes the date", () => {
 		const html = generateTilPageHtml(data, config);
 		expect(html).toContain("2025-01-15");
 	});
 
-	it("본문 HTML을 포함한다", () => {
+	it("includes body HTML", () => {
 		const html = generateTilPageHtml(data, config);
 		expect(html).toContain("<h2>Introduction</h2>");
 		expect(html).toContain("<p>Hello world</p>");
 	});
 
-	it("breadcrumb 네비게이션을 포함한다", () => {
+	it("includes breadcrumb navigation", () => {
 		const html = generateTilPageHtml(data, config);
 		expect(html).toContain('class="breadcrumb"');
-		// TIL 페이지는 {category}/{slug}.html에 위치하므로 홈은 ../index.html, 카테고리는 index.html
+		// TIL pages are located at {category}/{slug}.html, so home is ../index.html and category is index.html
 		expect(html).toContain('href="../index.html"');
 		expect(html).toContain('href="index.html"');
 	});
@@ -92,13 +92,13 @@ describe("generateCategoryIndexHtml", () => {
 		],
 	};
 
-	it("카테고리 이름을 포함한다", () => {
+	it("includes category name", () => {
 		const html = generateCategoryIndexHtml(data, config);
 		expect(html).toContain("typescript");
 		expect(html).toContain("2 TILs");
 	});
 
-	it("TIL 목록 링크를 포함한다", () => {
+	it("includes TIL list links", () => {
 		const html = generateCategoryIndexHtml(data, config);
 		expect(html).toContain("async-patterns.html");
 		expect(html).toContain("Async Patterns");
@@ -106,18 +106,18 @@ describe("generateCategoryIndexHtml", () => {
 		expect(html).toContain("Generics");
 	});
 
-	it("요약을 포함한다", () => {
+	it("includes summary", () => {
 		const html = generateCategoryIndexHtml(data, config);
 		expect(html).toContain("Learn async/await");
 	});
 
-	it("날짜를 포함한다", () => {
+	it("includes dates", () => {
 		const html = generateCategoryIndexHtml(data, config);
 		expect(html).toContain("2025-01-15");
 		expect(html).toContain("2025-01-10");
 	});
 
-	it("breadcrumb을 포함한다", () => {
+	it("includes breadcrumb", () => {
 		const html = generateCategoryIndexHtml(data, config);
 		expect(html).toContain("../index.html");
 	});
@@ -140,7 +140,7 @@ describe("renderAllTilsHtml", () => {
 		},
 	];
 
-	it("카테고리별 접이식 그룹을 생성한다", () => {
+	it("generates collapsible groups per category", () => {
 		const html = renderAllTilsHtml(categories);
 		expect(html).toContain("<details");
 		expect(html).toContain("<summary>");
@@ -148,31 +148,31 @@ describe("renderAllTilsHtml", () => {
 		expect(html).toContain("rust");
 	});
 
-	it("각 카테고리의 TIL 수를 표시한다", () => {
+	it("displays TIL count per category", () => {
 		const html = renderAllTilsHtml(categories);
 		expect(html).toContain("(2)");
 		expect(html).toContain("(1)");
 	});
 
-	it("전체 TIL 수를 표시한다", () => {
+	it("displays total TIL count", () => {
 		const html = renderAllTilsHtml(categories);
 		expect(html).toContain("All TILs (3)");
 	});
 
-	it("각 TIL에 올바른 링크를 생성한다", () => {
+	it("generates correct links for each TIL", () => {
 		const html = renderAllTilsHtml(categories);
 		expect(html).toContain("typescript/async.html");
 		expect(html).toContain("typescript/generics.html");
 		expect(html).toContain("rust/ownership.html");
 	});
 
-	it("빈 카테고리 배열은 빈 문자열을 반환한다", () => {
+	it("returns empty string for empty category array", () => {
 		expect(renderAllTilsHtml([])).toBe("");
 	});
 });
 
 describe("renderSummaryCardsHtml", () => {
-	it("4개의 카드를 렌더링한다", () => {
+	it("renders 4 cards", () => {
 		const html = renderSummaryCardsHtml(42, 5, 3, 7);
 		expect(html).toContain("summary-cards");
 		expect(html).toContain("42");
@@ -181,7 +181,7 @@ describe("renderSummaryCardsHtml", () => {
 		expect(html).toContain("7");
 	});
 
-	it("카드 레이블을 포함한다", () => {
+	it("includes card labels", () => {
 		const html = renderSummaryCardsHtml(0, 0, 0, 0);
 		expect(html).toContain("Total TILs");
 		expect(html).toContain("Categories");
@@ -189,7 +189,7 @@ describe("renderSummaryCardsHtml", () => {
 		expect(html).toContain("Streak");
 	});
 
-	it("0 값을 올바르게 표시한다", () => {
+	it("correctly displays 0 values", () => {
 		const html = renderSummaryCardsHtml(0, 0, 0, 0);
 		expect(html).toContain("card-value");
 	});
@@ -201,7 +201,7 @@ describe("renderRecentTilsHtml", () => {
 		{ title: "Ownership", slug: "ownership", category: "rust", createdDate: "2025-01-12", summary: "" },
 	];
 
-	it("최근 TIL 카드를 렌더링한다", () => {
+	it("renders recent TIL cards", () => {
 		const html = renderRecentTilsHtml(recent);
 		expect(html).toContain("recent-tils-section");
 		expect(html).toContain("Recent TILs");
@@ -209,25 +209,25 @@ describe("renderRecentTilsHtml", () => {
 		expect(html).toContain("Ownership");
 	});
 
-	it("카테고리 뱃지를 포함한다", () => {
+	it("includes category badges", () => {
 		const html = renderRecentTilsHtml(recent);
 		expect(html).toContain('class="badge"');
 		expect(html).toContain("typescript");
 		expect(html).toContain("rust");
 	});
 
-	it("올바른 링크를 생성한다", () => {
+	it("generates correct links", () => {
 		const html = renderRecentTilsHtml(recent);
 		expect(html).toContain("typescript/async-patterns.html");
 		expect(html).toContain("rust/ownership.html");
 	});
 
-	it("요약이 있으면 표시한다", () => {
+	it("displays summary when present", () => {
 		const html = renderRecentTilsHtml(recent);
 		expect(html).toContain("Learn async/await");
 	});
 
-	it("요약이 없으면 recent-til-summary를 생략한다", () => {
+	it("omits recent-til-summary when no summary", () => {
 		const noSummary: RecentTilEntry[] = [
 			{ title: "Ownership", slug: "ownership", category: "rust", createdDate: "2025-01-12", summary: "" },
 		];
@@ -235,13 +235,13 @@ describe("renderRecentTilsHtml", () => {
 		expect(html).not.toContain("recent-til-summary");
 	});
 
-	it("빈 배열은 빈 문자열을 반환한다", () => {
+	it("returns empty string for empty array", () => {
 		expect(renderRecentTilsHtml([])).toBe("");
 	});
 });
 
 describe("generateProfileHtml", () => {
-	it("프로필 페이지를 생성한다", () => {
+	it("generates a profile page", () => {
 		const html = generateProfileHtml(config, "<div>cards</div>", "<div>heatmap</div>", "<div>recent</div>", "<div>tils</div>");
 		expect(html).toContain("<!DOCTYPE html>");
 		expect(html).toContain("My TIL");
@@ -252,18 +252,18 @@ describe("generateProfileHtml", () => {
 		expect(html).toContain("<div>tils</div>");
 	});
 
-	it("GitHub 링크를 포함한다", () => {
+	it("includes GitHub link", () => {
 		const html = generateProfileHtml(config, "", "", "", "");
 		expect(html).toContain("https://github.com/test");
 	});
 
-	it("GitHub URL이 없으면 링크를 생략한다", () => {
+	it("omits link when no GitHub URL", () => {
 		const noGithub: ProfileConfig = { title: "TIL", description: "desc" };
 		const html = generateProfileHtml(noGithub, "", "", "", "");
 		expect(html).not.toContain("GitHub</a>");
 	});
 
-	it("oh-my-til 링크를 포함한다", () => {
+	it("includes oh-my-til link", () => {
 		const html = generateProfileHtml(config, "", "", "", "");
 		expect(html).toContain("oh-my-til");
 	});

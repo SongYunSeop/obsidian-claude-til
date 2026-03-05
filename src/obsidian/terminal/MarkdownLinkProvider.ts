@@ -10,22 +10,22 @@ import type {
 } from "@xterm/xterm";
 
 export interface MarkdownLinkMatch {
-	/** 전체 매치 텍스트 (예: "[text](path.md)") */
+	/** Full match text (e.g. "[text](path.md)") */
 	fullMatch: string;
-	/** 링크 경로 (예: "til/typescript/generics.md") — () 안 */
+	/** Link path (e.g. "til/typescript/generics.md") — inside () */
 	linkText: string;
-	/** 표시 텍스트 (예: "제네릭 정리") — [] 안 */
+	/** Display text (e.g. "Generics Summary") — inside [] */
 	displayText: string;
-	/** 매치 시작 인덱스 (0-based) */
+	/** Match start index (0-based) */
 	startIndex: number;
-	/** 매치 끝 인덱스 (exclusive, 0-based) */
+	/** Match end index (exclusive, 0-based) */
 	endIndex: number;
 }
 
 /**
- * 텍스트에서 표준 마크다운 링크 `[text](path)`를 찾아 반환한다.
- * 이미지 문법 `![alt](img)` 는 제외한다.
- * 순수 함수 — 부수효과 없음, 단위 테스트 가능.
+ * Finds and returns standard markdown links `[text](path)` in the given text.
+ * Excludes image syntax `![alt](img)`.
+ * Pure function — no side effects, unit-testable.
  */
 export function findMarkdownLinks(text: string): MarkdownLinkMatch[] {
 	const regex = /(?<!!)\[([^\[\]]*)\]\(([^()]+)\)/g;
@@ -49,7 +49,7 @@ export function findMarkdownLinks(text: string): MarkdownLinkMatch[] {
 }
 
 /**
- * CJK/전각 문자 여부를 판별한다. (터미널에서 2셀 너비)
+ * Checks if a character is CJK/fullwidth (occupies 2 cells in terminal).
  */
 export function isFullWidth(code: number): boolean {
 	return (
@@ -70,8 +70,8 @@ export function isFullWidth(code: number): boolean {
 }
 
 /**
- * 문자열의 charIndex까지의 터미널 셀 너비를 계산한다.
- * 한글 등 전각 문자는 2셀, ASCII는 1셀.
+ * Calculates the terminal cell width up to charIndex in the string.
+ * CJK/fullwidth characters count as 2 cells, ASCII as 1.
  */
 export function cellWidth(text: string, charIndex: number): number {
 	let width = 0;
@@ -84,20 +84,20 @@ export function cellWidth(text: string, charIndex: number): number {
 }
 
 export interface FilepathMatch {
-	/** 전체 매치 텍스트 (예: "til/datadog/backlog.md") */
+	/** Full match text (e.g. "til/datadog/backlog.md") */
 	fullMatch: string;
-	/** 파일 경로 — fullMatch와 동일 */
+	/** File path — same as fullMatch */
 	filePath: string;
-	/** 매치 시작 인덱스 (0-based) */
+	/** Match start index (0-based) */
 	startIndex: number;
-	/** 매치 끝 인덱스 (exclusive, 0-based) */
+	/** Match end index (exclusive, 0-based) */
 	endIndex: number;
 }
 
 /**
- * 텍스트에서 TIL 파일 경로 패턴 `til/category/slug.md`를 찾아 반환한다.
- * 마크다운 링크의 () 안에 있는 경로는 제외한다 (MarkdownLinkProvider가 처리).
- * 순수 함수 — 부수효과 없음, 단위 테스트 가능.
+ * Finds TIL file path patterns `til/category/slug.md` in text.
+ * Excludes paths inside markdown link parentheses (handled by MarkdownLinkProvider).
+ * Pure function — no side effects, unit-testable.
  */
 export function findTilFilePaths(text: string): FilepathMatch[] {
 	const regex = /(?<!\()til\/[\w가-힣-]+(?:\/[\w가-힣-]+)*\.md/g;
@@ -117,9 +117,9 @@ export function findTilFilePaths(text: string): FilepathMatch[] {
 }
 
 /**
- * OSC 8 하이퍼링크 URI에서 vault 상대 경로를 추출한다.
+ * Extracts a vault-relative path from an OSC 8 hyperlink URI.
  * file:///absolute/path/to/vault/til/topic/file.md → til/topic/file.md
- * 순수 함수 — 부수효과 없음, 단위 테스트 가능.
+ * Pure function — no side effects, unit-testable.
  */
 export function parseOsc8Uri(uri: string, vaultPath: string): string | null {
 	let filePath: string;
@@ -129,7 +129,7 @@ export function parseOsc8Uri(uri: string, vaultPath: string): string | null {
 	} else if (uri.startsWith("/")) {
 		filePath = uri;
 	} else {
-		// 상대 경로 (til/xxx/yyy.md 등)
+		// Relative path (til/xxx/yyy.md etc.)
 		return uri;
 	}
 
@@ -147,9 +147,9 @@ const LINK_DECORATIONS: ILinkDecorations = {
 };
 
 /**
- * xterm.js ILinkProvider 구현.
- * 터미널 버퍼에서 `til/category/slug.md` 파일 경로를 감지하고,
- * vault에 실제 존재하는 파일만 클릭 가능한 링크로 만든다.
+ * xterm.js ILinkProvider implementation.
+ * Detects `til/category/slug.md` file paths in the terminal buffer
+ * and turns them into clickable links (creates file on click if missing).
  */
 export class FilepathLinkProvider implements ILinkProvider {
 	private terminal: Terminal;
@@ -177,7 +177,7 @@ export class FilepathLinkProvider implements ILinkProvider {
 			return;
 		}
 
-		// 파일 존재 여부와 무관하게 링크를 만든다 (없는 파일은 클릭 시 생성)
+		// Create links regardless of file existence (missing files created on click)
 		const links: ILink[] = matches
 			.map((m) => ({
 				range: {
@@ -199,9 +199,9 @@ export class FilepathLinkProvider implements ILinkProvider {
 }
 
 /**
- * xterm.js ILinkProvider 구현.
- * 터미널 버퍼에서 `[text](path)` 마크다운 링크를 감지하고,
- * 클릭 시 Obsidian에서 해당 노트를 연다.
+ * xterm.js ILinkProvider implementation.
+ * Detects `[text](path)` markdown links in the terminal buffer
+ * and opens the corresponding note in Obsidian on click.
  */
 export class MarkdownLinkProvider implements ILinkProvider {
 	private terminal: Terminal;
@@ -214,7 +214,7 @@ export class MarkdownLinkProvider implements ILinkProvider {
 		bufferLineNumber: number,
 		callback: (links: ILink[] | undefined) => void,
 	): void {
-		// 터미널의 buffer에서 해당 줄의 텍스트를 가져온다
+		// Get the text of the line from the terminal buffer
 		const buffer = this.terminal.buffer.active;
 		const line: IBufferLine | undefined = buffer.getLine(bufferLineNumber - 1);
 		if (!line) {
@@ -238,7 +238,7 @@ export class MarkdownLinkProvider implements ILinkProvider {
 			text: m.fullMatch,
 			decorations: LINK_DECORATIONS,
 			activate: () => {
-				// .md 확장자 제거 후 Obsidian에 전달
+				// Strip .md extension before passing to Obsidian
 				const pathWithoutExt = m.linkText.replace(/\.md$/, "");
 				const resolved = this.app.metadataCache.getFirstLinkpathDest(pathWithoutExt, "");
 				const linkPath = resolved ? resolved.path : pathWithoutExt;
@@ -252,21 +252,21 @@ export class MarkdownLinkProvider implements ILinkProvider {
 
 interface Osc8MarkerEntry {
 	marker: IMarker;
-	/** 시작 열 (0-based) */
+	/** Start column (0-based) */
 	startCol: number;
-	/** 끝 열 (0-based, exclusive) */
+	/** End column (0-based, exclusive) */
 	endCol: number;
 	/** OSC 8 URI */
 	url: string;
 }
 
 /**
- * xterm.js ILinkProvider 구현.
- * terminal.parser.registerOscHandler(8, ...)로 OSC 8 시퀀스를 직접 추적하고,
- * IMarker 기반 위치 추적으로 버퍼 스크롤/트리밍에도 정확한 좌표를 유지한다.
+ * xterm.js ILinkProvider implementation.
+ * Tracks OSC 8 sequences via terminal.parser.registerOscHandler(8, ...),
+ * using IMarker-based position tracking for accurate coordinates across buffer scroll/trimming.
  *
- * xterm.js 내장 OSC 8 linkHandler가 Electron 환경에서 activate를 호출하지 않는
- * 문제를 우회한다.
+ * Works around the issue where xterm.js built-in OSC 8 linkHandler
+ * does not call activate in Electron environments.
  */
 export class Osc8LinkProvider implements ILinkProvider {
 	private terminal: Terminal;
@@ -286,19 +286,19 @@ export class Osc8LinkProvider implements ILinkProvider {
 			const url = semicolonIndex >= 0 ? data.slice(semicolonIndex + 1) : "";
 
 			if (url) {
-				// OSC 8 open: 링크 시작 위치 기록
+				// OSC 8 open: record link start position
 				this.currentUrl = url;
 				const buffer = terminal.buffer.active;
 				this.currentStartCol = buffer.cursorX;
 				this.openLine = buffer.baseY + buffer.cursorY;
 			} else {
-				// OSC 8 close: 마커 생성 + 엔트리 저장
+				// OSC 8 close: create marker + save entry
 				if (this.currentUrl) {
 					const buffer = terminal.buffer.active;
 					const closeLine = buffer.baseY + buffer.cursorY;
 					const endCol = buffer.cursorX;
 
-					// 단일 행 링크만 지원
+					// Only single-line links supported
 					if (closeLine === this.openLine) {
 						const marker = terminal.registerMarker(0);
 						if (marker) {
@@ -310,7 +310,7 @@ export class Osc8LinkProvider implements ILinkProvider {
 							};
 							this.entries.push(entry);
 
-							// 마커가 버퍼 트리밍으로 제거되면 엔트리도 정리
+							// Clean up entry when marker is disposed by buffer trimming
 							marker.onDispose(() => {
 								const idx = this.entries.indexOf(entry);
 								if (idx !== -1) this.entries.splice(idx, 1);
@@ -322,7 +322,7 @@ export class Osc8LinkProvider implements ILinkProvider {
 				}
 			}
 
-			return false; // xterm.js 기본 처리도 유지
+			return false; // Keep xterm.js default handling
 		}));
 	}
 

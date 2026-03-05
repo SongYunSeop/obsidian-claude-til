@@ -4,22 +4,22 @@ export interface MigrateResult {
 }
 
 /**
- * `[[...]]` 내부 문자열에서 path와 displayText를 분리한다.
- * `|` 또는 `\|` (테이블 이스케이프)를 구분자로 처리한다.
- * alias가 없으면 path를 displayText로 사용한다.
+ * Splits the inner string of `[[...]]` into path and displayText.
+ * Handles `|` or `\|` (table escape) as the separator.
+ * Uses path as displayText when no alias is present.
  */
 export function parseWikilink(inner: string): {
 	path: string;
 	displayText: string;
 } {
-	// `\|` (escaped pipe in tables) 또는 `|` 를 구분자로 분리
+	// Split by `\|` (escaped pipe in tables) or `|` as separator
 	const pipeIndex = inner.search(/\\?\|/);
 	if (pipeIndex === -1) {
 		return { path: inner, displayText: inner };
 	}
 
 	const path = inner.slice(0, pipeIndex);
-	// `\|` 면 구분자가 2글자, `|` 면 1글자
+	// `\|` separator is 2 chars, `|` separator is 1 char
 	const separatorLength = inner[pipeIndex] === "\\" ? 2 : 1;
 	const displayText = inner.slice(pipeIndex + separatorLength);
 
@@ -27,8 +27,8 @@ export function parseWikilink(inner: string): {
 }
 
 /**
- * path와 displayText로 표준 마크다운 링크를 생성한다.
- * `.md` 확장자가 없으면 자동 추가, 이미 있으면 유지한다.
+ * Builds a standard markdown link from path and displayText.
+ * Automatically appends `.md` extension if absent; preserves it if already present.
  */
 export function toMarkdownLink(path: string, displayText: string): string {
 	const mdPath = path.endsWith(".md") ? path : `${path}.md`;
@@ -36,14 +36,14 @@ export function toMarkdownLink(path: string, displayText: string): string {
 }
 
 /**
- * 코드 블록과 wikilink를 매칭하는 정규식.
- * 그룹 1: fenced/inline 코드 블록 (보존 대상)
- * 그룹 2: wikilink (변환 대상)
+ * Regex matching code blocks and wikilinks.
+ * Group 1: fenced/inline code blocks (to preserve)
+ * Group 2: wikilinks (to convert)
  */
 const WIKILINK_REGEX = /(```[\s\S]*?```|`[^`\n]+`)|(\[\[[^\[\]]+?\]\])/g;
 
 /**
- * 코드 블록 내부를 제외하고 wikilink 수를 카운트한다.
+ * Counts wikilinks excluding content inside code blocks.
  */
 export function countWikilinks(content: string): number {
 	let count = 0;
@@ -60,8 +60,8 @@ export function countWikilinks(content: string): number {
 }
 
 /**
- * 코드 블록 내부를 보존하면서 wikilink를 표준 마크다운 링크로 변환한다.
- * regex alternation 패턴: 코드 블록이 먼저 매칭되어 보존, wikilink는 변환.
+ * Converts wikilinks to standard markdown links while preserving code block contents.
+ * Regex alternation pattern: code blocks match first and are preserved; wikilinks are converted.
  */
 export function migrateLinks(content: string): MigrateResult {
 	let count = 0;
@@ -69,12 +69,12 @@ export function migrateLinks(content: string): MigrateResult {
 	const result = content.replace(
 		new RegExp(WIKILINK_REGEX.source, WIKILINK_REGEX.flags),
 		(fullMatch, codeBlock: string | undefined, wikilink: string | undefined) => {
-			// 코드 블록 매칭 → 원본 그대로 반환
+			// Code block match → return original unchanged
 			if (codeBlock) return fullMatch;
 
-			// wikilink 매칭 → 변환 수행
+			// Wikilink match → perform conversion
 			if (wikilink) {
-				const inner = wikilink.slice(2, -2); // [[ ]] 제거
+				const inner = wikilink.slice(2, -2); // Remove [[ ]]
 				const { path, displayText } = parseWikilink(inner);
 				count++;
 				return toMarkdownLink(path, displayText);
@@ -88,7 +88,7 @@ export function migrateLinks(content: string): MigrateResult {
 }
 
 /**
- * 코드 블록 내부를 제외하고 잔여 wikilink가 있는지 확인한다.
+ * Checks whether any remaining wikilinks exist, excluding content inside code blocks.
  */
 export function hasWikilinks(content: string): boolean {
 	return countWikilinks(content) > 0;

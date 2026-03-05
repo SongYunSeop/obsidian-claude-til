@@ -7,73 +7,73 @@ import * as path from "path";
 const ROOT = path.resolve(__dirname, "..");
 
 describe("parseArgs", () => {
-	it("positional 인자와 options를 분리한다", () => {
+	it("separates positional arguments and options", () => {
 		const result = parseArgs(["~/my-til", "--port", "3000"]);
 		expect(result.positional).toEqual(["~/my-til"]);
 		expect(result.options).toEqual({ port: "3000" });
 	});
 
-	it("positional 인자가 없으면 빈 배열을 반환한다", () => {
+	it("returns empty array when no positional arguments", () => {
 		const result = parseArgs(["--port", "3000"]);
 		expect(result.positional).toEqual([]);
 		expect(result.options).toEqual({ port: "3000" });
 	});
 
-	it("options가 없으면 빈 객체를 반환한다", () => {
+	it("returns empty object when no options", () => {
 		const result = parseArgs(["~/my-til"]);
 		expect(result.positional).toEqual(["~/my-til"]);
 		expect(result.options).toEqual({});
 	});
 
-	it("인자가 없으면 모두 빈 값을 반환한다", () => {
+	it("returns all empty values when no arguments", () => {
 		const result = parseArgs([]);
 		expect(result.positional).toEqual([]);
 		expect(result.options).toEqual({});
 	});
 
-	it("여러 positional 인자를 수집한다", () => {
+	it("collects multiple positional arguments", () => {
 		const result = parseArgs(["a", "b", "--til-path", "til"]);
 		expect(result.positional).toEqual(["a", "b"]);
 		expect(result.options).toEqual({ "til-path": "til" });
 	});
 
-	it("알 수 없는 플래그 뒤의 positional을 소비하지 않는다", () => {
+	it("does not consume positional after unknown flags", () => {
 		const result = parseArgs(["--verbose", "~/my-til"]);
 		expect(result.positional).toEqual(["~/my-til"]);
 		expect(result.options).toEqual({});
 	});
 
-	it("options 뒤의 positional 인자도 수집한다", () => {
+	it("collects positional arguments after options", () => {
 		const result = parseArgs(["--port", "3000", "~/my-til"]);
 		expect(result.positional).toEqual(["~/my-til"]);
 		expect(result.options).toEqual({ port: "3000" });
 	});
 
-	it("--no-obsidian boolean 플래그를 수집한다", () => {
+	it("collects --no-obsidian boolean flag", () => {
 		const result = parseArgs(["~/my-til", "--no-obsidian"]);
 		expect(result.positional).toEqual(["~/my-til"]);
 		expect(result.options).toEqual({ "no-obsidian": "true" });
 	});
 
-	it("알 수 없는 boolean 플래그는 무시한다", () => {
+	it("ignores unknown boolean flags", () => {
 		const result = parseArgs(["--verbose", "--no-obsidian", "~/my-til"]);
 		expect(result.positional).toEqual(["~/my-til"]);
 		expect(result.options).toEqual({ "no-obsidian": "true" });
 	});
 
-	it("--mode 옵션을 파싱한다", () => {
+	it("parses --mode option", () => {
 		const result = parseArgs(["~/my-til", "--mode", "slim"]);
 		expect(result.positional).toEqual(["~/my-til"]);
 		expect(result.options).toEqual({ mode: "slim" });
 	});
 
-	it("--mode standard를 파싱한다", () => {
+	it("parses --mode standard", () => {
 		const result = parseArgs(["--mode", "standard"]);
 		expect(result.positional).toEqual([]);
 		expect(result.options).toEqual({ mode: "standard" });
 	});
 
-	it("--mode와 --no-obsidian을 함께 파싱한다", () => {
+	it("parses --mode and --no-obsidian together", () => {
 		const result = parseArgs(["~/my-til", "--mode", "slim", "--no-obsidian"]);
 		expect(result.positional).toEqual(["~/my-til"]);
 		expect(result.options).toEqual({ mode: "slim", "no-obsidian": "true" });
@@ -81,28 +81,28 @@ describe("parseArgs", () => {
 });
 
 describe("expandTilde", () => {
-	it("~/로 시작하는 경로를 홈 디렉토리로 확장한다", () => {
+	it("expands path starting with ~/ to home directory", () => {
 		expect(expandTilde("~/my-til")).toBe(path.join(os.homedir(), "my-til"));
 	});
 
-	it("~만 있으면 홈 디렉토리를 반환한다", () => {
+	it("returns home directory when only ~ is given", () => {
 		expect(expandTilde("~")).toBe(os.homedir());
 	});
 
-	it("~로 시작하지 않는 경로는 그대로 반환한다", () => {
+	it("returns path as-is when it does not start with ~", () => {
 		expect(expandTilde("/absolute/path")).toBe("/absolute/path");
 		expect(expandTilde("relative/path")).toBe("relative/path");
 	});
 
-	it("~user 형태는 확장하지 않는다", () => {
+	it("does not expand ~user form", () => {
 		expect(expandTilde("~other/path")).toBe("~other/path");
 	});
 });
 
 describe("TIL_VAULT_PATH environment variable", () => {
-	it("TIL_VAULT_PATH가 설정되면 basePath로 사용된다", () => {
-		// init 커맨드에 경로 인수 없이, TIL_VAULT_PATH만 설정하면 해당 경로를 사용
-		// init은 디렉토리가 없으면 생성하므로 /tmp 하위를 사용
+	it("uses TIL_VAULT_PATH as basePath when set", () => {
+		// When no path argument is given to init command, uses TIL_VAULT_PATH
+		// init creates the directory if it doesn't exist, so use /tmp subdirectory
 		const vaultPath = "/tmp/test-til-vault-env";
 		const result = execSync(
 			`node dist/cli.js init 2>&1 || true`,
@@ -111,7 +111,7 @@ describe("TIL_VAULT_PATH environment variable", () => {
 		expect(result).toContain(vaultPath);
 	});
 
-	it("명시적 경로 인수가 TIL_VAULT_PATH보다 우선한다", () => {
+	it("explicit path argument takes precedence over TIL_VAULT_PATH", () => {
 		const explicitPath = "/tmp/test-til-explicit";
 		const result = execSync(
 			`node dist/cli.js init ${explicitPath} 2>&1 || true`,

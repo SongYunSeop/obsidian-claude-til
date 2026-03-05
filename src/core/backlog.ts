@@ -2,13 +2,13 @@ import { parse as parseYaml } from "yaml";
 
 export interface BacklogItem {
 	path: string;        // "til/claude-code/permission-mode"
-	displayName: string; // "Permission 모드"
+	displayName: string; // "Permission mode"
 }
 
 /**
- * backlog.md 내용에서 미완료 항목을 파싱한다.
- * 형식: `- [ ] [displayName](path.md)` 또는 `- [ ] [](path.md)`
- * 완료 항목 `- [x]`는 제외한다.
+ * Parses incomplete items from backlog.md content.
+ * Format: `- [ ] [displayName](path.md)` or `- [ ] [](path.md)`
+ * Completed items `- [x]` are excluded.
  */
 export function parseBacklogItems(content: string): BacklogItem[] {
 	const items: BacklogItem[] = [];
@@ -27,7 +27,7 @@ export function parseBacklogItems(content: string): BacklogItem[] {
 }
 
 /**
- * 파일 경로에서 topic과 category를 추출한다.
+ * Extracts topic and category from a file path.
  * `til/{category}/{slug}.md` → `{ topic: slug, category }`
  */
 export interface BacklogProgress {
@@ -36,7 +36,7 @@ export interface BacklogProgress {
 }
 
 /**
- * 백로그 내용에서 완료/미완료 항목 수를 계산한다.
+ * Counts completed/incomplete items from backlog content.
  * `- [ ]` → todo, `- [x]`/`- [X]` → done
  */
 export function computeBacklogProgress(content: string): BacklogProgress {
@@ -49,19 +49,19 @@ export function computeBacklogProgress(content: string): BacklogProgress {
 }
 
 export interface BacklogCategoryStatus {
-	/** 카테고리명 (예: "datadog") */
+	/** category name (e.g. "datadog") */
 	category: string;
-	/** backlog.md 파일 경로 (예: "til/datadog/backlog.md") */
+	/** backlog.md file path (e.g. "til/datadog/backlog.md") */
 	filePath: string;
-	/** 완료 항목 수 */
+	/** number of completed items */
 	done: number;
-	/** 전체 항목 수 */
+	/** total number of items */
 	total: number;
 }
 
 /**
- * 진행률 바를 생성한다. █ = 완료, ░ = 미완료.
- * 순수 함수 — 부수효과 없음.
+ * Generates a progress bar. █ = completed, ░ = incomplete.
+ * Pure function — no side effects.
  */
 export function formatProgressBar(done: number, total: number, width = 10): string {
 	if (total === 0) return "░".repeat(width);
@@ -70,10 +70,10 @@ export function formatProgressBar(done: number, total: number, width = 10): stri
 }
 
 /**
- * 백로그 카테고리 목록을 마크다운 테이블로 포맷한다.
- * 카테고리명은 [카테고리](경로) 마크다운 링크 형식으로 출력한다.
- * 진행률 내림차순 정렬.
- * 순수 함수 — 부수효과 없음, 단위 테스트 가능.
+ * Formats the backlog category list as a markdown table.
+ * Category names are rendered as [category](path) markdown links.
+ * Sorted by progress in descending order.
+ * Pure function — no side effects, unit-testable.
  */
 export function formatBacklogTable(categories: BacklogCategoryStatus[]): string {
 	if (categories.length === 0) return "No backlog items found";
@@ -105,29 +105,29 @@ export function formatBacklogTable(categories: BacklogCategoryStatus[]): string 
 }
 
 export interface BacklogSectionItem {
-	/** 표시명 (예: "지식과 능력은 복리처럼 누적된다") */
+	/** display name (e.g. "Knowledge and ability compound like interest") */
 	displayName: string;
-	/** 파일 경로 (예: "til/agile-story/compound-learning.md") */
+	/** file path (e.g. "til/agile-story/compound-learning.md") */
 	path: string;
-	/** 완료 여부 */
+	/** whether completed */
 	done: boolean;
-	/** 원본 출처 URL 목록 (frontmatter sources에서 매핑) */
+	/** list of original source URLs (mapped from frontmatter sources) */
 	sourceUrls?: string[];
 }
 
 export interface BacklogSection {
-	/** 섹션 제목 (예: "선행 지식") */
+	/** section heading (e.g. "Prerequisites") */
 	heading: string;
-	/** 섹션 내 항목 목록 */
+	/** list of items in the section */
 	items: BacklogSectionItem[];
 }
 
 /**
- * 백로그 frontmatter에서 sources 맵을 파싱한다.
- * 두 가지 형식을 지원한다:
- * 1. 단일 URL: `  slug: url` → 배열로 정규화
- * 2. 복수 URL: `  slug:\n    - url1\n    - url2`
- * yaml 패키지로 파싱. 순수 함수 — 부수효과 없음.
+ * Parses the sources map from backlog frontmatter.
+ * Supports two formats:
+ * 1. Single URL: `  slug: url` → normalized to array
+ * 2. Multiple URLs: `  slug:\n    - url1\n    - url2`
+ * Parsed with the yaml package. Pure function — no side effects.
  */
 export function parseFrontmatterSources(content: string): Record<string, string[]> {
 	const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
@@ -157,9 +157,9 @@ export function parseFrontmatterSources(content: string): Record<string, string[
 }
 
 /**
- * 백로그 내용을 섹션별로 파싱하여 개별 항목을 반환한다.
- * `## 섹션명` 헤딩 아래의 `- [ ]`/`- [x]` 항목을 파싱한다.
- * 순수 함수 — 부수효과 없음.
+ * Parses backlog content by section and returns individual items.
+ * Parses `- [ ]`/`- [x]` items under `## section name` headings.
+ * Pure function — no side effects.
  */
 export function parseBacklogSections(content: string): BacklogSection[] {
 	const sources = parseFrontmatterSources(content);
@@ -182,7 +182,7 @@ export function parseBacklogSections(content: string): BacklogSection[] {
 			const rawPath = itemMatch[3]!.trim();
 			const path = rawPath.endsWith(".md") ? rawPath : rawPath + ".md";
 			const displayName = itemMatch[2]?.trim() || path.replace(/\.md$/, "");
-			// slug 추출: til/{category}/{slug}.md → slug
+			// Extract slug: til/{category}/{slug}.md → slug
 			const slug = path.replace(/\.md$/, "").split("/").pop() ?? "";
 			const item: BacklogSectionItem = { displayName, path, done };
 			if (sources[slug] && sources[slug]!.length > 0) {
@@ -196,18 +196,18 @@ export function parseBacklogSections(content: string): BacklogSection[] {
 }
 
 export interface CheckBacklogResult {
-	/** 변환된 백로그 내용 (변경 없으면 원본 그대로) */
+	/** transformed backlog content (original unchanged if no changes) */
 	content: string;
-	/** 체크 성공 여부 */
+	/** whether the check succeeded */
 	found: boolean;
-	/** 이미 완료된 항목이었는지 */
+	/** whether the item was already completed */
 	alreadyDone: boolean;
 }
 
 /**
- * 백로그 내용에서 slug에 매칭되는 항목을 `[x]`로 체크한다.
- * 링크 경로의 마지막 세그먼트(확장자 제외)가 slug와 일치하면 매칭.
- * 순수 함수 — 부수효과 없음.
+ * Checks the item matching the slug in the backlog content as `[x]`.
+ * Matches when the last segment of the link path (excluding extension) equals the slug.
+ * Pure function — no side effects.
  */
 export function checkBacklogItem(content: string, slug: string): CheckBacklogResult {
 	const lines = content.split("\n");

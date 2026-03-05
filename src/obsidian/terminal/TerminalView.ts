@@ -48,8 +48,8 @@ export class TerminalView extends ItemView {
 		container.empty();
 		container.addClass("oh-my-til-terminal-container");
 
-		// Obsidian의 view-content 스크롤을 강제 잠금
-		// xterm.js의 hidden textarea focus 시 브라우저가 부모 컨테이너를 스크롤하는 것을 방지
+		// Force-lock scroll on Obsidian's view-content element
+		// Prevents the browser from scrolling the parent container when xterm.js hidden textarea gains focus
 		const viewContent = container as HTMLElement;
 		viewContent.style.overflow = "hidden";
 		this.scrollLockHandler = () => {
@@ -60,7 +60,7 @@ export class TerminalView extends ItemView {
 
 		const content = container.createDiv({ cls: "oh-my-til-terminal-content" });
 
-		// DOM이 준비된 후 터미널 초기화
+		// Initialize terminal after DOM is ready
 		setTimeout(() => {
 			this.initTerminal(content);
 		}, 100);
@@ -71,8 +71,8 @@ export class TerminalView extends ItemView {
 	}
 
 	/**
-	 * PTY에 명령어를 전송한다.
-	 * PTY가 아직 준비되지 않았으면 큐에 저장하고 준비 후 자동 전송한다.
+	 * Sends a command to the PTY.
+	 * If the PTY is not ready yet, queues the command and sends it automatically once ready.
 	 */
 	writeCommand(command: string): void {
 		if (this.ptyProcess) {
@@ -122,10 +122,10 @@ export class TerminalView extends ItemView {
 		this.terminal.loadAddon(this.fitAddon);
 		this.terminal.open(container);
 
-		// xterm.js는 Shift+Enter와 Enter 모두 \r(0x0d)을 전송하지만
-		// Claude Code는 \r(submit)과 \n(newline)을 구분함
-		// Shift+Enter의 모든 이벤트(keydown/keypress/keyup)를 차단하고
-		// keydown에서만 \n을 직접 PTY에 전송하여 multiline 입력 지원
+		// xterm.js sends \r(0x0d) for both Shift+Enter and Enter,
+		// but Claude Code distinguishes \r(submit) from \n(newline).
+		// Block all Shift+Enter events (keydown/keypress/keyup) and
+		// send \n directly to the PTY only on keydown to support multiline input.
 		this.terminal.attachCustomKeyEventHandler((e: KeyboardEvent) => {
 			const result = handleShiftEnter(e);
 			if (result.sendNewline) {
@@ -134,21 +134,21 @@ export class TerminalView extends ItemView {
 			return result.allowDefault;
 		});
 
-		// 마크다운 링크 감지 등록
+		// Register markdown link detection
 		this.linkProviderDisposable = this.terminal.registerLinkProvider(
 			new MarkdownLinkProvider(this.app, this.terminal),
 		);
 
-		// TIL 파일 경로 감지 등록 (til/category/slug.md 패턴)
+		// Register TIL file path detection (til/category/slug.md pattern)
 		this.filepathLinkProviderDisposable = this.terminal.registerLinkProvider(
 			new FilepathLinkProvider(this.app, this.terminal),
 		);
 
-		// OSC 8 하이퍼링크 감지 등록 (파서 기반 URL 추적 + 클릭 처리)
+		// Register OSC 8 hyperlink detection (parser-based URL tracking + click handling)
 		this.osc8LinkProvider = new Osc8LinkProvider(this.app, this.terminal);
 		this.osc8LinkProviderDisposable = this.terminal.registerLinkProvider(this.osc8LinkProvider);
 
-		// DOM 렌더 후 fit → PTY 시작
+		// After DOM render: fit → start PTY
 		requestAnimationFrame(() => {
 			requestAnimationFrame(() => {
 				if (this.fitAddon && this.terminal) {
@@ -159,8 +159,8 @@ export class TerminalView extends ItemView {
 			});
 		});
 
-		// ResizeObserver로 자동 리사이즈 (debounce 50ms)
-		// 컨테이너 픽셀 크기가 실제로 변했을 때만 fit 실행 (불필요한 스크롤 점프 방지)
+		// Auto-resize via ResizeObserver (debounce 50ms)
+		// Only run fit when the container pixel size actually changes (prevents unnecessary scroll jumps)
 		this.resizeObserver = new ResizeObserver((entries) => {
 			const entry = entries[0];
 			if (!entry) return;
@@ -193,7 +193,7 @@ export class TerminalView extends ItemView {
 				cwd: vaultPath,
 			});
 
-			// PTY → xterm (스크롤 점프 방지: follow mode일 때 매 프레임 scrollToBottom)
+			// PTY → xterm (prevent scroll jump: call scrollToBottom every frame in follow mode)
 			let followMode = true;
 			let rafPending = false;
 			const viewport = this.terminal.element?.querySelector(".xterm-viewport") as HTMLElement | null;
@@ -221,12 +221,12 @@ export class TerminalView extends ItemView {
 				this.ptyProcess?.write(data);
 			});
 
-			// 리사이즈 동기화
+			// Sync resize
 			this.terminal.onResize(({ cols, rows }: { cols: number; rows: number }) => {
 				this.ptyProcess?.resize(cols, rows);
 			});
 
-			// claude 자동 실행
+			// Auto-launch Claude
 			if (this.settings.autoLaunchClaude) {
 				const args = [
 					this.settings.resumeLastSession ? "--continue" : "",
@@ -237,7 +237,7 @@ export class TerminalView extends ItemView {
 					: "clear && claude\r";
 				setTimeout(() => {
 					this.ptyProcess?.write(cmd);
-					// 프롬프트 감지 기반 flush (타임아웃 10초 폴백)
+					// Prompt-detection based flush (10s timeout fallback)
 					this.waitForClaudeReady(() => this.flushPendingCommands());
 				}, 300);
 			} else {
@@ -253,7 +253,7 @@ export class TerminalView extends ItemView {
 	private waitForClaudeReady(callback: () => void): void {
 		const TIMEOUT = 10_000;
 		let resolved = false;
-		// Claude Code 프롬프트 패턴: 줄 끝에 > 또는 ❯ (ANSI 이스케이프 이후)
+		// Claude Code prompt pattern: > or ❯ at end of line (after ANSI escapes)
 		const CLAUDE_PROMPT_RE = /(?:^|\n)\s*[>❯]\s*$/;
 
 		const disposable = this.terminal?.onData((data: string) => {
@@ -261,7 +261,7 @@ export class TerminalView extends ItemView {
 				resolved = true;
 				clearTimeout(timer);
 				disposable?.dispose();
-				// 프롬프트 출력 후 약간의 여유
+				// Brief delay after prompt output
 				setTimeout(callback, 200);
 			}
 		});

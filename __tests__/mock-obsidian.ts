@@ -1,6 +1,6 @@
 /**
- * obsidian 모듈 mock.
- * vitest.config.ts의 alias로 import 시 이 파일이 로드된다.
+ * obsidian module mock.
+ * This file is loaded when imported via the alias in vitest.config.ts.
  */
 
 export class TFile {
@@ -55,10 +55,10 @@ export class Vault {
 		},
 	};
 
-	// 테스트 헬퍼: 파일/폴더 등록
+	// Test helper: register file/folder
 	_setFile(path: string, content: string, stat?: { ctime?: number; mtime?: number; size?: number }): void {
 		this.files.set(path, content);
-		// TFile도 자동 등록 (stat이 주어지면 갱신)
+		// Also auto-register TFile (update if stat is provided)
 		if (!this.abstractFiles.has(path) || stat) {
 			this.abstractFiles.set(path, new TFile(path, stat));
 		}
@@ -95,13 +95,13 @@ export class Vault {
 	}
 
 	offref(_ref: { event: string }): void {
-		// 간단 구현: 리스너 전체 제거
+		// Simple implementation: remove all listeners
 		if (_ref?.event) {
 			this.listeners.delete(_ref.event);
 		}
 	}
 
-	// 테스트 헬퍼: 이벤트 발행
+	// Test helper: trigger event
 	_trigger(event: string, ...args: unknown[]): void {
 		const callbacks = this.listeners.get(event) ?? [];
 		for (const cb of callbacks) {
@@ -143,12 +143,12 @@ export class App {
 		};
 		this.metadataCache = {
 			getFirstLinkpathDest: (linkpath: string) => {
-				// vault에 등록된 파일 중 linkpath와 매치되는 것을 반환
+				// Return the file registered in vault that matches linkpath
 				const files = this.vault.getFiles();
-				// 정확한 경로 매치
+				// Exact path match
 				const exact = files.find((f) => f.path === linkpath || f.path === linkpath + ".md");
 				if (exact) return exact;
-				// basename 매치 (Obsidian 기본 동작)
+				// basename match (Obsidian default behavior)
 				const byName = files.find((f) => f.basename === linkpath);
 				return byName ?? null;
 			},
@@ -160,7 +160,7 @@ export class App {
 		};
 	}
 
-	// 테스트 헬퍼
+	// Test helpers
 	_setActiveFile(file: TFile | null): void {
 		this._activeFile = file;
 	}
@@ -186,7 +186,7 @@ export class Notice {
 	hide(): void {}
 }
 
-// UI 클래스 스텁 (테스트에서 직접 사용하지 않지만 import 해소용)
+// UI class stubs (not used directly in tests, but needed to resolve imports)
 export class Modal {
 	app: App;
 	contentEl = { empty: () => {}, createEl: () => ({}) };

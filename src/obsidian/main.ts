@@ -43,24 +43,24 @@ export default class TILPlugin extends Plugin {
 
 		this.addSettingTab(new TILSettingTab(this.app, this));
 
-		// 플러그인 에셋 자동 설치/업데이트 (skills, agents, CLAUDE.md)
+		// Auto-install/update plugin assets (skills, agents, CLAUDE.md)
 		const storage = new ObsidianStorage(this.app);
 		installPlugin(storage, this.manifest.version);
 
-		// 시작 시 대시보드 자동 열기 (워크스페이스 복원 이후 포커스 확보)
+		// Auto-open dashboard on startup (acquire focus after workspace restore)
 		if (this.settings.openDashboardOnStartup) {
 			this.app.workspace.onLayoutReady(() => {
 				setTimeout(() => this.openDashboard(), 500);
 			});
 		}
 
-		// 파일 watcher 시작
+		// Start file watcher
 		if (this.settings.autoOpenNewTIL) {
 			this.watcher = new TILWatcher(this.app, this.settings.tilPath);
 			this.watcher.start();
 		}
 
-		// backlog → TIL 유도: 빈 파일 열림 시 backlog 매칭 확인
+		// backlog → TIL nudge: check for backlog match when an empty file is opened
 		this.registerEvent(
 			this.app.workspace.on("file-open", async (file) => {
 				if (!file || !(file instanceof TFile)) return;
@@ -145,7 +145,7 @@ export default class TILPlugin extends Plugin {
 	async saveSettings() {
 		await this.saveData(this.settings);
 
-		// watcher 상태 동기화
+		// Sync watcher state
 		if (this.settings.autoOpenNewTIL) {
 			if (!this.watcher) {
 				this.watcher = new TILWatcher(this.app, this.settings.tilPath);

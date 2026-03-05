@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { parseBacklogItems, extractTopicFromPath, computeBacklogProgress, formatProgressBar, formatBacklogTable, parseBacklogSections, parseFrontmatterSources, checkBacklogItem, type BacklogCategoryStatus } from "../src/backlog";
 
 describe("parseBacklogItems", () => {
-	it("미완료 항목 [name](path.md) 을 파싱한다", () => {
+	it("parses incomplete items [name](path.md)", () => {
 		const content = `- [ ] [Permission 모드](til/claude-code/permission-mode.md)
 - [ ] [Generics 완전 정복](til/typescript/generics.md)`;
 
@@ -13,7 +13,7 @@ describe("parseBacklogItems", () => {
 		]);
 	});
 
-	it("완료 항목 [x] 는 제외한다", () => {
+	it("excludes completed items [x]", () => {
 		const content = `- [x] [완료됨](til/done-topic.md)
 - [ ] [진행 중](til/pending-topic.md)`;
 
@@ -22,7 +22,7 @@ describe("parseBacklogItems", () => {
 		expect(items[0]!.displayName).toBe("진행 중");
 	});
 
-	it("표시 이름 없는 경우 path를 displayName으로 사용한다", () => {
+	it("uses path as displayName when display name is absent", () => {
 		const content = `- [ ] [](til/react/hooks.md)`;
 
 		const items = parseBacklogItems(content);
@@ -31,11 +31,11 @@ describe("parseBacklogItems", () => {
 		]);
 	});
 
-	it("빈 문자열은 빈 배열을 반환한다", () => {
+	it("returns empty array for empty string", () => {
 		expect(parseBacklogItems("")).toEqual([]);
 	});
 
-	it("항목이 없는 내용은 빈 배열을 반환한다", () => {
+	it("returns empty array for content with no items", () => {
 		const content = `# Backlog
 
 이것은 설명 텍스트입니다.`;
@@ -43,7 +43,7 @@ describe("parseBacklogItems", () => {
 		expect(parseBacklogItems(content)).toEqual([]);
 	});
 
-	it("설명 텍스트가 포함된 항목에서 설명을 무시한다", () => {
+	it("ignores description text in items that contain description", () => {
 		const content = `- [ ] [React Hooks](til/react/hooks.md) - 커스텀 훅 패턴 학습`;
 
 		const items = parseBacklogItems(content);
@@ -52,7 +52,7 @@ describe("parseBacklogItems", () => {
 		]);
 	});
 
-	it("완료/미완료 항목이 섞여있어도 정확히 파싱한다", () => {
+	it("parses correctly even when completed and incomplete items are mixed", () => {
 		const content = `# Claude Code 학습
 
 - [x] [기본 사용법](til/claude-code/basics.md)
@@ -67,28 +67,28 @@ describe("parseBacklogItems", () => {
 });
 
 describe("computeBacklogProgress", () => {
-	it("완료/미완료 항목 수를 계산한다", () => {
+	it("counts completed and incomplete items", () => {
 		const content = "- [x] 완료\n- [ ] 미완료1\n- [ ] 미완료2";
 		const result = computeBacklogProgress(content);
 		expect(result.done).toBe(1);
 		expect(result.todo).toBe(2);
 	});
 
-	it("[X] 대문자도 완료로 카운트한다", () => {
+	it("counts uppercase [X] as completed", () => {
 		const content = "- [X] 대문자 완료\n- [x] 소문자 완료\n- [ ] 미완료";
 		const result = computeBacklogProgress(content);
 		expect(result.done).toBe(2);
 		expect(result.todo).toBe(1);
 	});
 
-	it("체크박스가 없으면 0을 반환한다", () => {
+	it("returns 0 when no checkboxes", () => {
 		const content = "# Empty backlog\nNo items here.";
 		const result = computeBacklogProgress(content);
 		expect(result.done).toBe(0);
 		expect(result.todo).toBe(0);
 	});
 
-	it("빈 문자열에서 0을 반환한다", () => {
+	it("returns 0 for empty string", () => {
 		const result = computeBacklogProgress("");
 		expect(result.done).toBe(0);
 		expect(result.todo).toBe(0);
@@ -101,65 +101,65 @@ describe("extractTopicFromPath", () => {
 		expect(result).toEqual({ topic: "permission-mode", category: "claude-code" });
 	});
 
-	it("확장자 없는 경로도 동일하게 처리한다", () => {
+	it("handles path without extension the same way", () => {
 		const result = extractTopicFromPath("til/typescript/generics", "til");
 		expect(result).toEqual({ topic: "generics", category: "typescript" });
 	});
 
-	it("tilPath 밖 경로는 null을 반환한다", () => {
+	it("returns null for paths outside tilPath", () => {
 		const result = extractTopicFromPath("notes/daily.md", "til");
 		expect(result).toBeNull();
 	});
 
-	it("backlog.md 경로는 null을 반환한다", () => {
+	it("returns null for backlog.md path", () => {
 		const result = extractTopicFromPath("til/claude-code/backlog.md", "til");
 		expect(result).toBeNull();
 	});
 
-	it("tilPath 루트의 파일은 null을 반환한다 (category 없음)", () => {
+	it("returns null for files at tilPath root (no category)", () => {
 		const result = extractTopicFromPath("til/readme.md", "til");
 		expect(result).toBeNull();
 	});
 
-	it("커스텀 tilPath를 지원한다", () => {
+	it("supports custom tilPath", () => {
 		const result = extractTopicFromPath("learning/til/react/hooks.md", "learning/til");
 		expect(result).toEqual({ topic: "hooks", category: "react" });
 	});
 
-	it("깊은 경로도 처리한다", () => {
+	it("handles deep paths", () => {
 		const result = extractTopicFromPath("til/react/advanced/patterns.md", "til");
 		expect(result).toEqual({ topic: "advanced/patterns", category: "react" });
 	});
 });
 
 describe("formatProgressBar", () => {
-	it("0%는 모두 빈 칸이다", () => {
+	it("0% is all empty", () => {
 		expect(formatProgressBar(0, 10)).toBe("░░░░░░░░░░");
 	});
 
-	it("100%는 모두 채워진다", () => {
+	it("100% is fully filled", () => {
 		expect(formatProgressBar(10, 10)).toBe("██████████");
 	});
 
-	it("50%는 반만 채워진다", () => {
+	it("50% is half filled", () => {
 		expect(formatProgressBar(5, 10)).toBe("█████░░░░░");
 	});
 
-	it("total이 0이면 모두 빈 칸이다", () => {
+	it("all empty when total is 0", () => {
 		expect(formatProgressBar(0, 0)).toBe("░░░░░░░░░░");
 	});
 
-	it("커스텀 너비를 지원한다", () => {
+	it("supports custom width", () => {
 		expect(formatProgressBar(3, 4, 4)).toBe("███░");
 	});
 });
 
 describe("formatBacklogTable", () => {
-	it("빈 배열이면 안내 메시지를 반환한다", () => {
+	it("returns guidance message for empty array", () => {
 		expect(formatBacklogTable([])).toBe("No backlog items found");
 	});
 
-	it("카테고리를 마크다운 링크로 출력한다", () => {
+	it("outputs categories as markdown links", () => {
 		const categories: BacklogCategoryStatus[] = [
 			{ category: "datadog", filePath: "til/datadog/backlog.md", done: 24, total: 25 },
 		];
@@ -169,7 +169,7 @@ describe("formatBacklogTable", () => {
 		expect(result).toContain("24/25");
 	});
 
-	it("진행률 내림차순으로 정렬한다", () => {
+	it("sorts by progress rate in descending order", () => {
 		const categories: BacklogCategoryStatus[] = [
 			{ category: "aws", filePath: "til/aws/backlog.md", done: 0, total: 10 },
 			{ category: "datadog", filePath: "til/datadog/backlog.md", done: 9, total: 10 },
@@ -180,7 +180,7 @@ describe("formatBacklogTable", () => {
 		expect(datadogIdx).toBeLessThan(awsIdx);
 	});
 
-	it("총계를 포함한다", () => {
+	it("includes totals", () => {
 		const categories: BacklogCategoryStatus[] = [
 			{ category: "a", filePath: "til/a/backlog.md", done: 3, total: 5 },
 			{ category: "b", filePath: "til/b/backlog.md", done: 2, total: 5 },
@@ -189,7 +189,7 @@ describe("formatBacklogTable", () => {
 		expect(result).toContain("5 of 10 items completed (50%)");
 	});
 
-	it("진행바를 포함한다", () => {
+	it("includes progress bar", () => {
 		const categories: BacklogCategoryStatus[] = [
 			{ category: "test", filePath: "til/test/backlog.md", done: 5, total: 10 },
 		];
@@ -199,7 +199,7 @@ describe("formatBacklogTable", () => {
 });
 
 describe("parseBacklogSections", () => {
-	it("섹션별 항목을 파싱한다", () => {
+	it("parses items by section", () => {
 		const content = `## 선행 지식
 - [ ] [복리 학습](til/agile-story/compound-learning.md)
 - [x] [의도적 수련](til/agile-story/deliberate-practice.md)
@@ -225,11 +225,11 @@ describe("parseBacklogSections", () => {
 		expect(sections[1]!.items).toHaveLength(1);
 	});
 
-	it("빈 내용은 빈 배열을 반환한다", () => {
+	it("returns empty array for empty content", () => {
 		expect(parseBacklogSections("")).toEqual([]);
 	});
 
-	it("항목이 없는 섹션은 제외한다", () => {
+	it("excludes sections with no items", () => {
 		const content = `## 설명만 있는 섹션
 이것은 설명 텍스트입니다.
 
@@ -241,7 +241,7 @@ describe("parseBacklogSections", () => {
 		expect(sections[0]!.heading).toBe("항목이 있는 섹션");
 	});
 
-	it("[X] 대문자도 완료로 처리한다", () => {
+	it("treats uppercase [X] as completed", () => {
 		const content = `## 테스트
 - [X] [대문자 완료](til/test/done.md)
 - [ ] [미완료](til/test/todo.md)`;
@@ -251,7 +251,7 @@ describe("parseBacklogSections", () => {
 		expect(sections[0]!.items[1]!.done).toBe(false);
 	});
 
-	it(".md 확장자가 없는 경로에 .md를 추가한다", () => {
+	it("adds .md to paths without .md extension", () => {
 		const content = `## 테스트
 - [ ] [항목](til/test/item)`;
 
@@ -259,7 +259,7 @@ describe("parseBacklogSections", () => {
 		expect(sections[0]!.items[0]!.path).toBe("til/test/item.md");
 	});
 
-	it("표시명이 비어있으면 경로를 사용한다", () => {
+	it("uses path when display name is empty", () => {
 		const content = `## 테스트
 - [ ] [](til/test/item.md)`;
 
@@ -267,7 +267,7 @@ describe("parseBacklogSections", () => {
 		expect(sections[0]!.items[0]!.displayName).toBe("til/test/item");
 	});
 
-	it("frontmatter sources가 있으면 sourceUrls를 매핑한다", () => {
+	it("maps sourceUrls when frontmatter sources exist", () => {
 		const content = `---
 tags:
   - backlog
@@ -293,7 +293,7 @@ sources:
 		expect(sections[0]!.items[2]!.sourceUrls).toBeUndefined();
 	});
 
-	it("단일 URL 인라인 형식도 배열로 매핑한다", () => {
+	it("maps single inline URL format as array too", () => {
 		const content = `---
 sources:
   compound-learning: https://example.com/compound
@@ -306,7 +306,7 @@ sources:
 		expect(sections[0]!.items[0]!.sourceUrls).toEqual(["https://example.com/compound"]);
 	});
 
-	it("frontmatter sources가 없으면 sourceUrls는 undefined이다", () => {
+	it("sourceUrls is undefined when no frontmatter sources", () => {
 		const content = `---
 tags:
   - backlog
@@ -321,7 +321,7 @@ tags:
 });
 
 describe("parseFrontmatterSources", () => {
-	it("배열 형식의 sources를 파싱한다", () => {
+	it("parses array-format sources", () => {
 		const content = `---
 tags:
   - backlog
@@ -343,7 +343,7 @@ updated: 2026-02-21
 		});
 	});
 
-	it("인라인 단일 URL도 배열로 반환한다", () => {
+	it("returns inline single URL as array too", () => {
 		const content = `---
 sources:
   compound-learning: https://example.com/compound
@@ -357,14 +357,14 @@ sources:
 		});
 	});
 
-	it("frontmatter가 없으면 빈 객체를 반환한다", () => {
+	it("returns empty object when no frontmatter", () => {
 		const content = `# 백로그
 - [ ] [항목](til/test/item.md)`;
 
 		expect(parseFrontmatterSources(content)).toEqual({});
 	});
 
-	it("sources 키가 없으면 빈 객체를 반환한다", () => {
+	it("returns empty object when no sources key", () => {
 		const content = `---
 tags:
   - backlog
@@ -376,7 +376,7 @@ updated: 2026-02-21
 		expect(parseFrontmatterSources(content)).toEqual({});
 	});
 
-	it("sources가 비어있으면 빈 객체를 반환한다", () => {
+	it("returns empty object when sources is empty", () => {
 		const content = `---
 sources:
 updated: 2026-02-21
@@ -387,7 +387,7 @@ updated: 2026-02-21
 });
 
 describe("checkBacklogItem", () => {
-	it("slug에 매칭되는 미완료 항목을 [x]로 체크한다", () => {
+	it("checks incomplete item matching slug as [x]", () => {
 		const content = `## 핵심 개념
 - [ ] [제네릭](til/typescript/generics.md) - 타입 매개변수
 - [ ] [매핑된 타입](til/typescript/mapped-types.md)`;
@@ -399,7 +399,7 @@ describe("checkBacklogItem", () => {
 		expect(result.content).toContain("- [ ] [매핑된 타입](til/typescript/mapped-types.md)");
 	});
 
-	it("이미 완료된 항목이면 alreadyDone을 반환한다", () => {
+	it("returns alreadyDone for already completed items", () => {
 		const content = `## 핵심 개념
 - [x] [제네릭](til/typescript/generics.md)
 - [ ] [타입](til/typescript/types.md)`;
@@ -409,7 +409,7 @@ describe("checkBacklogItem", () => {
 		expect(result.alreadyDone).toBe(true);
 	});
 
-	it("[X] 대문자 완료도 alreadyDone으로 인식한다", () => {
+	it("recognizes uppercase [X] completion as alreadyDone", () => {
 		const content = `## 테스트
 - [X] [항목](til/test/item.md)`;
 
@@ -418,7 +418,7 @@ describe("checkBacklogItem", () => {
 		expect(result.alreadyDone).toBe(true);
 	});
 
-	it("slug가 매칭되지 않으면 found=false를 반환한다", () => {
+	it("returns found=false when slug does not match", () => {
 		const content = `## 테스트
 - [ ] [제네릭](til/typescript/generics.md)`;
 
@@ -428,7 +428,7 @@ describe("checkBacklogItem", () => {
 		expect(result.content).toBe(content);
 	});
 
-	it("확장자 없는 경로에서도 slug를 매칭한다", () => {
+	it("matches slug even in paths without extension", () => {
 		const content = `## 테스트
 - [ ] [항목](til/test/my-item)`;
 
@@ -438,7 +438,7 @@ describe("checkBacklogItem", () => {
 		expect(result.content).toContain("- [x] [항목](til/test/my-item)");
 	});
 
-	it("첫 번째 매칭 항목만 체크한다", () => {
+	it("checks only the first matching item", () => {
 		const content = `## 섹션1
 - [ ] [A](til/a/slug.md)
 ## 섹션2
@@ -446,13 +446,13 @@ describe("checkBacklogItem", () => {
 
 		const result = checkBacklogItem(content, "slug");
 		expect(result.found).toBe(true);
-		// 첫 번째만 체크됨
+		// only the first one is checked
 		const lines = result.content.split("\n");
 		expect(lines.find((l) => l.includes("til/a/slug.md"))).toContain("[x]");
 		expect(lines.find((l) => l.includes("til/b/slug.md"))).toContain("[ ]");
 	});
 
-	it("빈 내용이면 found=false를 반환한다", () => {
+	it("returns found=false for empty content", () => {
 		const result = checkBacklogItem("", "slug");
 		expect(result.found).toBe(false);
 	});

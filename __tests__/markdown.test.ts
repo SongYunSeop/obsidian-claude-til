@@ -2,23 +2,23 @@ import { describe, it, expect } from "vitest";
 import { renderMarkdown, escapeHtml, stripFrontmatter, renderInline, rewriteTilLinks } from "../src/core/markdown";
 
 describe("escapeHtml", () => {
-	it("HTML 특수문자를 이스케이프한다", () => {
+	it("escapes HTML special characters", () => {
 		expect(escapeHtml('<script>alert("xss")</script>')).toBe(
 			"&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;",
 		);
 	});
 
-	it("앰퍼샌드를 이스케이프한다", () => {
+	it("escapes ampersands", () => {
 		expect(escapeHtml("a & b")).toBe("a &amp; b");
 	});
 
-	it("작은따옴표를 이스케이프한다", () => {
+	it("escapes single quotes", () => {
 		expect(escapeHtml("it's")).toBe("it&#39;s");
 	});
 });
 
 describe("stripFrontmatter", () => {
-	it("frontmatter를 제거한다", () => {
+	it("removes frontmatter", () => {
 		const md = `---
 title: Test
 date: 2025-01-01
@@ -27,53 +27,53 @@ date: 2025-01-01
 		expect(stripFrontmatter(md)).toBe("# Hello");
 	});
 
-	it("frontmatter가 없으면 그대로 반환한다", () => {
+	it("returns as-is when no frontmatter", () => {
 		expect(stripFrontmatter("# Hello")).toBe("# Hello");
 	});
 
-	it("닫는 ---가 없으면 그대로 반환한다", () => {
+	it("returns as-is when closing --- is missing", () => {
 		const md = "---\ntitle: Test\n# Hello";
 		expect(stripFrontmatter(md)).toBe(md);
 	});
 });
 
 describe("renderInline", () => {
-	it("볼드를 변환한다", () => {
+	it("converts bold", () => {
 		expect(renderInline("**bold**")).toBe("<strong>bold</strong>");
 	});
 
-	it("이탤릭을 변환한다", () => {
+	it("converts italic", () => {
 		expect(renderInline("*italic*")).toBe("<em>italic</em>");
 	});
 
-	it("볼드+이탤릭을 변환한다", () => {
+	it("converts bold+italic", () => {
 		expect(renderInline("***both***")).toBe("<strong><em>both</em></strong>");
 	});
 
-	it("인라인 코드를 변환한다", () => {
+	it("converts inline code", () => {
 		expect(renderInline("`code`")).toBe("<code>code</code>");
 	});
 
-	it("링크를 변환한다", () => {
+	it("converts links", () => {
 		expect(renderInline("[text](https://example.com)")).toBe(
 			'<a href="https://example.com">text</a>',
 		);
 	});
 
-	it("javascript: URI를 차단한다", () => {
+	it("blocks javascript: URIs", () => {
 		expect(renderInline("[xss](javascript:void)")).toBe("xss");
 		expect(renderInline("[xss](JAVASCRIPT:void)")).toBe("xss");
 		expect(renderInline("[vbs](vbscript:msgbox)")).toBe("vbs");
-		// data: URI도 차단
+		// also blocks data: URIs
 		expect(renderInline("[d](data:text/plain,hello)")).toBe("d");
 	});
 
-	it("javascript: URI가 href에 포함되지 않는다", () => {
+	it("does not include javascript: URI in href", () => {
 		const html = renderInline("[click](javascript:alert)");
 		expect(html).not.toContain("javascript:");
 	});
 
-	it("HTML을 이스케이프한 후 인라인 변환한다", () => {
+	it("escapes HTML then applies inline conversion", () => {
 		expect(renderInline("**<b>bold</b>**")).toBe(
 			"<strong>&lt;b&gt;bold&lt;/b&gt;</strong>",
 		);
@@ -81,7 +81,7 @@ describe("renderInline", () => {
 });
 
 describe("renderMarkdown", () => {
-	it("frontmatter를 제거하고 본문을 변환한다", () => {
+	it("removes frontmatter and converts body", () => {
 		const md = `---
 title: Test
 ---
@@ -94,7 +94,7 @@ World`;
 		expect(html).not.toContain("title: Test");
 	});
 
-	it("헤딩 h1~h6을 변환한다", () => {
+	it("converts headings h1~h6", () => {
 		const md = "# H1\n## H2\n### H3\n#### H4\n##### H5\n###### H6";
 		const html = renderMarkdown(md);
 		expect(html).toContain("<h1>H1</h1>");
@@ -105,7 +105,7 @@ World`;
 		expect(html).toContain("<h6>H6</h6>");
 	});
 
-	it("코드 블록을 변환한다", () => {
+	it("converts code blocks", () => {
 		const md = "```typescript\nconst x = 1;\n```";
 		const html = renderMarkdown(md);
 		expect(html).toContain('<pre><code class="language-typescript">');
@@ -113,7 +113,7 @@ World`;
 		expect(html).toContain("</code></pre>");
 	});
 
-	it("코드 블록 내부는 인라인 파싱하지 않는다", () => {
+	it("does not apply inline parsing inside code blocks", () => {
 		const md = "```\n**bold** *italic* `code`\n```";
 		const html = renderMarkdown(md);
 		expect(html).not.toContain("<strong>");
@@ -121,14 +121,14 @@ World`;
 		expect(html).toContain("**bold** *italic* `code`");
 	});
 
-	it("코드 블록 내부 HTML을 이스케이프한다", () => {
+	it("escapes HTML inside code blocks", () => {
 		const md = '```\n<script>alert("xss")</script>\n```';
 		const html = renderMarkdown(md);
 		expect(html).toContain("&lt;script&gt;");
 		expect(html).not.toContain("<script>");
 	});
 
-	it("비순서 리스트를 변환한다", () => {
+	it("converts unordered lists", () => {
 		const md = "- item 1\n- item 2\n- item 3";
 		const html = renderMarkdown(md);
 		expect(html).toContain("<ul>");
@@ -138,7 +138,7 @@ World`;
 		expect(html).toContain("</ul>");
 	});
 
-	it("순서 리스트를 변환한다", () => {
+	it("converts ordered lists", () => {
 		const md = "1. first\n2. second\n3. third";
 		const html = renderMarkdown(md);
 		expect(html).toContain("<ol>");
@@ -147,27 +147,27 @@ World`;
 		expect(html).toContain("</ol>");
 	});
 
-	it("블록쿼트를 변환한다", () => {
+	it("converts blockquotes", () => {
 		const md = "> This is a quote\n> with two lines";
 		const html = renderMarkdown(md);
 		expect(html).toContain("<blockquote>");
 		expect(html).toContain("</blockquote>");
 	});
 
-	it("문단을 분리한다", () => {
+	it("separates paragraphs", () => {
 		const md = "First paragraph\n\nSecond paragraph";
 		const html = renderMarkdown(md);
 		expect(html).toContain("<p>First paragraph</p>");
 		expect(html).toContain("<p>Second paragraph</p>");
 	});
 
-	it("수평선을 변환한다", () => {
+	it("converts horizontal rules", () => {
 		const md = "above\n\n---\n\nbelow";
 		const html = renderMarkdown(md);
 		expect(html).toContain("<hr>");
 	});
 
-	it("인라인 요소가 문단 내에서 동작한다", () => {
+	it("inline elements work inside paragraphs", () => {
 		const md = "This has **bold** and *italic* and `code` and [link](url)";
 		const html = renderMarkdown(md);
 		expect(html).toContain("<strong>bold</strong>");
@@ -176,7 +176,7 @@ World`;
 		expect(html).toContain('<a href="url">link</a>');
 	});
 
-	it("테이블을 변환한다", () => {
+	it("converts tables", () => {
 		const md = "| 헤더1 | 헤더2 |\n|------|------|\n| 셀1 | 셀2 |\n| 셀3 | 셀4 |";
 		const html = renderMarkdown(md);
 		expect(html).toContain("<table>");
@@ -187,18 +187,18 @@ World`;
 		expect(html).toContain("</table>");
 	});
 
-	it("테이블 셀 내 인라인 마크다운을 처리한다", () => {
+	it("processes inline markdown inside table cells", () => {
 		const md = "| Name | Desc |\n|------|------|\n| **bold** | `code` |";
 		const html = renderMarkdown(md);
 		expect(html).toContain("<strong>bold</strong>");
 		expect(html).toContain("<code>code</code>");
 	});
 
-	it("빈 입력을 처리한다", () => {
+	it("handles empty input", () => {
 		expect(renderMarkdown("")).toBe("");
 	});
 
-	it("언어 없는 코드 블록을 처리한다", () => {
+	it("handles code blocks without language", () => {
 		const md = "```\nplain code\n```";
 		const html = renderMarkdown(md);
 		expect(html).toContain("<pre><code>");

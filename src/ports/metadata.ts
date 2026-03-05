@@ -1,7 +1,7 @@
 /**
- * 파일 메타데이터 제공 인터페이스.
- * Obsidian의 metadataCache를 추상화한다.
- * Standalone에서는 YAML/정규식 기반으로 구현된다.
+ * File metadata provider interface.
+ * Abstracts Obsidian's metadataCache.
+ * Standalone mode uses YAML/regex-based implementation.
  */
 
 export interface FileMetadata {
@@ -12,7 +12,7 @@ export interface FileMetadata {
 }
 
 export interface MetadataProvider {
-	/** 파일의 메타데이터를 반환한다. 파일이 없으면 null. */
+	/** Returns file metadata. Returns null if file does not exist. */
 	getFileMetadata(path: string): Promise<FileMetadata | null>;
 
 	/** resolvedLinks: source → { target → count } */
@@ -21,6 +21,6 @@ export interface MetadataProvider {
 	/** unresolvedLinks: source → { linkName → count } */
 	getUnresolvedLinks(): Promise<Record<string, Record<string, number>>>;
 
-	/** 현재 에디터에서 열린 파일 경로. standalone에서는 null 반환. */
+	/** Path of the file currently open in the editor. Returns null in standalone mode. */
 	getActiveFilePath(): Promise<string | null>;
 }

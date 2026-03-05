@@ -8,35 +8,35 @@ import {
 } from "../src/migrate-links";
 
 describe("parseWikilink", () => {
-	it("단순 경로를 파싱한다", () => {
+	it("parses a simple path", () => {
 		expect(parseWikilink("til/cat/slug")).toEqual({
 			path: "til/cat/slug",
 			displayText: "til/cat/slug",
 		});
 	});
 
-	it("alias 포함 경로를 파싱한다", () => {
+	it("parses path with alias", () => {
 		expect(parseWikilink("til/cat/slug|Display")).toEqual({
 			path: "til/cat/slug",
 			displayText: "Display",
 		});
 	});
 
-	it("이스케이프 파이프를 구분자로 처리한다", () => {
+	it("treats escaped pipe as delimiter", () => {
 		expect(parseWikilink("path\\|name")).toEqual({
 			path: "path",
 			displayText: "name",
 		});
 	});
 
-	it(".md 포함 경로를 유지한다", () => {
+	it("preserves path containing .md", () => {
 		expect(parseWikilink("til/cat/slug.md|Name")).toEqual({
 			path: "til/cat/slug.md",
 			displayText: "Name",
 		});
 	});
 
-	it("한글 displayText를 처리한다", () => {
+	it("handles Korean displayText", () => {
 		expect(parseWikilink("til/react/hooks|리액트 훅")).toEqual({
 			path: "til/react/hooks",
 			displayText: "리액트 훅",
@@ -45,15 +45,15 @@ describe("parseWikilink", () => {
 });
 
 describe("toMarkdownLink", () => {
-	it(".md 확장자를 자동 추가한다", () => {
+	it("automatically adds .md extension", () => {
 		expect(toMarkdownLink("path", "name")).toBe("[name](path.md)");
 	});
 
-	it(".md 중복 추가를 방지한다", () => {
+	it("prevents duplicate .md addition", () => {
 		expect(toMarkdownLink("path.md", "name")).toBe("[name](path.md)");
 	});
 
-	it("긴 경로를 처리한다", () => {
+	it("handles a long path", () => {
 		expect(toMarkdownLink("til/typescript/generics", "Generics")).toBe(
 			"[Generics](til/typescript/generics.md)",
 		);
@@ -61,50 +61,50 @@ describe("toMarkdownLink", () => {
 });
 
 describe("countWikilinks", () => {
-	it("일반 텍스트에서 wikilink를 카운트한다", () => {
+	it("counts wikilinks in plain text", () => {
 		const content = "참고: [[til/a]] 그리고 [[til/b|B]]";
 		expect(countWikilinks(content)).toBe(2);
 	});
 
-	it("fenced 코드 블록 내부 wikilink를 제외한다", () => {
+	it("excludes wikilinks inside fenced code blocks", () => {
 		const content = "텍스트 [[til/a]]\n```\n[[til/b]]\n```\n[[til/c]]";
 		expect(countWikilinks(content)).toBe(2);
 	});
 
-	it("인라인 코드 내부 wikilink를 제외한다", () => {
+	it("excludes wikilinks inside inline code", () => {
 		const content = "텍스트 [[til/a]] 그리고 `[[til/b]]` 끝";
 		expect(countWikilinks(content)).toBe(1);
 	});
 
-	it("wikilink가 없으면 0을 반환한다", () => {
+	it("returns 0 when no wikilinks", () => {
 		expect(countWikilinks("일반 텍스트")).toBe(0);
 	});
 
-	it("빈 문자열에서 0을 반환한다", () => {
+	it("returns 0 for empty string", () => {
 		expect(countWikilinks("")).toBe(0);
 	});
 });
 
 describe("migrateLinks", () => {
-	it("단순 wikilink를 변환한다", () => {
+	it("converts a simple wikilink", () => {
 		const result = migrateLinks("참고: [[path]]");
 		expect(result.content).toBe("참고: [path](path.md)");
 		expect(result.count).toBe(1);
 	});
 
-	it("alias wikilink를 변환한다", () => {
+	it("converts alias wikilink", () => {
 		const result = migrateLinks("참고: [[path|name]]");
 		expect(result.content).toBe("참고: [name](path.md)");
 		expect(result.count).toBe(1);
 	});
 
-	it("테이블 이스케이프 파이프를 처리한다", () => {
+	it("handles table escaped pipe", () => {
 		const result = migrateLinks("| [[path\\|name]] |");
 		expect(result.content).toBe("| [name](path.md) |");
 		expect(result.count).toBe(1);
 	});
 
-	it("여러 wikilink를 일괄 변환한다", () => {
+	it("converts multiple wikilinks in bulk", () => {
 		const content = "[[til/a]] 그리고 [[til/b|B 주제]]";
 		const result = migrateLinks(content);
 		expect(result.content).toBe(
@@ -113,7 +113,7 @@ describe("migrateLinks", () => {
 		expect(result.count).toBe(2);
 	});
 
-	it("fenced 코드 블록 내부를 보존한다", () => {
+	it("preserves content inside fenced code blocks", () => {
 		const content = "[[til/a]]\n```\n[[til/b]]\n```\n[[til/c]]";
 		const result = migrateLinks(content);
 		expect(result.content).toBe(
@@ -122,7 +122,7 @@ describe("migrateLinks", () => {
 		expect(result.count).toBe(2);
 	});
 
-	it("인라인 코드 내부를 보존한다", () => {
+	it("preserves content inside inline code", () => {
 		const content = "변환: [[til/a]] 보존: `[[til/b]]` 끝";
 		const result = migrateLinks(content);
 		expect(result.content).toBe(
@@ -131,7 +131,7 @@ describe("migrateLinks", () => {
 		expect(result.count).toBe(1);
 	});
 
-	it("코드 블록 밖 wikilink만 변환한다 (혼합)", () => {
+	it("converts only wikilinks outside code blocks (mixed)", () => {
 		const content = `# 제목
 
 [[til/outside]]
@@ -159,14 +159,14 @@ const link = "[[til/inside]]";
 		expect(result.count).toBe(2);
 	});
 
-	it("wikilink가 없으면 원본을 유지한다", () => {
+	it("preserves original content when no wikilinks", () => {
 		const content = "일반 텍스트입니다.";
 		const result = migrateLinks(content);
 		expect(result.content).toBe(content);
 		expect(result.count).toBe(0);
 	});
 
-	it(".md 확장자가 있는 경로를 중복 추가하지 않는다", () => {
+	it("does not duplicate .md extension for paths that already have it", () => {
 		const result = migrateLinks("[[til/cat/slug.md|Name]]");
 		expect(result.content).toBe("[Name](til/cat/slug.md)");
 		expect(result.count).toBe(1);
@@ -174,25 +174,25 @@ const link = "[[til/inside]]";
 });
 
 describe("hasWikilinks", () => {
-	it("wikilink가 있으면 true를 반환한다", () => {
+	it("returns true when wikilinks exist", () => {
 		expect(hasWikilinks("텍스트 [[til/a]] 끝")).toBe(true);
 	});
 
-	it("코드 블록 안에만 있으면 false를 반환한다", () => {
+	it("returns false when wikilinks exist only inside code blocks", () => {
 		expect(hasWikilinks("```\n[[til/a]]\n```")).toBe(false);
 	});
 
-	it("인라인 코드 안에만 있으면 false를 반환한다", () => {
+	it("returns false when wikilinks exist only inside inline code", () => {
 		expect(hasWikilinks("코드: `[[til/a]]`")).toBe(false);
 	});
 
-	it("모두 변환 후 false를 반환한다", () => {
+	it("returns false after all wikilinks are converted", () => {
 		const original = "[[til/a]] [[til/b]]";
 		const { content } = migrateLinks(original);
 		expect(hasWikilinks(content)).toBe(false);
 	});
 
-	it("wikilink가 없으면 false를 반환한다", () => {
+	it("returns false when no wikilinks", () => {
 		expect(hasWikilinks("일반 텍스트")).toBe(false);
 	});
 });

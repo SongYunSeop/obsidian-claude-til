@@ -1,6 +1,6 @@
 import type { FileStorage } from "./ports/storage";
 
-// esbuild의 text loader로 번들에 포함
+// Bundled via esbuild text loader
 import tilSkill from "../skills/til/SKILL.md";
 import backlogSkill from "../skills/backlog/SKILL.md";
 import researchSkill from "../skills/research/SKILL.md";
@@ -51,7 +51,7 @@ const HOOKS: Record<string, string> = {
 };
 
 /**
- * Claude Code hooks 설정 (.claude/settings.json에 등록할 hook 규칙).
+ * Claude Code hooks configuration (hook rules to register in .claude/settings.json).
  */
 const HOOKS_CONFIG: Record<string, Array<Record<string, unknown>>> = {
 	Notification: [{
@@ -61,11 +61,11 @@ const HOOKS_CONFIG: Record<string, Array<Record<string, unknown>>> = {
 };
 
 /**
- * 버전 관리 파일을 설치/업데이트하는 공통 로직.
+ * Common logic for installing/updating versioned files.
  *
- * - 파일이 없으면 새로 설치
- * - plugin-version이 현재보다 낮으면 업데이트
- * - plugin-version이 없으면 사용자 커스터마이즈로 간주, 건너뜀
+ * - Installs fresh if file does not exist
+ * - Updates if plugin-version is lower than current
+ * - Skips if plugin-version is absent (treated as user-customized)
  */
 async function installFiles(
 	storage: FileStorage,
@@ -74,7 +74,7 @@ async function installFiles(
 	pluginVersion: string,
 	label: string,
 ): Promise<void> {
-	// 필요한 디렉토리를 사전에 수집하여 중복 없이 생성
+	// Collect required directories upfront and create them without duplicates
 	const dirs = new Set<string>();
 	for (const relativePath of Object.keys(files)) {
 		const fullPath = `${basePath}/${relativePath}`;
@@ -94,9 +94,9 @@ async function installFiles(
 				const existing = await storage.readFile(fullPath);
 				const installedVersion = extractPluginVersion(existing ?? "");
 
-				// plugin-version이 없으면 사용자 커스터마이즈 → 건너뜀
+				// No plugin-version means user-customized → skip
 				if (!installedVersion) return;
-				// 현재 버전이 더 높지 않을 때 건너뜀
+				// Skip when current version is not newer
 				if (!isNewerVersion(pluginVersion, installedVersion)) return;
 			}
 
@@ -107,10 +107,10 @@ async function installFiles(
 }
 
 /**
- * vault에 플러그인 에셋(skills, agents, CLAUDE.md 섹션)을 설치/업데이트한다.
+ * Installs/updates plugin assets (skills, agents, CLAUDE.md section) into the vault.
  */
 export async function installPlugin(storage: FileStorage, pluginVersion: string): Promise<void> {
-	// 병렬 실행 전에 공유 부모 디렉토리 생성 (race condition 방지)
+	// Create shared parent directory before parallel execution (prevent race condition)
 	if (!(await storage.exists(".claude"))) {
 		await storage.mkdir(".claude");
 	}
@@ -126,8 +126,8 @@ export async function installPlugin(storage: FileStorage, pluginVersion: string)
 }
 
 /**
- * hook 스크립트를 .claude/hooks/에 설치하고, .claude/settings.json에 hook 규칙을 등록한다.
- * 스크립트는 항상 덮어쓰고, settings.json은 기존 설정을 보존하며 추가만 한다.
+ * Installs hook scripts into .claude/hooks/ and registers hook rules in .claude/settings.json.
+ * Scripts are always overwritten; settings.json preserves existing config and only appends.
  */
 async function installHooks(storage: FileStorage): Promise<void> {
 	if (!(await storage.exists(HOOKS_BASE))) {
@@ -144,8 +144,8 @@ async function installHooks(storage: FileStorage): Promise<void> {
 }
 
 /**
- * .claude/settings.json에 oh-my-til hook 규칙을 등록한다.
- * 이미 등록된 hook은 건너뛰고, 기존 사용자 설정을 보존한다.
+ * Registers oh-my-til hook rules in .claude/settings.json.
+ * Skips already-registered hooks and preserves existing user settings.
  */
 async function installHooksConfig(storage: FileStorage): Promise<void> {
 	const settingsPath = ".claude/settings.json";
@@ -185,8 +185,8 @@ async function installHooksConfig(storage: FileStorage): Promise<void> {
 }
 
 /**
- * .claude/CLAUDE.md에 MCP 도구 안내 섹션을 추가/업데이트한다.
- * 마커 주석(버전 포함)으로 관리하여 기존 내용을 보존한다.
+ * Adds/updates the MCP tools guide section in .claude/CLAUDE.md.
+ * Managed via marker comments (including version) to preserve existing content.
  */
 async function installClaudeMdSection(storage: FileStorage, pluginVersion: string): Promise<void> {
 	const filePath = ".claude/CLAUDE.md";
@@ -201,9 +201,9 @@ async function installClaudeMdSection(storage: FileStorage, pluginVersion: strin
 		const existing = await storage.readFile(filePath);
 		const existingContent = existing ?? "";
 
-		if (existingContent.includes(markerStart)) return; // 같은 버전 이미 설치됨
+		if (existingContent.includes(markerStart)) return; // same version already installed
 
-		// 이전 버전 마커가 있으면 교체
+		// Replace if an older version marker exists
 		if (existingContent.includes(MCP_MARKER_START)) {
 			const replaced = existingContent.replace(
 				new RegExp(`${escapeRegExp(MCP_MARKER_START)}[\\s\\S]*?${escapeRegExp(MCP_MARKER_END)}`),
@@ -221,9 +221,9 @@ async function installClaudeMdSection(storage: FileStorage, pluginVersion: strin
 }
 
 /**
- * 이전 패키지명(claude-til)으로 설치된 skill 파일을 정리한다.
- * OLD_SKILLS_BASE = ".claude/skills/claude-til" 경로 대상 (의도적 레거시 마이그레이션).
- * plugin-version이 있는 파일만 삭제 (사용자 커스터마이즈 보호).
+ * Cleans up skill files installed under the old package name (claude-til).
+ * Targets OLD_SKILLS_BASE = ".claude/skills/claude-til" (intentional legacy migration).
+ * Only deletes files that have a plugin-version (protects user-customized files).
  */
 async function cleanupOldSkills(storage: FileStorage): Promise<void> {
 	const oldPaths = ["til/SKILL.md", "backlog/SKILL.md", "research/SKILL.md"];

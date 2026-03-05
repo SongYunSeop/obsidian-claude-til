@@ -1,6 +1,6 @@
 /**
- * skills.ts 의 순수 함수 및 상수.
- * Obsidian Vault API에 의존하지 않으므로 독립적으로 테스트 가능하다.
+ * Pure functions and constants for skill management.
+ * Independent of Obsidian Vault API, fully testable in isolation.
  */
 
 export const VERSION_PLACEHOLDER = "__PLUGIN_VERSION__";
@@ -13,14 +13,14 @@ export const HOOKS_BASE = ".claude/hooks";
 export const OLD_SKILLS_BASE = ".claude/skills/claude-til";
 
 /**
- * 소스 파일의 __PLUGIN_VERSION__ 플레이스홀더를 실제 버전으로 치환한다.
+ * Replaces the __PLUGIN_VERSION__ placeholder in source files with the actual version.
  */
 export function resolveVersionPlaceholder(content: string, version: string): string {
 	return content.replace(VERSION_PLACEHOLDER, version);
 }
 
 /**
- * frontmatter에서 plugin-version 값을 추출한다.
+ * Extracts the plugin-version value from frontmatter.
  */
 export function extractPluginVersion(content: string): string | null {
 	const match = content.match(/^---\n([\s\S]*?)\n---/);
@@ -30,7 +30,7 @@ export function extractPluginVersion(content: string): string | null {
 }
 
 /**
- * semver 비교. a > b이면 true.
+ * Semver comparison. Returns true if a > b.
  */
 export function isNewerVersion(a: string, b: string): boolean {
 	const pa = a.split(".").map(Number);

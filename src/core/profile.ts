@@ -1,6 +1,6 @@
 /**
- * 프로필 페이지, TIL 개별 페이지, 카테고리 인덱스 페이지 HTML 생성 순수 함수.
- * docs/style.css와 동일한 다크 테마 디자인 시스템을 사용한다.
+ * Pure functions for generating profile page, individual TIL page, and category index page HTML.
+ * Uses the same dark theme design system as docs/style.css.
  */
 
 import { escapeHtml } from "./markdown";
@@ -10,8 +10,8 @@ export interface ProfileConfig {
 	title: string;
 	description: string;
 	githubUrl?: string;
-	baseUrl?: string; // 상대 경로 기본값: ""
-	subtitle?: string; // 프로필 페이지 소개 문구
+	baseUrl?: string; // relative path default: ""
+	subtitle?: string; // profile page introduction text
 }
 
 export interface TilEntry {
@@ -46,7 +46,7 @@ export interface RecentTilEntry {
 	summary: string;
 }
 
-/** 공통 CSS (다크 테마, docs/style.css 기반) */
+/** Common CSS (dark theme, based on docs/style.css) */
 export function getProfileCss(): string {
 	return `
 :root {
@@ -601,10 +601,10 @@ ${body}
 </html>`;
 }
 
-/** 개별 TIL 페이지 HTML을 생성한다. */
+/** Generates HTML for an individual TIL page. */
 export function generateTilPageHtml(data: TilPageData, config: ProfileConfig): string {
-	// TIL 페이지는 {category}/{slug}.html에 위치하므로
-	// 홈: ../index.html, 카테고리: index.html (같은 디렉토리)
+	// TIL pages live at {category}/{slug}.html, so
+	// home: ../index.html, category: index.html (same directory)
 	const body = `
 <div class="container">
   <nav class="breadcrumb">
@@ -643,7 +643,7 @@ export function generateTilPageHtml(data: TilPageData, config: ProfileConfig): s
 	});
 }
 
-/** 카테고리 인덱스 페이지 HTML을 생성한다. */
+/** Generates HTML for the category index page. */
 export function generateCategoryIndexHtml(data: CategoryPageData, config: ProfileConfig): string {
 	const tilItems = data.tils
 		.map((t) => {
@@ -686,7 +686,7 @@ export function generateCategoryIndexHtml(data: CategoryPageData, config: Profil
 	});
 }
 
-/** 프로필 페이지에 삽입할 전체 TIL 목록 HTML을 생성한다 (카테고리별 접이식). */
+/** Generates HTML for the full TIL list inserted into the profile page (collapsible by category). */
 export function renderAllTilsHtml(categories: CategoryTilGroup[]): string {
 	if (categories.length === 0) return "";
 
@@ -715,7 +715,7 @@ ${groups}
 </div>`;
 }
 
-/** Summary Cards (4개 통계 카드 한 행) HTML을 생성한다. */
+/** Generates HTML for Summary Cards (one row of 4 stat cards). */
 export function renderSummaryCardsHtml(
 	totalTils: number,
 	categoryCount: number,
@@ -742,7 +742,7 @@ export function renderSummaryCardsHtml(
 </div>`;
 }
 
-/** 최근 TIL 목록 (최대 5개) HTML을 생성한다. */
+/** Generates HTML for the recent TIL list (up to 5 items). */
 export function renderRecentTilsHtml(recent: RecentTilEntry[]): string {
 	if (recent.length === 0) return "";
 
@@ -770,23 +770,23 @@ ${cards}
 </div>`;
 }
 
-/** 히트맵 셀 배열을 HTML로 렌더링한다. 요일 레이블(Mon/Wed/Fri), 월 레이블, hover 툴팁 포함. */
+/** Renders the heatmap cell array as HTML. Includes day labels (Mon/Wed/Fri), month labels, and hover tooltips. */
 export function renderHeatmapHtml(cells: HeatmapCell[], streak: number, totalTils: number): string {
 	if (cells.length === 0) return "";
 
-	// 첫 셀의 요일에 맞춰 빈 셀 추가 (월요일=0 기준)
+	// Pad with empty cells to align with the first cell's day of week (Monday=0 basis)
 	const firstDate = new Date(cells[0]!.date);
 	const dow = firstDate.getDay(); // 0=Sun
-	// 월요일 시작: Sun→6 empty, Mon→0, Tue→1, ..., Sat→5
+	// Monday start: Sun→6 empty, Mon→0, Tue→1, ..., Sat→5
 	const emptyCount = dow === 0 ? 6 : dow - 1;
 
-	// 빈 셀 HTML
+	// Empty cell HTML
 	const emptyCells = Array.from(
 		{ length: emptyCount },
 		() => '<div class="heatmap-cell" data-level="0"></div>',
 	).join("\n");
 
-	// 실제 셀 HTML (shield.io 스타일 tooltip: data-date + data-count)
+	// Actual cell HTML (shield.io style tooltip: data-date + data-count)
 	const cellsHtml = cells
 		.map((c) => {
 			const countLabel = `${c.count} TIL${c.count !== 1 ? "s" : ""}`;
@@ -794,12 +794,12 @@ export function renderHeatmapHtml(cells: HeatmapCell[], streak: number, totalTil
 		})
 		.join("\n");
 
-	// 월 레이블 계산: 각 열(주)의 첫 번째 셀 날짜를 기준으로 월이 바뀌는 지점을 찾는다
-	// 총 열 수 = ceil((emptyCount + cells.length) / 7)
+	// Compute month labels: find where the month changes based on the first cell date in each column (week)
+	// Total columns = ceil((emptyCount + cells.length) / 7)
 	const totalCells = emptyCount + cells.length;
 	const totalCols = Math.ceil(totalCells / 7);
-	// 각 열 인덱스에 해당하는 날짜: emptyCount개 빈 셀 이후 cells 배열 시작
-	// 열 col의 첫 번째 실제 셀 인덱스 = col * 7 - emptyCount (0-based in cells array)
+	// Date corresponding to each column index: cells array starts after emptyCount empty cells
+	// First actual cell index for column col = col * 7 - emptyCount (0-based in cells array)
 	const monthLabels: { col: number; label: string }[] = [];
 	let lastMonth = -1;
 	for (let col = 0; col < totalCols; col++) {
@@ -815,7 +815,7 @@ export function renderHeatmapHtml(cells: HeatmapCell[], streak: number, totalTil
 		}
 	}
 
-	// 월 레이블 HTML: 각 레이블을 열의 정확한 x 위치에 absolute로 배치
+	// Month label HTML: position each label absolutely at the exact x position of its column
 	const colWidth = 14; // 12px cell + 2px gap
 	const monthLabelHtmlParts = monthLabels.map(({ col, label }) => {
 		const left = col * colWidth;
@@ -823,8 +823,8 @@ export function renderHeatmapHtml(cells: HeatmapCell[], streak: number, totalTil
 	});
 	const monthLabelsHtml = monthLabelHtmlParts.join("");
 
-	// 요일 레이블: Mon, Wed, Fri만 표시
-	// 행 순서: row0=Mon, row1=Tue, row2=Wed, row3=Thu, row4=Fri, row5=Sat, row6=Sun
+	// Day labels: only Mon, Wed, Fri are shown
+	// Row order: row0=Mon, row1=Tue, row2=Wed, row3=Thu, row4=Fri, row5=Sat, row6=Sun
 	const dayLabelRows = ["Mon", "", "Wed", "", "Fri", "", ""];
 	const dayLabelsHtml = dayLabelRows
 		.map((d) => (d ? `<div>${d}</div>` : "<div>&nbsp;</div>"))
@@ -859,7 +859,7 @@ More
 </div>`;
 }
 
-/** 프로필 페이지 HTML을 생성한다. */
+/** Generates HTML for the profile page. */
 export function generateProfileHtml(
 	config: ProfileConfig,
 	summaryCardsHtml: string,

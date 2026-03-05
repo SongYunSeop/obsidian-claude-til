@@ -1,12 +1,12 @@
 import { extractCategory } from "./context";
 
-// --- 타입 ---
+// --- Types ---
 
 export interface SrsMetadata {
 	next_review: string;    // YYYY-MM-DD
-	interval: number;       // 다음 복습까지 일수
-	ease_factor: number;    // SM-2 ease factor (최소 1.3, 기본 2.5)
-	repetitions: number;    // 연속 정답 횟수
+	interval: number;       // days until next review
+	ease_factor: number;    // SM-2 ease factor (minimum 1.3, default 2.5)
+	repetitions: number;    // consecutive correct answer count
 	last_review: string;    // YYYY-MM-DD
 }
 
@@ -39,7 +39,7 @@ export interface SrsFileEntry {
 	frontmatter: Record<string, unknown>;
 }
 
-// --- 유틸 (stats.ts와 공유하는 날짜 유틸. 로컬 타임존 기반 설계.) ---
+// --- Utilities (date utils shared with stats.ts; designed around local timezone) ---
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -53,7 +53,7 @@ function startOfDay(ts: number): number {
 	return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
 }
 
-/** YYYY-MM-DD 또는 YYYY-MM-DDTHH:mm:ss 문자열을 타임스탬프로 변환 */
+/** Converts a YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss string to a timestamp */
 function parseDateStr(dateStr: string): number {
 	if (dateStr.includes("T")) {
 		return new Date(dateStr).getTime();
@@ -62,11 +62,11 @@ function parseDateStr(dateStr: string): number {
 	return new Date(y!, m! - 1, d!).getTime();
 }
 
-// --- 핵심 함수 ---
+// --- Core functions ---
 
 /**
- * 새 카드의 기본 SRS 메타데이터를 생성한다.
- * interval=1, ease=2.5, next_review=내일.
+ * Creates default SRS metadata for a new card.
+ * interval=1, ease=2.5, next_review=tomorrow.
  */
 export function createDefaultSrsMetadata(now?: number): SrsMetadata {
 	const currentTime = now ?? Date.now();
@@ -82,7 +82,7 @@ export function createDefaultSrsMetadata(now?: number): SrsMetadata {
 }
 
 /**
- * SM-2 알고리즘을 실행하여 다음 복습 일정을 계산한다.
+ * Runs the SM-2 algorithm to compute the next review schedule.
  */
 export function computeNextReview(current: SrsMetadata, grade: ReviewGrade, now?: number): SrsMetadata {
 	const currentTime = now ?? Date.now();
@@ -91,11 +91,11 @@ export function computeNextReview(current: SrsMetadata, grade: ReviewGrade, now?
 	let { interval, ease_factor, repetitions } = current;
 
 	if (grade < 3) {
-		// 실패: 리셋
+		// Failure: reset
 		repetitions = 0;
 		interval = 1;
 	} else {
-		// 성공
+		// Success
 		if (repetitions === 0) {
 			interval = 1;
 		} else if (repetitions === 1) {
@@ -106,7 +106,7 @@ export function computeNextReview(current: SrsMetadata, grade: ReviewGrade, now?
 		repetitions += 1;
 	}
 
-	// ease factor 업데이트
+	// Update ease factor
 	ease_factor += 0.1 - (5 - grade) * (0.08 + (5 - grade) * 0.02);
 	ease_factor = Math.max(ease_factor, 1.3);
 
@@ -122,7 +122,7 @@ export function computeNextReview(current: SrsMetadata, grade: ReviewGrade, now?
 }
 
 /**
- * 오늘 복습 대상인지 판별한다.
+ * Determines whether the card is due for review today.
  */
 export function isDueForReview(nextReview: string, now?: number): boolean {
 	const currentTime = now ?? Date.now();
@@ -132,7 +132,7 @@ export function isDueForReview(nextReview: string, now?: number): boolean {
 }
 
 /**
- * 연체 일수를 계산한다. 양수=연체, 0=오늘, 음수=미래.
+ * Computes the number of overdue days. Positive=overdue, 0=today, negative=future.
  */
 export function computeOverdueDays(nextReview: string, now?: number): number {
 	const currentTime = now ?? Date.now();
@@ -142,8 +142,8 @@ export function computeOverdueDays(nextReview: string, now?: number): number {
 }
 
 /**
- * frontmatter에서 SRS 필드를 파싱한다.
- * 5개 필드가 모두 있어야 유효한 SrsMetadata를 반환한다.
+ * Parses SRS fields from frontmatter.
+ * All 5 fields must be present to return a valid SrsMetadata.
  */
 export function parseSrsMetadata(frontmatter: Record<string, unknown>): SrsMetadata | null {
 	const nextReview = frontmatter.next_review;
@@ -172,7 +172,7 @@ export function parseSrsMetadata(frontmatter: Record<string, unknown>): SrsMetad
 }
 
 /**
- * 파일 내용의 frontmatter에 SRS 필드를 업데이트/삽입한다.
+ * Updates/inserts SRS fields in the frontmatter of file content.
  */
 export function updateFrontmatterSrs(fileContent: string, srs: SrsMetadata): string {
 	const srsFields = [
@@ -186,7 +186,7 @@ export function updateFrontmatterSrs(fileContent: string, srs: SrsMetadata): str
 	const SRS_KEYS = ["next_review", "interval", "ease_factor", "repetitions", "last_review"];
 
 	if (!fileContent.startsWith("---")) {
-		// frontmatter 없음 → 새로 생성
+		// No frontmatter → create new one
 		return `---\n${srsFields.join("\n")}\n---\n${fileContent}`;
 	}
 
@@ -198,20 +198,20 @@ export function updateFrontmatterSrs(fileContent: string, srs: SrsMetadata): str
 	const fmContent = fileContent.slice(4, endIdx);
 	const afterFm = fileContent.slice(endIdx + 3);
 
-	// 기존 SRS 필드 제거
+	// Remove existing SRS fields
 	const existingLines = fmContent.split("\n").filter((line) => {
 		const key = line.split(":")[0]?.trim();
 		return !SRS_KEYS.includes(key ?? "");
 	});
 
-	// 빈 줄 정리 후 SRS 필드 추가
+	// Clean blank lines then append SRS fields
 	const cleanedLines = existingLines.filter((l) => l.trim() !== "");
 	const newFmLines = [...cleanedLines, ...srsFields];
 	return `---\n${newFmLines.join("\n")}\n---${afterFm}`;
 }
 
 /**
- * frontmatter에서 SRS 필드 5개를 제거한다. TIL 내용은 유지.
+ * Removes the 5 SRS fields from frontmatter. TIL content is preserved.
  */
 export function removeFrontmatterSrs(fileContent: string): string {
 	const SRS_KEYS = ["next_review", "interval", "ease_factor", "repetitions", "last_review"];
@@ -235,15 +235,15 @@ export function removeFrontmatterSrs(fileContent: string): string {
 
 	const cleanedLines = filteredLines.filter((l) => l.trim() !== "");
 	if (cleanedLines.length === 0) {
-		// frontmatter가 비어짐
+		// frontmatter becomes empty
 		return afterFm.replace(/^\n/, "");
 	}
 	return `---\n${cleanedLines.join("\n")}\n---${afterFm}`;
 }
 
 /**
- * 복습 대상 카드를 필터링+정렬+상한 적용한다.
- * 연체일 내림차순 (가장 급한 것 먼저).
+ * Filters, sorts, and caps review-due cards.
+ * Sorted by overdue days descending (most urgent first).
  */
 export function filterDueCards(
 	files: SrsFileEntry[],
@@ -275,13 +275,13 @@ export function filterDueCards(
 		});
 	}
 
-	// 연체일 내림차순 (가장 급한 것 먼저)
+	// Sort by overdue days descending (most urgent first)
 	cards.sort((a, b) => b.overdueDays - a.overdueDays);
 	return cards.slice(0, limit);
 }
 
 /**
- * 복습 통계를 집계한다.
+ * Aggregates review statistics.
  */
 export function computeReviewStats(
 	files: SrsFileEntry[],
@@ -331,8 +331,8 @@ export function computeReviewStats(
 }
 
 /**
- * 연속 복습일을 계산한다.
- * last_review 필드를 기반으로 매일 복습했는지 확인.
+ * Computes the consecutive review streak.
+ * Checks whether a review was done every day based on the last_review field.
  */
 export function computeReviewStreak(
 	files: SrsFileEntry[],
@@ -341,7 +341,7 @@ export function computeReviewStreak(
 ): number {
 	const currentTime = now ?? Date.now();
 
-	// 복습이 있었던 날짜 집합 구성
+	// Build a set of dates that had reviews
 	const reviewDays = new Set<string>();
 	for (const file of files) {
 		if (!file.path.startsWith(tilPath + "/")) continue;
@@ -364,7 +364,7 @@ export function computeReviewStreak(
 		if (reviewDays.has(dayStr)) {
 			streak++;
 		} else {
-			// 오늘 복습 아직 안 했어도 어제까지 연속이면 streak 유지 (grace period)
+			// Maintain streak even if today's review isn't done yet, as long as consecutive through yesterday (grace period)
 			if (i === 0) { cursor.setDate(cursor.getDate() - 1); continue; }
 			break;
 		}
@@ -375,17 +375,17 @@ export function computeReviewStreak(
 }
 
 /**
- * 2단계 평가를 SM-2 grade로 변환한다.
- * 기억남=4, 모름=1.
+ * Converts a two-level rating to an SM-2 grade.
+ * Remembered=4, Forgot=1.
  */
 export function simpleGradeToSm2(remembered: boolean): ReviewGrade {
 	return remembered ? 4 : 1;
 }
 
-// --- 포매팅 ---
+// --- Formatting ---
 
 /**
- * 복습 카드 목록을 텍스트로 포매팅한다.
+ * Formats the review card list as text.
  */
 export function formatReviewList(cards: ReviewCard[]): string {
 	if (cards.length === 0) return "No cards to review.";
@@ -405,7 +405,7 @@ export function formatReviewList(cards: ReviewCard[]): string {
 }
 
 /**
- * 복습 통계를 텍스트로 포매팅한다.
+ * Formats review statistics as text.
  */
 export function formatReviewStats(stats: ReviewStats): string {
 	const lines: string[] = [];

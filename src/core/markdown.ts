@@ -1,9 +1,9 @@
 /**
- * 마크다운 → HTML 순수 변환 함수.
- * 외부 라이브러리 없이 TIL 문서에 필요한 핵심 요소만 지원한다.
+ * Pure markdown → HTML conversion functions.
+ * Supports only the core elements needed for TIL documents, without external libraries.
  */
 
-/** HTML 특수문자를 이스케이프한다 (XSS 방지). */
+/** Escapes HTML special characters (XSS prevention). */
 export function escapeHtml(text: string): string {
 	return text
 		.replace(/&/g, "&amp;")
@@ -13,7 +13,7 @@ export function escapeHtml(text: string): string {
 		.replace(/'/g, "&#39;");
 }
 
-/** frontmatter(--- 블록)를 제거한다. */
+/** Removes frontmatter (--- block). */
 export function stripFrontmatter(md: string): string {
 	if (!md.startsWith("---")) return md;
 	const end = md.indexOf("\n---", 3);
@@ -21,23 +21,23 @@ export function stripFrontmatter(md: string): string {
 	return md.slice(end + 4).replace(/^\n+/, "");
 }
 
-/** 인라인 마크다운을 HTML로 변환한다. 코드 블록 내부에서는 호출하지 않는다. */
+/** Converts inline markdown to HTML. Should not be called inside code blocks. */
 export function renderInline(text: string): string {
 	let result = escapeHtml(text);
 
-	// 인라인 코드 (backtick) — 내부는 추가 파싱하지 않음
+	// Inline code (backtick) — inner content is not parsed further
 	result = result.replace(/`([^`]+)`/g, "<code>$1</code>");
 
-	// 볼드+이탤릭 (***text***)
+	// Bold+italic (***text***)
 	result = result.replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>");
 
-	// 볼드 (**text**)
+	// Bold (**text**)
 	result = result.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
 
-	// 이탤릭 (*text*)
+	// Italic (*text*)
 	result = result.replace(/\*(.+?)\*/g, "<em>$1</em>");
 
-	// 링크 [text](url) — javascript:, data:, vbscript: 스킴 차단 (XSS 방지)
+	// Link [text](url) — blocks javascript:, data:, vbscript: schemes (XSS prevention)
 	result = result.replace(
 		/\[([^\]]*)\]\(([^)]+)\)/g,
 		(_match: string, text: string, url: string) => {
@@ -58,7 +58,7 @@ interface BlockToken {
 	lang?: string; // code block language
 }
 
-/** 마크다운을 블록 토큰으로 파싱한다. */
+/** Parses markdown into block tokens. */
 function tokenize(md: string): BlockToken[] {
 	const lines = md.split("\n");
 	const tokens: BlockToken[] = [];
@@ -67,20 +67,20 @@ function tokenize(md: string): BlockToken[] {
 	while (i < lines.length) {
 		const line = lines[i]!;
 
-		// 빈 줄 건너뛰기
+		// Skip blank lines
 		if (line.trim() === "") {
 			i++;
 			continue;
 		}
 
-		// 수평선
+		// Horizontal rule
 		if (/^(-{3,}|\*{3,}|_{3,})\s*$/.test(line.trim())) {
 			tokens.push({ type: "hr", content: "" });
 			i++;
 			continue;
 		}
 
-		// 코드 블록 (``` 또는 ~~~)
+		// Code block (``` or ~~~)
 		const codeFenceMatch = line.match(/^(`{3,}|~{3,})(.*)$/);
 		if (codeFenceMatch) {
 			const fence = codeFenceMatch[1]!;
@@ -99,7 +99,7 @@ function tokenize(md: string): BlockToken[] {
 			continue;
 		}
 
-		// 헤딩
+		// Heading
 		const headingMatch = line.match(/^(#{1,6})\s+(.+)$/);
 		if (headingMatch) {
 			tokens.push({
@@ -111,7 +111,7 @@ function tokenize(md: string): BlockToken[] {
 			continue;
 		}
 
-		// 블록쿼트
+		// Blockquote
 		if (line.startsWith(">")) {
 			const bqLines: string[] = [];
 			while (i < lines.length && (lines[i]!.startsWith(">") || (lines[i]!.trim() !== "" && bqLines.length > 0 && !lines[i]!.startsWith("#")))) {
@@ -126,7 +126,7 @@ function tokenize(md: string): BlockToken[] {
 			continue;
 		}
 
-		// 비순서 리스트 (- 또는 *)
+		// Unordered list (- or *)
 		if (/^[\-\*]\s+/.test(line)) {
 			const listLines: string[] = [];
 			while (i < lines.length && /^[\-\*]\s+/.test(lines[i]!)) {
@@ -137,7 +137,7 @@ function tokenize(md: string): BlockToken[] {
 			continue;
 		}
 
-		// 순서 리스트 (1. 2. ...)
+		// Ordered list (1. 2. ...)
 		if (/^\d+\.\s+/.test(line)) {
 			const listLines: string[] = [];
 			while (i < lines.length && /^\d+\.\s+/.test(lines[i]!)) {
@@ -148,7 +148,7 @@ function tokenize(md: string): BlockToken[] {
 			continue;
 		}
 
-		// 테이블 (| col | col | 형식)
+		// Table (| col | col | format)
 		if (line.includes("|") && line.trim().startsWith("|")) {
 			const tableLines: string[] = [];
 			while (i < lines.length && lines[i]!.trim().startsWith("|")) {
@@ -159,7 +159,7 @@ function tokenize(md: string): BlockToken[] {
 			continue;
 		}
 
-		// 문단 (연속된 비빈 줄)
+		// Paragraph (consecutive non-blank lines)
 		const paraLines: string[] = [];
 		while (i < lines.length && lines[i]!.trim() !== "" && !lines[i]!.startsWith("#") && !lines[i]!.startsWith(">") && !/^[\-\*]\s+/.test(lines[i]!) && !/^\d+\.\s+/.test(lines[i]!) && !/^(`{3,}|~{3,})/.test(lines[i]!) && !/^(-{3,}|\*{3,}|_{3,})\s*$/.test(lines[i]!.trim()) && !(lines[i]!.includes("|") && lines[i]!.trim().startsWith("|"))) {
 			paraLines.push(lines[i]!);
@@ -173,7 +173,7 @@ function tokenize(md: string): BlockToken[] {
 	return tokens;
 }
 
-/** 블록 토큰을 HTML로 변환한다. */
+/** Converts block tokens to HTML. */
 function renderTokens(tokens: BlockToken[]): string {
 	const parts: string[] = [];
 
@@ -215,7 +215,7 @@ function renderTokens(tokens: BlockToken[]): string {
 				const parseRow = (row: string): string[] =>
 					row.split("|").slice(1, -1).map((cell) => cell.trim());
 
-				// 구분선 행(---|---) 판별
+				// Detect separator row (---|---)
 				const isSeparator = (row: string): boolean =>
 					parseRow(row).every((cell) => /^:?-+:?$/.test(cell));
 
@@ -252,8 +252,8 @@ function renderTokens(tokens: BlockToken[]): string {
 }
 
 /**
- * 마크다운을 HTML로 변환한다.
- * frontmatter는 자동 제거된다.
+ * Converts markdown to HTML.
+ * frontmatter is automatically stripped.
  */
 export function renderMarkdown(md: string): string {
 	const body = stripFrontmatter(md);
@@ -262,12 +262,12 @@ export function renderMarkdown(md: string): string {
 }
 
 /**
- * 정적 사이트용 내부 링크 변환.
- * HTML 내 `til/{category}/{slug}.md` 링크를 `../{category}/{slug}.html`로 변환한다.
- * TIL 페이지가 `{category}/{slug}.html`에 위치하므로 `../`로 루트까지 올라간 뒤 재진입.
+ * Rewrites internal links for the static site.
+ * Converts `til/{category}/{slug}.md` links in HTML to `../{category}/{slug}.html`.
+ * Since TIL pages live at `{category}/{slug}.html`, go up to root with `../` then re-enter.
  *
- * `existingFiles`가 주어지면 해당 Set에 없는 문서의 링크는 비활성 처리한다.
- * Set 값은 `til/{category}/{slug}.md` 형식이어야 한다.
+ * If `existingFiles` is provided, links to documents not in that Set are rendered as inactive.
+ * Set values must be in `til/{category}/{slug}.md` format.
  */
 export function rewriteTilLinks(html: string, existingFiles?: Set<string>): string {
 	return html.replace(

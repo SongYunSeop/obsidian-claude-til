@@ -3,7 +3,7 @@ import { readFileSync, readdirSync } from "fs";
 import { join } from "path";
 import { Vault } from "./mock-obsidian";
 
-// --- 순수 함수 테스트 (skills.ts에서 로직만 복사) ---
+// --- Pure function tests (logic copied from skills.ts only) ---
 
 const VERSION_PLACEHOLDER = "__PLUGIN_VERSION__";
 
@@ -28,7 +28,7 @@ function isNewerVersion(a: string, b: string): boolean {
 	return false;
 }
 
-// --- installFiles 로직 재현 (esbuild text import 우회) ---
+// --- Reproduce installFiles logic (workaround for esbuild text import) ---
 
 const SKILLS_BASE = ".claude/skills";
 const RULES_BASE = ".claude/rules";
@@ -117,60 +117,60 @@ async function cleanupOldSkills(vault: Vault): Promise<string[]> {
 	return removed;
 }
 
-// --- 테스트 ---
+// --- Tests ---
 
 describe("resolveVersionPlaceholder", () => {
-	it("__PLUGIN_VERSION__을 실제 버전으로 치환한다", () => {
+	it("replaces __PLUGIN_VERSION__ with the actual version", () => {
 		const content = '---\nplugin-version: "__PLUGIN_VERSION__"\n---\n# Skill';
 		const result = resolveVersionPlaceholder(content, "0.5.0");
 		expect(result).toBe('---\nplugin-version: "0.5.0"\n---\n# Skill');
 	});
 
-	it("플레이스홀더가 없으면 원본을 그대로 반환한다", () => {
+	it("returns the original content unchanged when no placeholder is present", () => {
 		const content = '---\nplugin-version: "0.2.0"\n---\n# Skill';
 		expect(resolveVersionPlaceholder(content, "0.5.0")).toBe(content);
 	});
 });
 
 describe("extractPluginVersion", () => {
-	it("frontmatter에서 plugin-version을 추출한다", () => {
+	it("extracts plugin-version from frontmatter", () => {
 		const content = '---\nname: til\nplugin-version: "0.1.2"\n---\n# TIL';
 		expect(extractPluginVersion(content)).toBe("0.1.2");
 	});
 
-	it("따옴표 없는 버전도 추출한다", () => {
+	it("extracts version without quotes", () => {
 		const content = "---\nplugin-version: 1.0.0\n---\n# Content";
 		expect(extractPluginVersion(content)).toBe("1.0.0");
 	});
 
-	it("frontmatter가 없으면 null을 반환한다", () => {
+	it("returns null when frontmatter is absent", () => {
 		expect(extractPluginVersion("# No frontmatter")).toBeNull();
 	});
 
-	it("plugin-version 필드가 없으면 null을 반환한다", () => {
+	it("returns null when plugin-version field is absent", () => {
 		const content = "---\nname: til\n---\n# Content";
 		expect(extractPluginVersion(content)).toBeNull();
 	});
 });
 
 describe("isNewerVersion", () => {
-	it("major가 높으면 true", () => {
+	it("returns true when major is higher", () => {
 		expect(isNewerVersion("2.0.0", "1.0.0")).toBe(true);
 	});
 
-	it("minor가 높으면 true", () => {
+	it("returns true when minor is higher", () => {
 		expect(isNewerVersion("0.2.0", "0.1.0")).toBe(true);
 	});
 
-	it("patch가 높으면 true", () => {
+	it("returns true when patch is higher", () => {
 		expect(isNewerVersion("0.1.3", "0.1.2")).toBe(true);
 	});
 
-	it("같은 버전이면 false", () => {
+	it("returns false when versions are equal", () => {
 		expect(isNewerVersion("0.1.2", "0.1.2")).toBe(false);
 	});
 
-	it("낮은 버전이면 false", () => {
+	it("returns false when version is lower", () => {
 		expect(isNewerVersion("0.1.0", "0.1.2")).toBe(false);
 	});
 });
@@ -187,7 +187,7 @@ describe("installFiles (skills)", () => {
 		vault = new Vault();
 	});
 
-	it("파일이 없으면 새로 설치한다", async () => {
+	it("installs files when they do not exist", async () => {
 		const installed = await installFiles(vault, SKILLS_BASE, skills, "0.2.0");
 
 		expect(installed).toContain(".claude/skills/til/SKILL.md");
@@ -200,7 +200,7 @@ describe("installFiles (skills)", () => {
 		expect(content).not.toContain("__PLUGIN_VERSION__");
 	});
 
-	it("plugin-version이 낮은 파일은 업데이트한다", async () => {
+	it("updates files whose plugin-version is lower", async () => {
 		vault._setFile(
 			".claude/skills/til/SKILL.md",
 			'---\nplugin-version: "0.1.0"\n---\n# TIL Skill v1',
@@ -213,7 +213,7 @@ describe("installFiles (skills)", () => {
 		expect(content).toContain("# TIL Skill v2");
 	});
 
-	it("같은 버전이면 건너뛴다", async () => {
+	it("skips files with the same version", async () => {
 		vault._setFile(
 			".claude/skills/til/SKILL.md",
 			'---\nplugin-version: "0.2.0"\n---\n# TIL Skill v2 (기존)',
@@ -226,7 +226,7 @@ describe("installFiles (skills)", () => {
 		expect(content).toContain("기존");
 	});
 
-	it("plugin-version이 없으면 사용자 커스터마이즈로 간주하고 건너뛴다", async () => {
+	it("skips files without plugin-version, treating them as user-customized", async () => {
 		vault._setFile(
 			".claude/skills/til/SKILL.md",
 			"# 사용자가 직접 작성한 스킬",
@@ -239,7 +239,7 @@ describe("installFiles (skills)", () => {
 		expect(content).toBe("# 사용자가 직접 작성한 스킬");
 	});
 
-	it("빈 스킬 목록이면 아무것도 설치하지 않는다", async () => {
+	it("installs nothing when the skill list is empty", async () => {
 		const installed = await installFiles(vault, SKILLS_BASE, {}, "0.2.0");
 		expect(installed).toEqual([]);
 	});
@@ -255,7 +255,7 @@ describe("installFiles (agents)", () => {
 		vault = new Vault();
 	});
 
-	it("에이전트 파일이 없으면 새로 설치한다", async () => {
+	it("installs agent files when they do not exist", async () => {
 		const installed = await installFiles(vault, AGENTS_BASE, agents, "0.2.0");
 
 		expect(installed).toContain(".claude/agents/til-fetcher.md");
@@ -267,7 +267,7 @@ describe("installFiles (agents)", () => {
 		expect(content).not.toContain("__PLUGIN_VERSION__");
 	});
 
-	it("plugin-version이 낮은 에이전트 파일은 업데이트한다", async () => {
+	it("updates agent files whose plugin-version is lower", async () => {
 		vault._setFile(
 			".claude/agents/til-fetcher.md",
 			'---\nplugin-version: "0.1.0"\n---\n# til-fetcher v1',
@@ -281,7 +281,7 @@ describe("installFiles (agents)", () => {
 		expect(content).toContain('plugin-version: "0.2.0"');
 	});
 
-	it("같은 버전이면 건너뛴다", async () => {
+	it("skips agent files with the same version", async () => {
 		vault._setFile(
 			".claude/agents/til-fetcher.md",
 			'---\nplugin-version: "0.2.0"\n---\n# til-fetcher (기존)',
@@ -294,7 +294,7 @@ describe("installFiles (agents)", () => {
 		expect(content).toContain("기존");
 	});
 
-	it("plugin-version이 없으면 사용자 커스터마이즈로 간주하고 건너뛴다", async () => {
+	it("skips agent files without plugin-version, treating them as user-customized", async () => {
 		vault._setFile(
 			".claude/agents/til-fetcher.md",
 			"# 사용자가 직접 작성한 에이전트",
@@ -315,7 +315,7 @@ describe("installFiles (empty rules)", () => {
 		vault = new Vault();
 	});
 
-	it("빈 rules 맵이면 아무것도 설치하지 않는다", async () => {
+	it("installs nothing when the rules map is empty", async () => {
 		const installed = await installFiles(vault, RULES_BASE, {}, "0.2.0");
 		expect(installed).toEqual([]);
 	});
@@ -329,7 +329,7 @@ describe("installClaudeMdSection", () => {
 		vault = new Vault();
 	});
 
-	it("CLAUDE.md가 없으면 새로 생성한다", async () => {
+	it("creates CLAUDE.md when it does not exist", async () => {
 		await installClaudeMdSection(vault, "0.1.2", mcpContent);
 
 		const content = await vault.adapter.read(".claude/CLAUDE.md");
@@ -338,7 +338,7 @@ describe("installClaudeMdSection", () => {
 		expect(content).toContain(MCP_MARKER_END);
 	});
 
-	it("CLAUDE.md가 있으면 끝에 추가한다", async () => {
+	it("appends to existing CLAUDE.md", async () => {
 		vault._setFile(".claude/CLAUDE.md", "# 기존 내용");
 
 		await installClaudeMdSection(vault, "0.1.2", mcpContent);
@@ -349,7 +349,7 @@ describe("installClaudeMdSection", () => {
 		expect(content).toContain("## MCP 도구 안내");
 	});
 
-	it("같은 버전의 마커가 있으면 중복 추가하지 않는다", async () => {
+	it("does not duplicate the section when the same version marker already exists", async () => {
 		vault._setFile(
 			".claude/CLAUDE.md",
 			`기존\n\n${MCP_MARKER_START}:0.1.2\n이전 내용\n${MCP_MARKER_END}`,
@@ -362,7 +362,7 @@ describe("installClaudeMdSection", () => {
 		expect(content).not.toContain("## MCP 도구 안내");
 	});
 
-	it("이전 버전의 마커가 있으면 새 버전으로 교체한다", async () => {
+	it("replaces the section with the new version when an older version marker exists", async () => {
 		vault._setFile(
 			".claude/CLAUDE.md",
 			`기존\n\n${MCP_MARKER_START}:0.1.0\n구버전 내용\n${MCP_MARKER_END}\n\n끝`,
@@ -386,7 +386,7 @@ describe("cleanupOldSkills", () => {
 		vault = new Vault();
 	});
 
-	it("이전 경로의 plugin-managed 스킬을 삭제한다", async () => {
+	it("deletes plugin-managed skills at the old path", async () => {
 		vault._setFile(
 			".claude/skills/claude-til/til/SKILL.md",
 			'---\nplugin-version: "0.1.0"\n---\n# TIL',
@@ -403,7 +403,7 @@ describe("cleanupOldSkills", () => {
 		expect(await vault.adapter.exists(".claude/skills/claude-til/til/SKILL.md")).toBe(false);
 	});
 
-	it("plugin-version이 없는 사용자 파일은 보존한다", async () => {
+	it("preserves user files without plugin-version", async () => {
 		vault._setFile(
 			".claude/skills/claude-til/til/SKILL.md",
 			"# 사용자가 직접 작성한 스킬",
@@ -415,25 +415,25 @@ describe("cleanupOldSkills", () => {
 		expect(await vault.adapter.exists(".claude/skills/claude-til/til/SKILL.md")).toBe(true);
 	});
 
-	it("이전 경로에 파일이 없으면 아무것도 하지 않는다", async () => {
+	it("does nothing when no files exist at the old path", async () => {
 		const removed = await cleanupOldSkills(vault);
 		expect(removed).toEqual([]);
 	});
 });
 
-describe("skills/ SKILL.md frontmatter 유효성", () => {
+describe("skills/ SKILL.md frontmatter validity", () => {
 	const skillsDir = join(__dirname, "..", "skills");
 	const skillDirs = readdirSync(skillsDir, { withFileTypes: true })
 		.filter((d) => d.isDirectory())
 		.map((d) => d.name);
 
-	it.each(skillDirs)("%s/SKILL.md에 plugin-version 플레이스홀더가 있다", (dir) => {
+	it.each(skillDirs)("%s/SKILL.md has a plugin-version placeholder", (dir) => {
 		const content = readFileSync(join(skillsDir, dir, "SKILL.md"), "utf8");
 		const version = extractPluginVersion(content);
 		expect(version).toBe("__PLUGIN_VERSION__");
 	});
 
-	it.each(skillDirs)("%s/SKILL.md에 name 필드가 있다", (dir) => {
+	it.each(skillDirs)("%s/SKILL.md has a name field", (dir) => {
 		const content = readFileSync(join(skillsDir, dir, "SKILL.md"), "utf8");
 		const match = content.match(/^---\n([\s\S]*?)\n---/);
 		expect(match).not.toBeNull();

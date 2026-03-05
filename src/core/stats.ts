@@ -1,7 +1,7 @@
 import { extractCategory } from "./context";
 import { formatProgressBar } from "./backlog";
 
-// --- 기존 타입 (하위 호환) ---
+// --- Existing types (backward compatible) ---
 
 export interface TILStats {
 	totalTils: number;
@@ -13,16 +13,16 @@ export interface StatsFileEntry {
 	extension: string;
 }
 
-// --- 새 타입 ---
+// --- New types ---
 
 export interface EnhancedStatsFileEntry {
 	path: string;
 	extension: string;
 	mtime: number;
 	ctime: number;
-	/** frontmatter date (YYYY-MM-DD). 없으면 ctime 기반으로 자동 생성. */
+	/** frontmatter date (YYYY-MM-DD). Auto-generated from ctime if absent. */
 	createdDate?: string;
-	/** frontmatter tags. MOC 등 특수 파일 필터링용. */
+	/** frontmatter tags. Used for filtering special files like MOC. */
 	tags?: string[];
 }
 
@@ -101,11 +101,11 @@ export interface EnhancedTILStats {
 	categoryDistribution: CategoryDistribution[];
 }
 
-// --- 기존 함수 (하위 호환) ---
+// --- Existing functions (backward compatible) ---
 
 /**
- * TIL 통계를 계산한다.
- * tilPath/ 하위의 .md 파일을 수집하고 폴더명으로 카테고리를 분류한다.
+ * Computes TIL statistics.
+ * Collects .md files under tilPath/ and classifies categories by folder name.
  */
 export function computeStats(files: StatsFileEntry[], tilPath: string): TILStats {
 	const tilFiles = files.filter((f) => {
@@ -128,11 +128,11 @@ export function computeStats(files: StatsFileEntry[], tilPath: string): TILStats
 	};
 }
 
-// --- 새 함수 ---
+// --- New functions ---
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-/** tilPath 하위 .md 파일만 필터링 (tags:til 필수, backlog.md·tags:moc 제외) */
+/** Filters only .md files under tilPath (tags:til required, excludes backlog.md and tags:moc) */
 function filterTilFiles(files: EnhancedStatsFileEntry[], tilPath: string): EnhancedStatsFileEntry[] {
 	return files.filter((f) => {
 		if (!f.path.startsWith(tilPath + "/")) return false;
@@ -144,25 +144,25 @@ function filterTilFiles(files: EnhancedStatsFileEntry[], tilPath: string): Enhan
 	});
 }
 
-/** 날짜를 YYYY-MM-DD로 포맷 */
+/** Formats a date as YYYY-MM-DD */
 function formatDate(ts: number): string {
 	const d = new Date(ts);
 	return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-/** 파일의 생성 날짜를 반환. frontmatter date 우선, 없으면 ctime 폴백. */
+/** Returns the file's creation date. frontmatter date takes priority, falls back to ctime. */
 function getCreatedDate(f: EnhancedStatsFileEntry): string {
 	return f.createdDate ?? formatDate(f.ctime);
 }
 
-/** datetime 문자열에서 날짜 부분(YYYY-MM-DD)만 추출. 이미 YYYY-MM-DD면 그대로 반환. */
+/** Extracts only the date part (YYYY-MM-DD) from a datetime string. Returns as-is if already YYYY-MM-DD. */
 export function extractDateOnly(dateStr: string): string {
 	return dateStr.slice(0, 10);
 }
 
-/** YYYY-MM-DD 또는 YYYY-MM-DDTHH:mm:ss 문자열을 타임스탬프로 변환 */
+/** Converts a YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss string to a timestamp */
 function parseDateStr(dateStr: string): number {
-	// T가 포함된 datetime이면 Date 생성자에 직접 전달
+	// If it's a datetime containing T, pass directly to the Date constructor
 	if (dateStr.includes("T")) {
 		return new Date(dateStr).getTime();
 	}
@@ -170,16 +170,16 @@ function parseDateStr(dateStr: string): number {
 	return new Date(y!, m! - 1, d!).getTime();
 }
 
-/** 날짜 문자열의 00:00:00 타임스탬프를 반환 */
+/** Returns the 00:00:00 timestamp for a date string */
 function startOfDay(ts: number): number {
 	const d = new Date(ts);
 	return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
 }
 
 /**
- * ctime(생성일) 기반 연속 활동일(streak)을 계산한다.
- * 오늘부터 역산하여 연속으로 TIL을 작성한 일수를 반환한다.
- * mtime이 아닌 ctime을 사용하여 동기화/인덱싱에 의한 오염을 방지한다.
+ * Computes the consecutive activity streak based on ctime (creation date).
+ * Returns the number of days TILs were written consecutively, counting back from today.
+ * Uses ctime rather than mtime to prevent contamination from sync/indexing.
  */
 export function computeStreak(files: EnhancedStatsFileEntry[], tilPath: string, now?: number, _prefilteredFiles?: EnhancedStatsFileEntry[]): number {
 	const currentTime = now ?? Date.now();
@@ -187,13 +187,13 @@ export function computeStreak(files: EnhancedStatsFileEntry[], tilPath: string, 
 
 	if (tilFiles.length === 0) return 0;
 
-	// 활동이 있었던 날짜 집합 구성 (datetime에서 날짜만 추출)
+	// Build a set of dates that had activity (extract date only from datetime)
 	const activeDays = new Set<string>();
 	for (const f of tilFiles) {
 		activeDays.add(extractDateOnly(getCreatedDate(f)));
 	}
 
-	// 오늘부터 역산
+	// Count back from today
 	let streak = 0;
 	const todayStart = startOfDay(currentTime);
 
@@ -203,7 +203,7 @@ export function computeStreak(files: EnhancedStatsFileEntry[], tilPath: string, 
 		if (activeDays.has(dayStr)) {
 			streak++;
 		} else {
-			// 오늘 활동이 없어도 어제부터 연속이면 streak 유지
+			// If no activity today, maintain streak if consecutive from yesterday
 			if (i === 0) { cursor.setDate(cursor.getDate() - 1); continue; }
 			break;
 		}
@@ -214,25 +214,25 @@ export function computeStreak(files: EnhancedStatsFileEntry[], tilPath: string, 
 }
 
 /**
- * 최근 7일간 작성된 TIL 파일 수를 계산한다 (frontmatter date 기준).
+ * Counts the number of TIL files written in the last 7 days (based on frontmatter date).
  */
 export function computeWeeklyCount(files: EnhancedStatsFileEntry[], tilPath: string, now?: number, _prefilteredFiles?: EnhancedStatsFileEntry[]): number {
 	const currentTime = now ?? Date.now();
-	const cutoff = startOfDay(currentTime) - 6 * DAY_MS; // 오늘 포함 7일
+	const cutoff = startOfDay(currentTime) - 6 * DAY_MS; // 7 days including today
 	const tilFiles = _prefilteredFiles ?? filterTilFiles(files, tilPath);
 	return tilFiles.filter((f) => parseDateStr(getCreatedDate(f)) >= cutoff).length;
 }
 
 /**
- * 365일간의 활동 히트맵 데이터를 생성한다 (ctime 기준).
- * level 0-4는 maxCount 기준으로 분배한다.
+ * Generates activity heatmap data for the past 365 days (based on ctime).
+ * Levels 0-4 are distributed relative to maxCount.
  */
 export function computeHeatmapData(files: EnhancedStatsFileEntry[], tilPath: string, now?: number, _prefilteredFiles?: EnhancedStatsFileEntry[]): HeatmapData {
 	const currentTime = now ?? Date.now();
 	const tilFiles = _prefilteredFiles ?? filterTilFiles(files, tilPath);
 	const todayStart = startOfDay(currentTime);
 
-	// 365일간의 날짜별 카운트 (datetime에서 날짜만 추출)
+	// Per-day count for 365 days (extract date only from datetime)
 	const countMap = new Map<string, number>();
 	for (const f of tilFiles) {
 		const dayStr = extractDateOnly(getCreatedDate(f));
@@ -242,16 +242,16 @@ export function computeHeatmapData(files: EnhancedStatsFileEntry[], tilPath: str
 	const cells: HeatmapCell[] = [];
 	let maxCount = 0;
 
-	// 364일 전부터 오늘까지 (365일)
+	// From 364 days ago to today (365 days)
 	for (let i = 364; i >= 0; i--) {
 		const dayTs = todayStart - i * DAY_MS;
 		const date = formatDate(dayTs);
 		const count = countMap.get(date) ?? 0;
 		if (count > maxCount) maxCount = count;
-		cells.push({ date, count, level: 0 }); // level은 아래에서 재계산
+		cells.push({ date, count, level: 0 }); // level is recalculated below
 	}
 
-	// level 할당 (0: 없음, 1-4: 4분위)
+	// Assign level (0: none, 1-4: quartiles)
 	for (const cell of cells) {
 		cell.level = computeLevel(cell.count, maxCount);
 	}
@@ -259,7 +259,7 @@ export function computeHeatmapData(files: EnhancedStatsFileEntry[], tilPath: str
 	return { cells, maxCount };
 }
 
-/** count를 level 0-4로 변환 */
+/** Converts count to level 0-4 */
 function computeLevel(count: number, maxCount: number): 0 | 1 | 2 | 3 | 4 {
 	if (count === 0) return 0;
 	if (maxCount === 0) return 0;
@@ -271,7 +271,7 @@ function computeLevel(count: number, maxCount: number): 0 | 1 | 2 | 3 | 4 {
 }
 
 /**
- * 카테고리별 파일 목록을 포함한 분류를 반환한다.
+ * Returns categorization including the file list per category.
  */
 export function computeEnhancedCategories(files: EnhancedStatsFileEntry[], tilPath: string, _prefilteredFiles?: EnhancedStatsFileEntry[]): EnhancedCategory[] {
 	const tilFiles = _prefilteredFiles ?? filterTilFiles(files, tilPath);
@@ -284,7 +284,7 @@ export function computeEnhancedCategories(files: EnhancedStatsFileEntry[], tilPa
 		categoryMap.get(cat)!.push({ path: f.path, filename, mtime: f.mtime });
 	}
 
-	// 카테고리 내 파일은 mtime 역순 정렬
+	// Files within a category sorted by mtime descending
 	return Array.from(categoryMap.entries())
 		.map(([name, catFiles]) => ({
 			name,
@@ -295,7 +295,7 @@ export function computeEnhancedCategories(files: EnhancedStatsFileEntry[], tilPa
 }
 
 /**
- * frontmatter date 기준으로 최근 N개의 TIL 파일을 선택한다.
+ * Selects the most recent N TIL files based on frontmatter date.
  */
 export function selectRecentTils(files: EnhancedStatsFileEntry[], tilPath: string, count: number): EnhancedStatsFileEntry[] {
 	const tilFiles = filterTilFiles(files, tilPath);
@@ -305,18 +305,18 @@ export function selectRecentTils(files: EnhancedStatsFileEntry[], tilPath: strin
 			const dateB = getCreatedDate(b);
 			const cmp = dateB.localeCompare(dateA);
 			if (cmp !== 0) return cmp;
-			// 같은 날짜면 ctime 역순 (최신 먼저)
+			// Same date: sort by ctime descending (newest first)
 			return b.ctime - a.ctime;
 		})
 		.slice(0, count);
 }
 
 /**
- * 마크다운 파일 내용에서 frontmatter 이후 첫 번째 문단을 요약으로 추출한다.
- * 헤딩(#), 빈 줄, 코드 블록 등을 건너뛰고 본문 텍스트만 가져온다.
+ * Extracts the first paragraph after frontmatter from markdown file content as a summary.
+ * Skips headings (#), blank lines, code blocks, etc. and retrieves only body text.
  */
 export function extractSummary(content: string, maxLength = 120): string {
-	// frontmatter 제거
+	// Strip frontmatter
 	let body = content;
 	if (body.startsWith("---")) {
 		const endIdx = body.indexOf("---", 3);
@@ -337,17 +337,17 @@ export function extractSummary(content: string, maxLength = 120): string {
 		if (inCodeBlock) continue;
 
 		const trimmed = line.trim();
-		// 헤딩, 빈 줄, 구분선 건너뛰기
+		// Skip headings, blank lines, and dividers
 		if (trimmed.startsWith("#") || trimmed === "" || trimmed === "---") {
-			if (paragraphLines.length > 0) break; // 첫 문단 완료
+			if (paragraphLines.length > 0) break; // First paragraph complete
 			continue;
 		}
 
-		// blockquote / callout 처리
+		// Handle blockquote / callout
 		let cleaned = trimmed;
 		if (cleaned.startsWith(">")) {
 			cleaned = cleaned.replace(/^>\s*/, "").trim();
-			// callout 시작 줄 (> [!type] ...) 은 제목이므로 전체 스킵
+			// callout opening line (> [!type] ...) is a title, skip entirely
 			if (cleaned.startsWith("[!")) continue;
 			if (!cleaned) continue;
 		}
@@ -356,21 +356,21 @@ export function extractSummary(content: string, maxLength = 120): string {
 	}
 
 	let text = paragraphLines.join(" ");
-	// 마크다운 링크 [text](url) → text, 이미지 ![alt](url) → alt
+	// Markdown links [text](url) → text, images ![alt](url) → alt
 	text = text.replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1");
-	// 위키링크 [[target|display]] → display, [[target]] → target
+	// Wikilinks [[target|display]] → display, [[target]] → target
 	text = text.replace(/\[\[([^|\]]*\|)?([^\]]*)\]\]/g, "$2");
 	if (text.length <= maxLength) return text;
 	return text.slice(0, maxLength - 1) + "\u2026";
 }
 
 /**
- * 백로그 진행률을 대시보드용으로 집계한다.
+ * Aggregates backlog progress for the dashboard.
  */
 export function computeDashboardBacklog(entries: BacklogProgressEntry[]): DashboardBacklogProgress {
 	const totalDone = entries.reduce((sum, e) => sum + e.done, 0);
 	const totalItems = entries.reduce((sum, e) => sum + e.total, 0);
-	// 진행률 내림차순 정렬
+	// Sort by progress descending
 	const categories = [...entries].sort((a, b) => {
 		const pctA = a.total > 0 ? a.done / a.total : 0;
 		const pctB = b.total > 0 ? b.done / b.total : 0;
@@ -380,7 +380,7 @@ export function computeDashboardBacklog(entries: BacklogProgressEntry[]): Dashbo
 }
 
 /**
- * 최근 N주간의 주별 TIL 작성 추이를 계산한다.
+ * Computes the weekly TIL writing trend over the past N weeks.
  */
 export function computeWeeklyTrend(
 	files: EnhancedStatsFileEntry[],
@@ -425,7 +425,7 @@ export function computeWeeklyTrend(
 }
 
 /**
- * 카테고리별 TIL 분포를 계산한다.
+ * Computes the TIL distribution by category.
  */
 export function computeCategoryDistribution(
 	files: EnhancedStatsFileEntry[],
@@ -452,8 +452,8 @@ export function computeCategoryDistribution(
 }
 
 /**
- * 트리맵 레이아웃을 계산한다 (재귀 이분할 방식).
- * data는 count 내림차순 정렬된 CategoryDistribution 배열이어야 한다.
+ * Computes treemap layout (recursive bisection approach).
+ * data must be a CategoryDistribution array sorted by count descending.
  */
 export function computeTreemapLayout(
 	data: CategoryDistribution[],
@@ -498,7 +498,7 @@ function treemapBisect(
 	const total = items.reduce((s, i) => s + i.count, 0);
 	if (total === 0) return [];
 
-	// 균형 잡힌 분할점 찾기
+	// Find the most balanced split point
 	let bestSplit = 1;
 	let bestDiff = Infinity;
 	let leftSum = 0;
@@ -532,7 +532,7 @@ function treemapBisect(
 }
 
 /**
- * 모든 대시보드 통계를 한 번에 계산하는 오케스트레이터.
+ * Orchestrator that computes all dashboard statistics in one pass.
  */
 export function computeEnhancedStats(
 	files: EnhancedStatsFileEntry[],
@@ -568,9 +568,9 @@ export interface RandomReviewPick {
 }
 
 /**
- * 대시보드 "오늘의 복습" 카드용 랜덤 아이템을 선택한다.
- * 완료된 TIL 1개 + 미완료 백로그 1개를 랜덤으로 뽑는다.
- * randomFn을 주입하면 테스트에서 결정적 결과를 얻을 수 있다.
+ * Selects random items for the dashboard "Today's Review" card.
+ * Randomly picks 1 completed TIL + 1 incomplete backlog item.
+ * Injecting randomFn allows deterministic results in tests.
  */
 export function pickRandomReviewItems(
 	files: EnhancedStatsFileEntry[],
@@ -598,7 +598,7 @@ export function pickRandomReviewItems(
 }
 
 /**
- * MCP 텍스트 출력용 포맷터.
+ * Formatter for MCP text output.
  */
 export function formatDashboardText(stats: EnhancedTILStats): string {
 	const lines: string[] = [];
@@ -616,7 +616,7 @@ export function formatDashboardText(stats: EnhancedTILStats): string {
 		lines.push(`| Reviews due | ${s.reviewDueCount} |`);
 	}
 
-	// Heatmap sparkline (주단위)
+	// Heatmap sparkline (weekly)
 	if (stats.heatmap.cells.length > 0) {
 		const sparks = ["▁", "▂", "▃", "▅", "▇"];
 		const weeks: number[] = [];

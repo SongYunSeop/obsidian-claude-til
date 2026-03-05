@@ -10,8 +10,8 @@ export interface McpServerOptions {
 }
 
 /**
- * MCP 서버 라이프사이클을 관리한다.
- * HTTP 서버 + Streamable HTTP 트랜스포트로 Claude Code와 통신한다.
+ * Manages MCP server lifecycle.
+ * Communicates with Claude Code via HTTP server + Streamable HTTP transport.
  */
 export class TILMcpServer {
 	private storage: FileStorage;
@@ -96,8 +96,8 @@ export class TILMcpServer {
 					res.end(JSON.stringify({ error: "Internal error" }));
 				}
 			} finally {
-				// POST(stateless)는 handleRequest 후 즉시 정리.
-				// GET/SSE는 응답 스트림이 끝날 때 정리.
+				// POST (stateless): clean up immediately after handleRequest.
+				// GET/SSE: clean up when the response stream ends.
 				if (res.writableEnded) {
 					await cleanup();
 				} else {

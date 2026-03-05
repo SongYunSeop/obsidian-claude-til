@@ -47,7 +47,7 @@ export class DashboardView extends ItemView {
 	async onOpen(): Promise<void> {
 		await this.render();
 
-		// vault 파일 변경 시 자동 새로고침 (tilPath 하위만)
+		// Auto-refresh on vault file changes (tilPath subtree only)
 		this.registerEvent(
 			this.app.vault.on("create", (file) => {
 				if (file.path.startsWith(this.tilPath + "/")) {
@@ -126,7 +126,7 @@ export class DashboardView extends ItemView {
 		this.cachedFiles = files;
 		this.cachedIncompleteBacklogItems = await this.gatherIncompleteBacklogItems();
 
-		// 복습 대상 카운트 (frontmatter next_review 기반)
+		// Count review-due items (based on frontmatter next_review)
 		let reviewDueCount = 0;
 		for (const f of this.app.vault.getFiles()) {
 			if (!f.path.startsWith(this.tilPath + "/")) continue;
@@ -305,17 +305,17 @@ export class DashboardView extends ItemView {
 
 		const body = section.createDiv({ cls: "oh-my-til-heatmap-body" });
 
-		// 요일 레이블 (좌측)
+		// Day-of-week labels (left side)
 		const dayLabels = body.createDiv({ cls: "oh-my-til-heatmap-day-labels" });
 		const days = ["", "Mon", "", "Wed", "", "Fri", ""];
 		for (const day of days) {
 			dayLabels.createDiv({ text: day });
 		}
 
-		// 스크롤 영역 (월 레이블 + 그리드)
+		// Scroll area (month labels + grid)
 		const scrollWrapper = body.createDiv({ cls: "oh-my-til-heatmap-scroll" });
 
-		// 월 레이블
+		// Month labels
 		const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 		const monthRow = scrollWrapper.createDiv({ cls: "oh-my-til-heatmap-month-labels" });
 		const numCols = Math.ceil(heatmap.cells.length / 7);
@@ -336,7 +336,7 @@ export class DashboardView extends ItemView {
 			}
 		}
 
-		// 히트맵 그리드
+		// Heatmap grid
 		const grid = scrollWrapper.createDiv({ cls: "oh-my-til-heatmap-grid" });
 		for (const cell of heatmap.cells) {
 			const cellEl = grid.createDiv({ cls: `oh-my-til-heatmap-level-${cell.level}` });
@@ -344,7 +344,7 @@ export class DashboardView extends ItemView {
 			cellEl.dataset.tooltipCount = `${cell.count}`;
 		}
 
-		// 색상 범례
+		// Color legend
 		const legend = section.createDiv({ cls: "oh-my-til-heatmap-legend" });
 		legend.createSpan({ text: "Less" });
 		for (let i = 0; i <= 4; i++) {
@@ -436,7 +436,7 @@ export class DashboardView extends ItemView {
 
 	private async renderRecentSummaries(container: HTMLElement, files: EnhancedStatsFileEntry[]): Promise<void> {
 		const maxDisplay = 5;
-		// 빈 요약 건너뛰기를 감안해 넉넉하게 선택
+		// Select extra candidates to account for entries with empty summaries
 		const recentFiles = selectRecentTils(files, this.tilPath, maxDisplay * 3);
 		if (recentFiles.length === 0) return;
 
@@ -475,7 +475,7 @@ export class DashboardView extends ItemView {
 			displayed++;
 		}
 
-		// 표시할 항목이 없으면 섹션 제거
+		// Remove section if there are no items to display
 		if (displayed === 0) {
 			section.remove();
 		}

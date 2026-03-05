@@ -24,44 +24,44 @@ describe("findPathMatches", () => {
 		"notes/typescript.md",
 	];
 
-	it("basename으로 매칭한다", () => {
+	it("matches by basename", () => {
 		const result = findPathMatches(paths, "generics", tilPath);
 		expect(result).toEqual(["til/typescript/generics.md"]);
 	});
 
-	it("카테고리(폴더명)로 매칭한다", () => {
+	it("matches by category (folder name)", () => {
 		const result = findPathMatches(paths, "typescript", tilPath);
 		expect(result).toEqual(["til/typescript/generics.md", "til/typescript/types.md"]);
 	});
 
-	it("대소문자를 무시한다", () => {
+	it("is case-insensitive", () => {
 		const result = findPathMatches(paths, "TypeScript", tilPath);
 		expect(result).toEqual(["til/typescript/generics.md", "til/typescript/types.md"]);
 	});
 
-	it("backlog.md를 제외한다", () => {
+	it("excludes backlog.md", () => {
 		const result = findPathMatches(paths, "react", tilPath);
 		expect(result).toEqual(["til/react/hooks.md"]);
 	});
 
-	it("tilPath 밖의 파일을 제외한다", () => {
+	it("excludes files outside tilPath", () => {
 		const result = findPathMatches(paths, "typescript", tilPath);
 		expect(result).not.toContain("notes/typescript.md");
 	});
 
-	it("빈 vault에서 빈 배열을 반환한다", () => {
+	it("returns an empty array from an empty vault", () => {
 		const result = findPathMatches([], "anything", tilPath);
 		expect(result).toEqual([]);
 	});
 
-	it("매칭되지 않으면 빈 배열을 반환한다", () => {
+	it("returns an empty array when no match is found", () => {
 		const result = findPathMatches(paths, "nonexistent", tilPath);
 		expect(result).toEqual([]);
 	});
 });
 
 describe("buildFileContext", () => {
-	it("카테고리를 올바르게 추출한다", () => {
+	it("extracts category correctly", () => {
 		const ctx = buildFileContext(
 			"til/typescript/generics.md",
 			tilPath,
@@ -79,7 +79,7 @@ describe("buildFileContext", () => {
 		expect(ctx.tags).toEqual(["#typescript"]);
 	});
 
-	it("루트 파일은 (uncategorized)로 분류한다", () => {
+	it("classifies root files as (uncategorized)", () => {
 		const ctx = buildFileContext(
 			"til/overview.md",
 			tilPath,
@@ -92,7 +92,7 @@ describe("buildFileContext", () => {
 		expect(ctx.category).toBe("(uncategorized)");
 	});
 
-	it("메타데이터를 그대로 보존한다", () => {
+	it("preserves metadata as-is", () => {
 		const ctx = buildFileContext(
 			"til/react/hooks.md",
 			tilPath,
@@ -111,7 +111,7 @@ describe("buildFileContext", () => {
 });
 
 describe("findUnresolvedMentions", () => {
-	it("topic에 매칭되는 미작성 링크를 찾는다", () => {
+	it("finds unresolved links matching the topic", () => {
 		const unresolvedLinks = {
 			"til/typescript/generics.md": { "고급 타입": 1, "유틸리티 타입": 1 },
 			"til/react/hooks.md": { "커스텀 훅": 1, "고급 타입": 1 },
@@ -131,7 +131,7 @@ describe("findUnresolvedMentions", () => {
 		expect(utility!.mentionedIn).toEqual(["til/typescript/generics.md"]);
 	});
 
-	it("tilPath 밖의 소스 파일을 제외한다", () => {
+	it("excludes source files outside tilPath", () => {
 		const unresolvedLinks = {
 			"til/typescript/generics.md": { "고급 타입": 1 },
 			"notes/random.md": { "고급 타입": 1 },
@@ -141,7 +141,7 @@ describe("findUnresolvedMentions", () => {
 		expect(result[0]!.mentionedIn).toEqual(["til/typescript/generics.md"]);
 	});
 
-	it("매칭되는 링크가 없으면 빈 배열을 반환한다", () => {
+	it("returns an empty array when no matching links are found", () => {
 		const unresolvedLinks = {
 			"til/typescript/generics.md": { "커스텀 훅": 1 },
 		};
@@ -149,7 +149,7 @@ describe("findUnresolvedMentions", () => {
 		expect(result).toEqual([]);
 	});
 
-	it("빈 unresolvedLinks에서 빈 배열을 반환한다", () => {
+	it("returns an empty array from empty unresolvedLinks", () => {
 		const result = findUnresolvedMentions({}, "anything", tilPath);
 		expect(result).toEqual([]);
 	});
@@ -168,21 +168,21 @@ describe("filterRecentFiles", () => {
 		{ path: "notes/outside.md", mtime: now - 1 * day, headings: ["외부"] },
 	];
 
-	it("days 기준으로 cutoff 필터링한다", () => {
+	it("filters by cutoff based on days", () => {
 		const result = filterRecentFiles(files, 3, tilPath, now);
 		expect(result.totalFiles).toBe(2);
 		expect(result.groups.flatMap((g) => g.files.map((f) => f.path))).toContain("til/typescript/generics.md");
 		expect(result.groups.flatMap((g) => g.files.map((f) => f.path))).toContain("til/react/hooks.md");
 	});
 
-	it("newest-first로 정렬한다", () => {
+	it("sorts newest-first", () => {
 		const result = filterRecentFiles(files, 7, tilPath, now);
-		expect(result.groups[0]!.date).toBe("2026-02-17"); // 가장 최근
+		expect(result.groups[0]!.date).toBe("2026-02-17"); // most recent
 		const allPaths = result.groups.flatMap((g) => g.files.map((f) => f.path));
 		expect(allPaths[0]).toBe("til/typescript/generics.md");
 	});
 
-	it("날짜별로 그룹핑한다", () => {
+	it("groups by date", () => {
 		const result = filterRecentFiles(files, 7, tilPath, now);
 		expect(result.groups.length).toBeGreaterThanOrEqual(2);
 		for (const group of result.groups) {
@@ -190,25 +190,25 @@ describe("filterRecentFiles", () => {
 		}
 	});
 
-	it("backlog.md를 제외한다", () => {
+	it("excludes backlog.md", () => {
 		const result = filterRecentFiles(files, 7, tilPath, now);
 		const allPaths = result.groups.flatMap((g) => g.files.map((f) => f.path));
 		expect(allPaths).not.toContain("til/react/backlog.md");
 	});
 
-	it("tilPath 밖의 파일을 제외한다", () => {
+	it("excludes files outside tilPath", () => {
 		const result = filterRecentFiles(files, 7, tilPath, now);
 		const allPaths = result.groups.flatMap((g) => g.files.map((f) => f.path));
 		expect(allPaths).not.toContain("notes/outside.md");
 	});
 
-	it("days=0이면 빈 결과를 반환한다", () => {
+	it("returns empty result when days=0", () => {
 		const result = filterRecentFiles(files, 0, tilPath, now);
 		expect(result.totalFiles).toBe(0);
 		expect(result.groups).toHaveLength(0);
 	});
 
-	it("카테고리를 올바르게 추출한다", () => {
+	it("extracts category correctly", () => {
 		const result = filterRecentFiles(files, 3, tilPath, now);
 		const tsFile = result.groups.flatMap((g) => g.files).find((f) => f.path === "til/typescript/generics.md");
 		expect(tsFile!.category).toBe("typescript");
@@ -216,7 +216,7 @@ describe("filterRecentFiles", () => {
 });
 
 describe("formatTopicContext", () => {
-	it("매칭 파일이 있을 때 올바른 형식을 출력한다", () => {
+	it("outputs the correct format when matching files exist", () => {
 		const result: TopicContextResult = {
 			topic: "typescript",
 			matchedFiles: [
@@ -243,7 +243,7 @@ describe("formatTopicContext", () => {
 		expect(text).toContain("고급 타입");
 	});
 
-	it("매칭이 없을 때 새 주제 메시지를 출력한다", () => {
+	it("outputs a new topic message when there are no matches", () => {
 		const result: TopicContextResult = {
 			topic: "unknown",
 			matchedFiles: [],
@@ -253,7 +253,7 @@ describe("formatTopicContext", () => {
 		expect(text).toContain("This is a new topic.");
 	});
 
-	it("unresolved만 있을 때도 출력한다", () => {
+	it("outputs even when only unresolved links exist", () => {
 		const result: TopicContextResult = {
 			topic: "타입",
 			matchedFiles: [],
@@ -269,19 +269,19 @@ describe("formatTopicContext", () => {
 });
 
 describe("extractCategory", () => {
-	it("하위 폴더명을 카테고리로 추출한다", () => {
+	it("extracts the subfolder name as category", () => {
 		expect(extractCategory("til/typescript/generics.md", "til")).toBe("typescript");
 	});
 
-	it("루트 파일은 (uncategorized)로 반환한다", () => {
+	it("returns (uncategorized) for root files", () => {
 		expect(extractCategory("til/overview.md", "til")).toBe("(uncategorized)");
 	});
 
-	it("깊은 경로에서 첫 번째 폴더를 카테고리로 반환한다", () => {
+	it("returns the first folder as category from a deep path", () => {
 		expect(extractCategory("til/react/advanced/patterns.md", "til")).toBe("react");
 	});
 
-	it("커스텀 tilPath를 지원한다", () => {
+	it("supports a custom tilPath", () => {
 		expect(extractCategory("learning/react/hooks.md", "learning")).toBe("react");
 	});
 });
@@ -295,38 +295,38 @@ describe("groupFilesByCategory", () => {
 		"notes/other.md",
 	];
 
-	it("카테고리별로 그룹핑한다", () => {
+	it("groups by category", () => {
 		const result = groupFilesByCategory(paths, "til");
 		expect(result["typescript"]).toHaveLength(2);
 		expect(result["react"]).toHaveLength(1);
 		expect(result["(uncategorized)"]).toContain("til/overview.md");
 	});
 
-	it("tilPath 밖의 파일을 제외한다", () => {
+	it("excludes files outside tilPath", () => {
 		const result = groupFilesByCategory(paths, "til");
 		const allPaths = Object.values(result).flat();
 		expect(allPaths).not.toContain("notes/other.md");
 	});
 
-	it("카테고리 필터를 적용한다", () => {
+	it("applies a category filter", () => {
 		const result = groupFilesByCategory(paths, "til", "typescript");
 		expect(Object.keys(result)).toEqual(["typescript"]);
 		expect(result["typescript"]).toHaveLength(2);
 	});
 
-	it("존재하지 않는 카테고리 필터에 빈 결과를 반환한다", () => {
+	it("returns empty result for a non-existent category filter", () => {
 		const result = groupFilesByCategory(paths, "til", "nonexistent");
 		expect(Object.keys(result)).toHaveLength(0);
 	});
 
-	it("빈 배열에서 빈 객체를 반환한다", () => {
+	it("returns an empty object from an empty array", () => {
 		const result = groupFilesByCategory([], "til");
 		expect(result).toEqual({});
 	});
 });
 
 describe("formatRecentContext", () => {
-	it("활동이 있을 때 올바른 형식을 출력한다", () => {
+	it("outputs the correct format when there is activity", () => {
 		const result: RecentContextResult = {
 			days: 7,
 			totalFiles: 2,
@@ -352,7 +352,7 @@ describe("formatRecentContext", () => {
 		expect(text).toContain("til/ts/generics.md");
 	});
 
-	it("활동이 없을 때 안내 메시지를 출력한다", () => {
+	it("outputs a guidance message when there is no activity", () => {
 		const result: RecentContextResult = {
 			days: 7,
 			totalFiles: 0,

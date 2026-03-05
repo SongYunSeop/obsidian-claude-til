@@ -4,7 +4,7 @@ import { parse as parseYaml } from "yaml";
 import type { FileStorage, FileEntry } from "../ports/storage";
 import type { MetadataProvider, FileMetadata } from "../ports/metadata";
 
-/** basePath 내부 경로만 허용하는 path traversal 방어 유틸 */
+/** Path traversal guard: only allows paths inside basePath */
 function resolveSafe(resolvedBase: string, filePath: string): string {
 	const resolved = path.resolve(resolvedBase, filePath);
 	if (resolved !== resolvedBase && !resolved.startsWith(resolvedBase + path.sep)) {

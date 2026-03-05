@@ -1,13 +1,13 @@
 import { describe, it, expect, afterEach } from "vitest";
 import * as http from "http";
 
-// MCP 서버의 HTTP 라우팅/CORS/에러 처리를 테스트한다.
-// 실제 McpServer 의존성 없이, handleRequest 로직의 핵심 동작만 검증.
+// Tests HTTP routing/CORS/error handling of the MCP server.
+// Verifies only the core behavior of the handleRequest logic without the actual McpServer dependency.
 
-// server.ts의 handleRequest 라우팅 로직을 재현
+// Reproduces the handleRequest routing logic from server.ts
 function createTestServer(): http.Server {
 	return http.createServer(async (req, res) => {
-		// CORS 헤더
+		// CORS headers
 		res.setHeader("Access-Control-Allow-Origin", "*");
 		res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
 		res.setHeader("Access-Control-Allow-Headers", "Content-Type, mcp-session-id");
@@ -20,7 +20,7 @@ function createTestServer(): http.Server {
 		}
 
 		if (req.url === "/mcp" || req.url?.startsWith("/mcp?")) {
-			// MCP 핸들러 (테스트에서는 간단한 응답으로 대체)
+			// MCP handler (replaced with a simple response in tests)
 			res.writeHead(200, { "Content-Type": "application/json" });
 			res.end(JSON.stringify({ ok: true }));
 			return;
@@ -64,12 +64,12 @@ function stopServer(): Promise<void> {
 	});
 }
 
-// 매 테스트마다 서버 정리
+// Clean up server after each test
 afterEach(async () => {
 	await stopServer();
 });
 
-describe("MCP 서버 HTTP 라우팅", () => {
+describe("MCP server HTTP routing", () => {
 	async function startAndGetPort(): Promise<number> {
 		server = createTestServer();
 		return new Promise((resolve) => {
@@ -80,7 +80,7 @@ describe("MCP 서버 HTTP 라우팅", () => {
 		});
 	}
 
-	it("OPTIONS 요청에 204 + CORS 헤더를 반환한다", async () => {
+	it("returns 204 + CORS headers for OPTIONS request", async () => {
 		const p = await startAndGetPort();
 		const res = await request(p, { method: "OPTIONS", path: "/mcp" });
 
@@ -90,7 +90,7 @@ describe("MCP 서버 HTTP 라우팅", () => {
 		expect(res.headers["access-control-allow-headers"]).toContain("mcp-session-id");
 	});
 
-	it("/mcp 경로에 200을 반환한다", async () => {
+	it("returns 200 for /mcp path", async () => {
 		const p = await startAndGetPort();
 		const res = await request(p, { method: "POST", path: "/mcp" });
 
@@ -98,28 +98,28 @@ describe("MCP 서버 HTTP 라우팅", () => {
 		expect(JSON.parse(res.body)).toEqual({ ok: true });
 	});
 
-	it("/mcp?session=xxx 쿼리스트링도 매치한다", async () => {
+	it("also matches /mcp?session=xxx query string", async () => {
 		const p = await startAndGetPort();
 		const res = await request(p, { method: "POST", path: "/mcp?session=abc123" });
 
 		expect(res.status).toBe(200);
 	});
 
-	it("다른 경로에 404를 반환한다", async () => {
+	it("returns 404 for other paths", async () => {
 		const p = await startAndGetPort();
 		const res = await request(p, { path: "/" });
 
 		expect(res.status).toBe(404);
 	});
 
-	it("/mcp가 아닌 경로에 404를 반환한다", async () => {
+	it("returns 404 for paths that are not /mcp", async () => {
 		const p = await startAndGetPort();
 		const res = await request(p, { path: "/api/something" });
 
 		expect(res.status).toBe(404);
 	});
 
-	it("모든 응답에 CORS 헤더가 포함된다", async () => {
+	it("includes CORS headers in all responses", async () => {
 		const p = await startAndGetPort();
 		const res = await request(p, { path: "/nonexistent" });
 
@@ -127,8 +127,8 @@ describe("MCP 서버 HTTP 라우팅", () => {
 	});
 });
 
-describe("MCP 서버 라이프사이클", () => {
-	it("시작 후 종료할 수 있다", async () => {
+describe("MCP server lifecycle", () => {
+	it("can be stopped after starting", async () => {
 		server = createTestServer();
 		await new Promise<void>((resolve) => server!.listen(0, "127.0.0.1", resolve));
 
@@ -139,8 +139,8 @@ describe("MCP 서버 라이프사이클", () => {
 		expect(server).toBeNull();
 	});
 
-	it("포트 충돌 시 에러를 발생한다", async () => {
-		// 첫 번째 서버 시작
+	it("throws error on port conflict", async () => {
+		// Start first server
 		const server1 = createTestServer();
 		const port = await new Promise<number>((resolve) => {
 			server1.listen(0, "127.0.0.1", () => {
@@ -148,7 +148,7 @@ describe("MCP 서버 라이프사이클", () => {
 			});
 		});
 
-		// 같은 포트로 두 번째 서버 시작 시도
+		// Attempt to start second server on the same port
 		const server2 = createTestServer();
 		const error = await new Promise<NodeJS.ErrnoException>((resolve) => {
 			server2.on("error", (err) => resolve(err as NodeJS.ErrnoException));
@@ -157,7 +157,7 @@ describe("MCP 서버 라이프사이클", () => {
 
 		expect(error.code).toBe("EADDRINUSE");
 
-		// 정리
+		// Cleanup
 		await new Promise<void>((resolve) => server1.close(() => resolve()));
 	});
 });

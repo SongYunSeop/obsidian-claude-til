@@ -1,6 +1,6 @@
 /**
- * MCP 학습 컨텍스트 도구의 순수 함수 모듈.
- * backlog.ts 패턴을 따라 Obsidian API 의존 없이 테스트 가능하다.
+ * Pure function module for MCP learning context tools.
+ * Follows the backlog.ts pattern; testable without Obsidian API dependency.
  */
 
 export interface TilFileContext {
@@ -43,8 +43,8 @@ export interface RecentContextResult {
 }
 
 /**
- * 경로/파일명 기반으로 topic에 매칭되는 TIL 파일을 찾는다.
- * backlog.md는 제외한다.
+ * Finds TIL files matching the topic based on path/filename.
+ * Excludes backlog.md.
  */
 export function findPathMatches(
 	filePaths: string[],
@@ -61,8 +61,8 @@ export function findPathMatches(
 }
 
 /**
- * TIL 파일 경로에서 카테고리를 추출한다.
- * `tilPath/{category}/file.md` → category, 하위 폴더 없으면 "(uncategorized)"
+ * Extracts the category from a TIL file path.
+ * `tilPath/{category}/file.md` → category, or "(uncategorized)" if no subfolder.
  */
 export function extractCategory(filePath: string, tilPath: string): string {
 	const relative = filePath.slice(tilPath.length + 1);
@@ -71,7 +71,7 @@ export function extractCategory(filePath: string, tilPath: string): string {
 }
 
 /**
- * 파일 경로와 메타데이터를 조합하여 TilFileContext를 생성한다.
+ * Builds a TilFileContext by combining file path and metadata.
  */
 export function buildFileContext(
 	path: string,
@@ -87,7 +87,7 @@ export function buildFileContext(
 }
 
 /**
- * 미작성 링크(unresolvedLinks) 중 topic에 매칭되는 것을 찾아 그룹핑한다.
+ * Finds entries in unresolvedLinks that match the topic and groups them.
  */
 export function findUnresolvedMentions(
 	unresolvedLinks: Record<string, Record<string, number>>,
@@ -114,7 +114,7 @@ export function findUnresolvedMentions(
 }
 
 /**
- * TopicContextResult를 Claude 소비용 텍스트로 포맷한다.
+ * Formats a TopicContextResult as text for Claude consumption.
  */
 export function formatTopicContext(result: TopicContextResult): string {
 	const lines: string[] = [];
@@ -155,8 +155,8 @@ export function formatTopicContext(result: TopicContextResult): string {
 }
 
 /**
- * 파일 경로를 카테고리별로 그룹핑한다.
- * category 지정 시 해당 카테고리만 반환한다.
+ * Groups file paths by category.
+ * If category is specified, returns only that category.
  */
 export function groupFilesByCategory(
 	filePaths: string[],
@@ -180,8 +180,8 @@ export function groupFilesByCategory(
 }
 
 /**
- * mtime 기준으로 최근 파일을 필터링하고 날짜별로 그룹핑한다.
- * newest-first 정렬.
+ * Filters recent files by mtime and groups them by date.
+ * Sorted newest-first.
  */
 export function filterRecentFiles(
 	files: Array<{ path: string; mtime: number; headings: string[] }>,
@@ -216,7 +216,7 @@ export function filterRecentFiles(
 		});
 	}
 
-	// 날짜 역순 정렬
+	// Sort dates in reverse order
 	const groups = Array.from(groupMap.entries())
 		.sort(([a], [b]) => b.localeCompare(a))
 		.map(([date, entries]) => ({ date, files: entries }));
@@ -225,7 +225,7 @@ export function filterRecentFiles(
 }
 
 /**
- * RecentContextResult를 Claude 소비용 텍스트로 포맷한다.
+ * Formats a RecentContextResult as text for Claude consumption.
  */
 export function formatRecentContext(result: RecentContextResult): string {
 	if (result.totalFiles === 0) {

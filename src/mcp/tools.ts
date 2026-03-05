@@ -34,11 +34,11 @@ import {
 } from "../core/srs";
 
 /**
- * MCP 도구를 서버에 등록한다.
- * 모든 도구는 FileStorage / MetadataProvider 포트를 통해 vault에 접근한다.
+ * Registers MCP tools with the server.
+ * All tools access the vault through the FileStorage / MetadataProvider ports.
  */
 export function registerTools(server: McpServer, storage: FileStorage, metadata: MetadataProvider, tilPath: string): void {
-	// til_list: TIL 파일 목록 + 메타데이터
+	// til_list: TIL file list + metadata
 	server.registerTool(
 		"til_list",
 		{
@@ -73,7 +73,7 @@ export function registerTools(server: McpServer, storage: FileStorage, metadata:
 		},
 	);
 
-	// til_backlog_status: 백로그 진행률 요약
+	// til_backlog_status: backlog progress summary
 	server.registerTool(
 		"til_backlog_status",
 		{
@@ -84,7 +84,7 @@ export function registerTools(server: McpServer, storage: FileStorage, metadata:
 			}),
 		},
 		async ({ category }) => {
-			// 백로그 파일은 til/{카테고리}/backlog.md 경로에 있다
+			// Backlog files are located at til/{category}/backlog.md
 			const files = (await storage.listFiles()).filter((f) => {
 				if (!f.path.startsWith(tilPath + "/")) return false;
 				if (f.name !== "backlog.md") return false;
@@ -123,7 +123,7 @@ export function registerTools(server: McpServer, storage: FileStorage, metadata:
 		},
 	);
 
-	// til_get_context: 주제 관련 기존 지식 컨텍스트
+	// til_get_context: existing knowledge context related to a topic
 	server.registerTool(
 		"til_get_context",
 		{
@@ -137,10 +137,10 @@ export function registerTools(server: McpServer, storage: FileStorage, metadata:
 			const allFiles = (await storage.listFiles()).filter((f) => f.extension === "md");
 			const allPaths = allFiles.map((f) => f.path);
 
-			// 1단계: 경로 매칭
+			// Step 1: path matching
 			const pathMatches = findPathMatches(allPaths, topic, tilPath);
 
-			// 2단계: 내용 매칭 (경로 매칭에 포함되지 않은 파일만, 배치 병렬 I/O)
+			// Step 2: content matching (only files not already matched by path, batched parallel I/O)
 			const pathMatchSet = new Set(pathMatches);
 			const contentMatches: string[] = [];
 			const lowerTopic = topic.toLowerCase();
@@ -160,7 +160,7 @@ export function registerTools(server: McpServer, storage: FileStorage, metadata:
 				}
 			}
 
-			// 3단계: metadata enrichment (병렬 조회)
+			// Step 3: metadata enrichment (parallel lookup)
 			const allMatchedPaths = [...pathMatches, ...contentMatches];
 			const [resolvedLinks, ...fileMetas] = await Promise.all([
 				metadata.getResolvedLinks(),
@@ -176,7 +176,7 @@ export function registerTools(server: McpServer, storage: FileStorage, metadata:
 				const outgoingLinks = fileMeta?.outgoingLinks ?? [];
 				const tags = fileMeta?.tags ?? [];
 
-				// backlinks: resolvedLinks에서 이 파일을 참조하는 파일들
+				// backlinks: files that reference this file in resolvedLinks
 				const backlinks: string[] = [];
 				for (const [sourcePath, targets] of Object.entries(resolvedLinks)) {
 					if (targets[filePath]) {
@@ -190,7 +190,7 @@ export function registerTools(server: McpServer, storage: FileStorage, metadata:
 				);
 			}
 
-			// 4단계: 미작성 링크 탐색
+			// Step 4: search for unresolved links
 			const unresolvedLinks = await metadata.getUnresolvedLinks();
 			const unresolvedMentions = findUnresolvedMentions(
 				unresolvedLinks,
@@ -203,7 +203,7 @@ export function registerTools(server: McpServer, storage: FileStorage, metadata:
 		},
 	);
 
-	// til_recent_context: 최근 학습 흐름
+	// til_recent_context: recent learning activity
 	server.registerTool(
 		"til_recent_context",
 		{
@@ -227,7 +227,7 @@ export function registerTools(server: McpServer, storage: FileStorage, metadata:
 		},
 	);
 
-	// til_dashboard: 학습 대시보드 통계
+	// til_dashboard: learning dashboard statistics
 	server.registerTool(
 		"til_dashboard",
 		{
@@ -236,10 +236,10 @@ export function registerTools(server: McpServer, storage: FileStorage, metadata:
 			inputSchema: z.object({}),
 		},
 		async () => {
-			// 1. vault 파일에서 EnhancedStatsFileEntry 구성 (frontmatter date 포함)
+			// 1. Build EnhancedStatsFileEntry from vault files (including frontmatter date)
 			const allFiles = await storage.listFiles();
 
-			// 1. vault 파일에서 EnhancedStatsFileEntry 구성 + 복습 카운트 (병렬 메타데이터 조회)
+			// 1. Build EnhancedStatsFileEntry from vault files + review count (parallel metadata lookup)
 			let reviewDueCount = 0;
 			const files: EnhancedStatsFileEntry[] = await Promise.all(
 				allFiles
@@ -251,7 +251,7 @@ export function registerTools(server: McpServer, storage: FileStorage, metadata:
 						const fmTags = fileMeta?.frontmatter?.tags;
 						const tags = Array.isArray(fmTags) ? fmTags.filter((t: unknown) => typeof t === "string") : undefined;
 
-						// 복습 대상 카운트 (이미 가져온 frontmatter 재활용)
+						// Count review-due items (reuse already-fetched frontmatter)
 						if (f.path.startsWith(tilPath + "/") && f.name !== "backlog.md") {
 							const nextReview = fileMeta?.frontmatter?.next_review;
 							if (typeof nextReview === "string" && isDueForReview(nextReview)) {
@@ -270,7 +270,7 @@ export function registerTools(server: McpServer, storage: FileStorage, metadata:
 					}),
 			);
 
-			// 2. backlog 파일 읽어서 BacklogProgressEntry 구성
+			// 2. Read backlog files and build BacklogProgressEntry list
 			const backlogFiles = allFiles.filter((f) => {
 				if (!f.path.startsWith(tilPath + "/")) return false;
 				if (f.name !== "backlog.md") return false;
@@ -293,10 +293,10 @@ export function registerTools(server: McpServer, storage: FileStorage, metadata:
 				}
 			}
 
-			// 3. computeEnhancedStats 호출
+			// 3. Call computeEnhancedStats
 			const stats = computeEnhancedStats(files, tilPath, backlogEntries, undefined, reviewDueCount);
 
-			// 5. JSON 반환
+			// 5. Return JSON
 			return {
 				content: [
 					{ type: "text" as const, text: JSON.stringify(stats) },
@@ -305,7 +305,7 @@ export function registerTools(server: McpServer, storage: FileStorage, metadata:
 		},
 	);
 
-	// til_review_list: 복습 대상 카드 목록
+	// til_review_list: list of cards due for review
 	server.registerTool(
 		"til_review_list",
 		{
@@ -364,7 +364,7 @@ export function registerTools(server: McpServer, storage: FileStorage, metadata:
 		},
 	);
 
-	// til_review_update: 복습 결과 기록 또는 복습 해제
+	// til_review_update: record a review result or remove from review schedule
 	server.registerTool(
 		"til_review_update",
 		{
@@ -418,7 +418,7 @@ export function registerTools(server: McpServer, storage: FileStorage, metadata:
 		},
 	);
 
-	// til_save_note: TIL 노트 저장 (frontmatter + 경로 규칙 보장)
+	// til_save_note: save a TIL note (ensures frontmatter + path conventions)
 	server.registerTool(
 		"til_save_note",
 		{
@@ -440,7 +440,7 @@ export function registerTools(server: McpServer, storage: FileStorage, metadata:
 			const path = `${tilPath}/${category}/${slug}.md`;
 			const noteDate = date || new Date().toISOString().slice(0, 10);
 
-			// frontmatter 생성
+			// Build frontmatter
 			const fmLines = ["---", `title: "${title.replace(/"/g, '\\"')}"`, `date: ${noteDate}`];
 			const effectiveCategory = fmCategory ?? category;
 			fmLines.push(`category: ${effectiveCategory}`);
@@ -457,14 +457,14 @@ export function registerTools(server: McpServer, storage: FileStorage, metadata:
 
 			const fullContent = fmLines.join("\n") + content;
 
-			// 디렉토리 생성 + 파일 저장
+			// Create directory + save file
 			await storage.mkdir(`${tilPath}/${category}`);
 			const existed = await storage.exists(path);
 			await storage.writeFile(path, fullContent);
 
 			const data: { path: string; created: boolean; category: string; slug: string; title: string; backlog_checked?: boolean; backlog_already_done?: boolean } = { path, created: !existed, category, slug, title };
 
-			// auto_check_backlog: 저장 후 백로그 자동 체크
+			// auto_check_backlog: auto-check backlog after saving
 			if (auto_check_backlog) {
 				const backlogPath = `${tilPath}/${category}/backlog.md`;
 				const backlogContent = await storage.readFile(backlogPath);
@@ -483,7 +483,7 @@ export function registerTools(server: McpServer, storage: FileStorage, metadata:
 		},
 	);
 
-	// til_backlog_check: 백로그 항목 완료 처리
+	// til_backlog_check: mark a backlog item as completed
 	server.registerTool(
 		"til_backlog_check",
 		{

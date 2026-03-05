@@ -17,9 +17,9 @@ import {
 	type SrsFileEntry,
 } from "../src/core/srs";
 
-// MCP 도구의 핵심 로직을 직접 테스트한다.
-// 실제 McpServer 없이 vault 접근 로직만 검증.
-// 각 테스트의 필터링 로직은 tools.ts의 실제 코드와 동일해야 한다.
+// Directly tests the core logic of MCP tools.
+// Validates vault access logic without a real McpServer.
+// The filtering logic in each test must match the actual code in tools.ts.
 
 type AppWithHelpers = App & {
 	_setActiveFile: (f: TFile | null) => void;
@@ -39,7 +39,7 @@ function createApp(files: Record<string, string>): App {
 	return new App(vault);
 }
 
-// --- tools.ts 로직을 그대로 재현한 헬퍼 함수들 ---
+// --- Helper functions that reproduce the tools.ts logic as-is ---
 
 function tilList(app: App, tilPath: string, category?: string): Record<string, string[]> {
 	const filePaths = app.vault.getFiles()
@@ -85,7 +85,7 @@ async function tilBacklogStatus(
 	return { totalDone, totalItems, categories };
 }
 
-// --- 테스트 ---
+// --- Tests ---
 
 describe("til_list", () => {
 	const tilPath = "til";
@@ -97,7 +97,7 @@ describe("til_list", () => {
 		"notes/other.md": "",
 	};
 
-	it("카테고리별로 분류한다", () => {
+	it("groups files by category", () => {
 		const app = createApp(files);
 		const result = tilList(app, tilPath);
 
@@ -105,14 +105,14 @@ describe("til_list", () => {
 		expect(result["react"]).toHaveLength(1);
 	});
 
-	it("루트 파일은 (uncategorized)로 분류된다", () => {
+	it("classifies root-level files as (uncategorized)", () => {
 		const app = createApp(files);
 		const result = tilList(app, tilPath);
 
 		expect(result["(uncategorized)"]).toContain("til/TIL MOC.md");
 	});
 
-	it("tilPath 밖의 파일은 포함하지 않는다", () => {
+	it("does not include files outside tilPath", () => {
 		const app = createApp(files);
 		const result = tilList(app, tilPath);
 
@@ -120,7 +120,7 @@ describe("til_list", () => {
 		expect(allPaths).not.toContain("notes/other.md");
 	});
 
-	it("카테고리 필터를 적용한다", () => {
+	it("applies a category filter", () => {
 		const app = createApp(files);
 		const result = tilList(app, tilPath, "typescript");
 
@@ -128,7 +128,7 @@ describe("til_list", () => {
 		expect(result["typescript"]).toHaveLength(2);
 	});
 
-	it("카테고리 필터 시 루트 파일은 제외된다", () => {
+	it("excludes root-level files when a category filter is applied", () => {
 		const app = createApp(files);
 		const result = tilList(app, tilPath, "typescript");
 
@@ -136,7 +136,7 @@ describe("til_list", () => {
 		expect(allPaths).not.toContain("til/TIL MOC.md");
 	});
 
-	it("존재하지 않는 카테고리 필터에 빈 결과를 반환한다", () => {
+	it("returns empty result for a non-existent category filter", () => {
 		const app = createApp(files);
 		const result = tilList(app, tilPath, "nonexistent");
 
@@ -147,7 +147,7 @@ describe("til_list", () => {
 describe("til_backlog_status", () => {
 	const tilPath = "til";
 
-	it("til/{카테고리}/backlog.md 경로의 백로그를 찾는다", async () => {
+	it("finds backlogs at til/{category}/backlog.md paths", async () => {
 		const app = createApp({
 			"til/typescript/backlog.md": "- [x] 완료\n- [ ] 미완료",
 			"til/react/backlog.md": "- [ ] 미완료1\n- [ ] 미완료2",
@@ -159,7 +159,7 @@ describe("til_backlog_status", () => {
 		expect(result.categories).toHaveLength(2);
 	});
 
-	it("카테고리 필터를 적용한다", async () => {
+	it("applies a category filter", async () => {
 		const app = createApp({
 			"til/typescript/backlog.md": "- [x] 완료\n- [ ] 미완료",
 			"til/react/backlog.md": "- [ ] 미완료1\n- [ ] 미완료2",
@@ -173,7 +173,7 @@ describe("til_backlog_status", () => {
 		expect(result.categories[0]!.path).toBe("til/typescript/backlog.md");
 	});
 
-	it("backlog.md가 아닌 파일은 무시한다", async () => {
+	it("ignores files that are not backlog.md", async () => {
 		const app = createApp({
 			"til/typescript/backlog.md": "- [x] 완료",
 			"til/typescript/generics.md": "- [ ] 이건 백로그가 아님",
@@ -185,7 +185,7 @@ describe("til_backlog_status", () => {
 		expect(result.categories).toHaveLength(1);
 	});
 
-	it("tilPath 밖의 backlog.md는 무시한다", async () => {
+	it("ignores backlog.md files outside tilPath", async () => {
 		const app = createApp({
 			"til/typescript/backlog.md": "- [x] 완료",
 			"notes/backlog.md": "- [ ] 이건 다른 폴더",
@@ -196,7 +196,7 @@ describe("til_backlog_status", () => {
 		expect(result.totalItems).toBe(1);
 	});
 
-	it("체크박스가 없는 백로그는 결과에서 제외된다", async () => {
+	it("excludes backlogs without checkboxes from results", async () => {
 		const app = createApp({
 			"til/empty/backlog.md": "# Empty backlog\nNo items here.",
 			"til/typescript/backlog.md": "- [x] 완료\n- [ ] 미완료",
@@ -207,7 +207,7 @@ describe("til_backlog_status", () => {
 		expect(result.categories[0]!.name).toBe("typescript");
 	});
 
-	it("백로그가 없으면 빈 결과를 반환한다", async () => {
+	it("returns empty result when no backlogs exist", async () => {
 		const app = createApp({
 			"til/typescript/generics.md": "# Generics",
 		});
@@ -218,7 +218,7 @@ describe("til_backlog_status", () => {
 		expect(result.categories).toHaveLength(0);
 	});
 
-	it("[X] 대문자도 완료로 카운트한다", async () => {
+	it("counts uppercase [X] as done", async () => {
 		const app = createApp({
 			"til/typescript/backlog.md": "- [X] 대문자 완료\n- [x] 소문자 완료\n- [ ] 미완료",
 		});
@@ -228,7 +228,7 @@ describe("til_backlog_status", () => {
 		expect(result.totalItems).toBe(3);
 	});
 
-	it("category 지정 시 sections에 sourceUrls가 포함된다", async () => {
+	it("includes sourceUrls in sections when a category is specified", async () => {
 		const backlogContent = `---
 tags:
   - backlog
@@ -272,7 +272,7 @@ describe("til_list (search)", () => {
 		"til/TIL MOC.md": "",
 	};
 
-	it("search 파라미터로 경로를 필터링한다", () => {
+	it("filters paths using the search parameter", () => {
 		const app = createApp(files);
 		const allPaths = app.vault.getFiles()
 			.filter((f: TFile) => f.path.startsWith(tilPath + "/") && f.extension === "md")
@@ -287,7 +287,7 @@ describe("til_list (search)", () => {
 		expect(allFiles).toContain("til/llm/function-calling.md");
 	});
 
-	it("search가 대소문자를 무시한다", () => {
+	it("search is case-insensitive", () => {
 		const app = createApp(files);
 		const allPaths = app.vault.getFiles()
 			.filter((f: TFile) => f.path.startsWith(tilPath + "/") && f.extension === "md")
@@ -300,7 +300,7 @@ describe("til_list (search)", () => {
 		expect(result["typescript"]).toHaveLength(2);
 	});
 
-	it("search + category 조합 필터링", () => {
+	it("filters by search + category combination", () => {
 		const app = createApp(files);
 		const allPaths = app.vault.getFiles()
 			.filter((f: TFile) => f.path.startsWith(tilPath + "/") && f.extension === "md")
@@ -314,7 +314,7 @@ describe("til_list (search)", () => {
 		expect(result["typescript"]).toEqual(["til/typescript/generics.md"]);
 	});
 
-	it("매칭 결과가 없으면 빈 객체를 반환한다", () => {
+	it("returns an empty object when there are no matching results", () => {
 		const app = createApp(files);
 		const allPaths = app.vault.getFiles()
 			.filter((f: TFile) => f.path.startsWith(tilPath + "/") && f.extension === "md")
@@ -328,10 +328,10 @@ describe("til_list (search)", () => {
 	});
 });
 
-// --- til_save_note auto_check_backlog 로직 재현 ---
+// --- Reproduce til_save_note auto_check_backlog logic ---
 
 describe("til_save_note (auto_check_backlog)", () => {
-	it("auto_check_backlog=true일 때 백로그 항목이 체크된다", () => {
+	it("checks the backlog item when auto_check_backlog=true", () => {
 		const backlogContent = "- [ ] [제네릭](til/typescript/generics.md) - 타입 매개변수\n- [ ] [타입](til/typescript/types.md)";
 		const result = checkBacklogItem(backlogContent, "generics");
 		expect(result.found).toBe(true);
@@ -339,21 +339,21 @@ describe("til_save_note (auto_check_backlog)", () => {
 		expect(result.content).toContain("[x]");
 	});
 
-	it("이미 체크된 항목은 alreadyDone=true를 반환한다", () => {
+	it("returns alreadyDone=true for an already-checked item", () => {
 		const backlogContent = "- [x] [제네릭](til/typescript/generics.md) - 타입 매개변수";
 		const result = checkBacklogItem(backlogContent, "generics");
 		expect(result.found).toBe(true);
 		expect(result.alreadyDone).toBe(true);
 	});
 
-	it("백로그에 항목이 없으면 found=false를 반환한다", () => {
+	it("returns found=false when the item is not in the backlog", () => {
 		const backlogContent = "- [ ] [타입](til/typescript/types.md)";
 		const result = checkBacklogItem(backlogContent, "generics");
 		expect(result.found).toBe(false);
 	});
 });
 
-// --- til_review_list include_content 로직 재현 ---
+// --- Reproduce til_review_list include_content logic ---
 
 function makeSrsFiles(
 	entries: Array<{ path: string; title?: string; frontmatter?: Record<string, unknown> }>,
@@ -368,7 +368,7 @@ function makeSrsFiles(
 
 describe("til_review_list (include_content)", () => {
 	const tilPath = "til";
-	// 과거 날짜로 설정하여 모두 복습 대상이 되도록
+	// Set to a past date so all cards become due for review
 	const dueFrontmatter = {
 		next_review: "2026-01-01",
 		interval: 1,
@@ -377,7 +377,7 @@ describe("til_review_list (include_content)", () => {
 		last_review: "2025-12-31",
 	};
 
-	it("include_content=true일 때 각 카드에 content 필드가 포함된다", async () => {
+	it("includes a content field in each card when include_content=true", async () => {
 		const files: Record<string, string> = {
 			"til/typescript/generics.md": "# Generics\n제네릭 내용",
 			"til/react/hooks.md": "# Hooks\n훅 내용",
@@ -391,7 +391,7 @@ describe("til_review_list (include_content)", () => {
 
 		const cards = filterDueCards(srsFiles, tilPath);
 
-		// include_content=true 로직 재현 (tools.ts의 Promise.all + storage.readFile)
+		// Reproduce include_content=true logic (Promise.all + storage.readFile from tools.ts)
 		const contents = await Promise.all(
 			cards.map((card) => {
 				const file = app.vault.getAbstractFileByPath(card.path);
@@ -411,20 +411,20 @@ describe("til_review_list (include_content)", () => {
 		}
 	});
 
-	it("include_content=false(또는 미지정)일 때 content 필드가 없다", () => {
+	it("does not include a content field when include_content=false (or unset)", () => {
 		const srsFiles = makeSrsFiles([
 			{ path: "til/typescript/generics.md", title: "Generics", frontmatter: { ...dueFrontmatter } },
 		]);
 
 		const cards = filterDueCards(srsFiles, tilPath);
 
-		// include_content가 없으면 cards를 그대로 반환
+		// When include_content is absent, return cards as-is
 		for (const card of cards) {
 			expect(card).not.toHaveProperty("content");
 		}
 	});
 
-	it("삭제된 파일(content가 null)은 빈 문자열로 대체된다", () => {
+	it("replaces deleted file content (null) with an empty string", () => {
 		const srsFiles = makeSrsFiles([
 			{ path: "til/typescript/generics.md", title: "Generics", frontmatter: { ...dueFrontmatter } },
 			{ path: "til/deleted/missing.md", title: "Missing", frontmatter: { ...dueFrontmatter } },
@@ -432,7 +432,7 @@ describe("til_review_list (include_content)", () => {
 
 		const cards = filterDueCards(srsFiles, tilPath);
 
-		// null 값을 포함한 contents 배열 시뮬레이션
+		// Simulate a contents array containing null values
 		const contents: (string | null)[] = ["# Generics\n내용", null];
 		const cardsWithContent = cards.map((card, i) => ({
 			...card,
@@ -444,7 +444,7 @@ describe("til_review_list (include_content)", () => {
 	});
 });
 
-// --- til_save_note frontmatter 생성 로직 재현 ---
+// --- Reproduce til_save_note frontmatter generation logic ---
 
 function buildTilFrontmatter(opts: {
 	title: string;
@@ -472,38 +472,38 @@ function buildTilFrontmatter(opts: {
 }
 
 describe("til_save_note (frontmatter)", () => {
-	it("category가 frontmatter에 포함된다", () => {
+	it("includes category in frontmatter", () => {
 		const fm = buildTilFrontmatter({ title: "제네릭", category: "typescript" });
 		expect(fm).toContain("category: typescript");
 	});
 
-	it("fmCategory가 있으면 category 대신 사용된다", () => {
+	it("uses fmCategory instead of category when fmCategory is provided", () => {
 		const fm = buildTilFrontmatter({ title: "제네릭", category: "typescript", fmCategory: "타입스크립트" });
 		expect(fm).toContain("category: 타입스크립트");
 		expect(fm).not.toContain("category: typescript");
 	});
 
-	it("fmCategory가 없으면 category 파라미터가 사용된다", () => {
+	it("uses the category parameter when fmCategory is absent", () => {
 		const fm = buildTilFrontmatter({ title: "Hooks", category: "react" });
 		expect(fm).toContain("category: react");
 	});
 
-	it("aliases가 frontmatter에 포함된다", () => {
+	it("includes aliases in frontmatter", () => {
 		const fm = buildTilFrontmatter({ title: "제네릭", category: "typescript", aliases: ["제네릭", "Generics"] });
 		expect(fm).toContain('aliases: ["제네릭", "Generics"]');
 	});
 
-	it("aliases가 없으면 frontmatter에 포함되지 않는다", () => {
+	it("does not include aliases in frontmatter when absent", () => {
 		const fm = buildTilFrontmatter({ title: "Hooks", category: "react" });
 		expect(fm).not.toContain("aliases");
 	});
 
-	it("aliases에 따옴표가 있으면 이스케이프된다", () => {
+	it("escapes quotes in aliases", () => {
 		const fm = buildTilFrontmatter({ title: "Test", category: "test", aliases: ['say "hello"'] });
 		expect(fm).toContain('aliases: ["say \\"hello\\""]');
 	});
 
-	it("tags + category + aliases가 모두 포함된 완전한 frontmatter", () => {
+	it("produces complete frontmatter with tags + category + aliases", () => {
 		const fm = buildTilFrontmatter({
 			title: "제네릭 기초",
 			category: "typescript",
@@ -521,12 +521,12 @@ describe("til_save_note (frontmatter)", () => {
 	});
 });
 
-// --- til_get_context 통합 테스트 ---
+// --- til_get_context integration tests ---
 
-describe("til_get_context (통합)", () => {
+describe("til_get_context (integration)", () => {
 	const tilPath = "til";
 
-	it("경로 매칭 + metadataCache enrichment 전체 파이프라인", async () => {
+	it("full pipeline: path matching + metadataCache enrichment", async () => {
 		const vault = new Vault();
 		const v = vault as VaultWithHelpers;
 		v._setFile("til/typescript/generics.md", "# Generics\n제네릭 기초 내용");
@@ -547,7 +547,7 @@ describe("til_get_context (통합)", () => {
 			"til/typescript/generics.md": { "고급 타입": 1, "유틸리티 타입": 1 },
 		});
 
-		// tools.ts의 til_get_context 로직 재현
+		// Reproduce the til_get_context logic from tools.ts
 		const allFiles = app.vault.getFiles().filter((f: TFile) => f.extension === "md");
 		const allPaths = allFiles.map((f: TFile) => f.path);
 
@@ -556,7 +556,7 @@ describe("til_get_context (통합)", () => {
 		expect(pathMatches).toContain("til/typescript/types.md");
 		expect(pathMatches).not.toContain("til/react/backlog.md");
 
-		// content 매칭 (pathMatches에 포함되지 않은 파일에서)
+		// content matching (in files not included in pathMatches)
 		const pathMatchSet = new Set(pathMatches);
 		const contentMatches: string[] = [];
 		for (const file of allFiles) {
@@ -594,7 +594,7 @@ describe("til_get_context (통합)", () => {
 		);
 		expect(unresolvedMentions).toHaveLength(2);
 
-		// 포맷
+		// format
 		const result: TopicContextResult = {
 			topic: "typescript",
 			matchedFiles: [
@@ -615,7 +615,7 @@ describe("til_get_context (통합)", () => {
 		expect(text).toContain("Generics");
 	});
 
-	it("매칭 파일이 없으면 새 주제 메시지를 반환한다", () => {
+	it("returns a new topic message when no matching files exist", () => {
 		const app = createApp({ "til/react/hooks.md": "# Hooks" });
 		const allPaths = app.vault.getFiles().map((f: TFile) => f.path);
 		const pathMatches = findPathMatches(allPaths, "golang", tilPath);
@@ -630,14 +630,14 @@ describe("til_get_context (통합)", () => {
 	});
 });
 
-// --- til_recent_context 통합 테스트 ---
+// --- til_recent_context integration tests ---
 
-describe("til_recent_context (통합)", () => {
+describe("til_recent_context (integration)", () => {
 	const tilPath = "til";
 	const now = new Date("2026-02-18T12:00:00Z").getTime();
 	const day = 24 * 60 * 60 * 1000;
 
-	it("mtime 기반 필터링 + headings 추출 전체 파이프라인", () => {
+	it("full pipeline: mtime-based filtering + headings extraction", () => {
 		const vault = new Vault();
 		const v = vault as VaultWithHelpers;
 		v._setFile("til/typescript/generics.md", "# Generics", { mtime: now - 1 * day });
@@ -672,7 +672,7 @@ describe("til_recent_context (통합)", () => {
 		expect(text).toContain("Generics");
 	});
 
-	it("활동이 없으면 안내 메시지를 반환한다", () => {
+	it("returns a guidance message when there is no activity", () => {
 		const result = filterRecentFiles([], 7, tilPath, now);
 		const text = formatRecentContext(result);
 		expect(text).toContain("No learning activity in the last");

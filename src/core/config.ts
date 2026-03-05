@@ -15,8 +15,8 @@ export interface OmtConfig {
 export type SiteConfig = OmtConfig;
 
 /**
- * vault 루트의 oh-my-til.json 설정 파일을 읽는다.
- * 파일이 없거나 파싱 실패 시 빈 객체를 반환한다.
+ * Reads the oh-my-til.json config file from the vault root.
+ * Returns an empty object if the file is missing or parsing fails.
  */
 export function loadOmtConfig(basePath: string): OmtConfig {
 	const configPath = path.join(basePath, "oh-my-til.json");
