@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Oh My TIL</title>
+  <link rel="icon" type="image/png" href="png/favicon.png">
+  <link href="https://cdn.jsdelivr.net/npm/pretendard@latest/dist/web/static/pretendard.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@500&family=Noto+Serif:ital,wght@0,400;0,500;0,600;1,400&family=Open+Sans:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: #F0F0F0;
+      color: #312927;
+      font-family: 'Open Sans', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ── Navbar ── */
+    .navbar {
+      width: 100%;
+      height: 66px;
+      padding: 0 28px;
+      border-bottom: 1px solid rgba(49, 41, 39, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .navbar-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 44px;
+      text-decoration: none;
+    }
+
+    .navbar-logo img {
+      height: 34px;
+      width: auto;
+    }
+
+    .navbar-logo-text {
+      font-family: 'Noto Serif', serif;
+      font-weight: 500;
+      font-size: 20px;
+      color: #312927;
+      line-height: 1.362;
+    }
+
+    .navbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 27px;
+    }
+
+    .navbar-actions a {
+      color: #312927;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+    }
+
+    .navbar-actions svg {
+      display: block;
+    }
+
+    /* ── Hero ── */
+    .hero-wrapper {
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+
+    .hero {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 140px;
+      padding: 0 100px;
+      min-height: 800px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-content {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-text {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .hero-badge {
+      font-family: 'Noto Sans', sans-serif;
+      font-weight: 500;
+      font-size: 18px;
+      color: #DE6F38;
+      line-height: 1.362;
+    }
+
+    .hero-title {
+      font-family: 'Noto Serif', serif;
+      font-weight: 600;
+      font-size: 80px;
+      color: #312927;
+      line-height: 1.362;
+    }
+
+    .hero-description {
+      font-family: 'Open Sans', sans-serif;
+      font-weight: 400;
+      font-size: 20px;
+      color: rgba(49, 41, 39, 0.76);
+      line-height: 1.5;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .hero-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px;
+      background: #FBFBFB;
+      border-radius: 16px;
+      border: none;
+      cursor: pointer;
+      font-family: 'Open Sans', sans-serif;
+      font-weight: 300;
+      font-size: 17px;
+      color: #000;
+      text-decoration: none;
+      line-height: 1.248;
+      white-space: nowrap;
+    }
+
+    .hero-btn:hover {
+      background: #f0f0f0;
+    }
+
+    .btn-copy-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .btn-copy-text {
+      font-weight: 300;
+      font-size: 17px;
+      color: rgba(0, 0, 0, 0.4);
+    }
+
+    .btn-icon {
+      width: 20px;
+      height: 20px;
+      display: block;
+      flex-shrink: 0;
+    }
+
+
+    /* ── Hero background decorations ── */
+    .hero-bg-deco {
+      position: absolute;
+      pointer-events: none;
+      user-select: none;
+      opacity: 0.55;
+    }
+    /* Hero illustration — frame animation */
+    .hero-illustration {
+      position: relative;
+      z-index: 1;
+      position: relative;
+      width: 320px;
+      height: 257px;
+      flex-shrink: 0;
+    }
+
+    .hero-illustration img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      opacity: 0;
+    }
+
+
+    /* ── Features ── */
+    .features-wrapper {
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+
+    .features {
+      padding: 60px 28px;
+      border-top: 1px solid rgba(49, 41, 39, 0.12);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 69px;
+    }
+
+    .features-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 9px;
+      width: 698px;
+      max-width: 100%;
+      text-align: center;
+    }
+
+    .features-emoji {
+      font-size: 45px;
+      line-height: 1.5;
+    }
+
+    .features-title {
+      font-family: 'Noto Serif', serif;
+      font-weight: 400;
+      font-size: 44px;
+      color: #2F2A2A;
+      line-height: 1.362;
+    }
+
+    .features-grid {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 34px;
+      align-self: stretch;
+    }
+
+    .features-row {
+      display: flex;
+      align-items: center;
+      gap: 29px;
+      align-self: stretch;
+    }
+
+    .feature-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 22px;
+      flex: 1;
+    }
+
+    .feature-icon {
+      width: 120px;
+      height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .feature-icon img {
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+    }
+
+    .feature-text {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      text-align: center;
+      width: 100%;
+    }
+
+    .feature-title {
+      font-family: 'Open Sans', sans-serif;
+      font-weight: 400;
+      font-size: 20px;
+      color: #312927;
+      line-height: 1.5;
+    }
+
+    .feature-desc {
+      font-family: 'Open Sans', sans-serif;
+      font-weight: 400;
+      font-size: 13px;
+      color: rgba(49, 41, 39, 0.82);
+      line-height: 1.5;
+    }
+
+    .divider-v {
+      width: 1px;
+      height: 199px;
+      background: #6C6C6C;
+      flex-shrink: 0;
+    }
+
+    .divider-h {
+      height: 1px;
+      background: #6C6C6C;
+      align-self: stretch;
+    }
+
+
+
+    /* ── Language tooltip ── */
+    .navbar-logo-wrap {
+      position: relative;
+    }
+
+    .lang-tooltip {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(-4px) scale(0.9);
+      transform-origin: top left;
+      transition: opacity 0.2s ease,
+                  transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 200;
+    }
+
+    .lang-tooltip.visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+
+    .lang-tooltip-tail {
+      display: block;
+      margin-left: 10px;
+      margin-bottom: -1px;
+      flex-shrink: 0;
+    }
+
+    .lang-tooltip-bubble {
+      background: #312927;
+      border-radius: 16px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-width: 220px;
+    }
+
+    .lang-tooltip-text {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .lang-text-primary {
+      font-family: 'Pretendard', sans-serif;
+      font-weight: 400;
+      font-size: 15px;
+      line-height: 1.193;
+      color: #F0F0F0;
+    }
+
+    .lang-text-secondary {
+      font-family: 'Pretendard', sans-serif;
+      font-weight: 300;
+      font-size: 14px;
+      line-height: 1.193;
+      color: rgba(240, 240, 240, 0.4);
+    }
+
+    .lang-btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .lang-btn {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      width: 100%;
+      padding: 10px 0;
+      background: #443D3B;
+      border: 1px solid #625B5B;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.1s ease;
+    }
+
+    .lang-btn:active {
+      transform: scale(0.96);
+    }
+
+    .lang-btn-primary {
+      font-family: 'Pretendard', sans-serif;
+      font-weight: 400;
+      font-size: 14px;
+      line-height: 1.193;
+      color: #F0F0F0;
+    }
+
+    .lang-btn-secondary {
+      font-family: 'Pretendard', sans-serif;
+      font-weight: 300;
+      font-size: 14px;
+      line-height: 1.193;
+      color: rgba(240, 240, 240, 0.4);
+    }
+
+    /* ── Scroll fade-in ── */
+    .scroll-fade {
+      opacity: 0;
+      transform: translateY(-16px);
+      filter: blur(8px);
+      transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+                  transform 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+                  filter 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .scroll-fade.visible {
+      opacity: 1;
+      transform: translateY(0);
+      filter: blur(0px);
+    }
+    .scroll-fade:nth-child(2) { transition-delay: 0.12s; }
+
+
+    .scroll-fade-letter {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(-12px);
+      filter: blur(6px);
+      transition: opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+                  transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+                  filter 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .scroll-fade-letter.visible {
+      opacity: 1;
+      transform: translateY(0);
+      filter: blur(0px);
+    }
+
+    /* ── Hero enter animation ── */
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-16px); filter: blur(8px); }
+      to   { opacity: 1; transform: translateY(0); filter: blur(0px); }
+    }
+
+    .fade-in {
+      opacity: 0;
+      animation: fadeInDown 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .hero-title .word {
+      display: inline-block;
+      opacity: 0;
+      animation: fadeInDown 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <header>
+    <nav class="navbar">
+      <div class="navbar-logo-wrap">
+        <a href="#" class="navbar-logo">
+          <img src="png/logo.png" alt="Oh My TIL logo">
+          <span class="navbar-logo-text">oh my til</span>
+        </a>
+        <div class="lang-tooltip" id="langTooltip">
+          <svg class="lang-tooltip-tail" width="16" height="9" viewBox="0 0 16 9" xmlns="http://www.w3.org/2000/svg"><path d="M0,9 L6.5,1.8 Q8,0 9.5,1.8 L16,9 Z" fill="#312927"/></svg>
+          <div class="lang-tooltip-bubble">
+            <div class="lang-tooltip-text">
+              <span class="lang-text-primary">한국어로 바꿔줄까?</span>
+              <span class="lang-text-secondary">Want me to switch it to Korean?</span>
+            </div>
+            <div class="lang-btn-group">
+              <button class="lang-btn" onclick="handleLang(true)">
+                <span class="lang-btn-primary">응!</span>
+                <span class="lang-btn-secondary">YES!</span>
+              </button>
+              <button class="lang-btn" onclick="handleLang(false)">
+                <span class="lang-btn-primary">괜찮아!</span>
+                <span class="lang-btn-secondary">No, Thank you!</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="navbar-actions">
+        <a href="https://github.com/yoonseyoung/oh-my-til" aria-label="GitHub">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M16 3C8.82 3 3 8.82 3 16c0 5.75 3.73 10.62 8.9 12.34.65.12.89-.28.89-.62v-2.17c-3.62.79-4.38-1.74-4.38-1.74-.59-1.5-1.44-1.9-1.44-1.9-1.18-.8.09-.79.09-.79 1.3.09 1.99 1.34 1.99 1.34 1.16 1.98 3.04 1.41 3.78 1.08.12-.84.45-1.41.82-1.74-2.89-.33-5.93-1.44-5.93-6.43 0-1.42.51-2.58 1.34-3.49-.13-.33-.58-1.65.13-3.44 0 0 1.09-.35 3.58 1.34a12.46 12.46 0 013.26-.44c1.1.01 2.21.15 3.25.44 2.48-1.69 3.57-1.34 3.57-1.34.71 1.79.26 3.11.13 3.44.84.91 1.34 2.07 1.34 3.49 0 5-3.05 6.1-5.95 6.42.47.4.88 1.19.88 2.4v3.56c0 .34.23.75.89.62C25.28 26.62 29 21.75 29 16c0-7.18-5.82-13-13-13z" fill="#312927"/>
+          </svg>
+        </a>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Hero Section -->
+  <div class="hero-wrapper">
+    <section class="hero">
+      <div class="hero-content">
+        <div class="hero-text">
+          <div>
+            <p class="hero-badge fade-in" style="animation-delay:0s">v0.12.3 — Open Source</p>
+            <h1 class="hero-title"><span class="word" style="animation-delay:0.18s">o</span><span class="word" style="animation-delay:0.25s">h</span> <span class="word" style="animation-delay:0.32s">m</span><span class="word" style="animation-delay:0.39s">y</span> <span class="word" style="animation-delay:0.46s">t</span><span class="word" style="animation-delay:0.53s">i</span><span class="word" style="animation-delay:0.60s">l</span></h1>
+          </div>
+          <p class="hero-description fade-in" style="animation-delay:0.62s">
+            AI-powered&nbsp;Today I Learned&nbsp;workflow.<br>
+            Research, learn, and build your knowledge base with Claude Code.
+          </p>
+        </div>
+        <div class="hero-actions fade-in" style="animation-delay:0.78s">
+          <button class="hero-btn" onclick="copyCommand(this)">
+            <span>npx oh-my-til init ~/my-til</span>
+            <span class="btn-copy-group">
+              <span class="btn-copy-text">click to copy</span>
+              <svg class="btn-icon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="7.5" y="7.5" width="9" height="9" rx="1.5" stroke="black" stroke-width="1.25"/>
+                <path d="M5 12.5H4.5A1.5 1.5 0 013 11V4.5A1.5 1.5 0 014.5 3H11A1.5 1.5 0 0112.5 4.5V5" stroke="black" stroke-width="1.25" stroke-linecap="round"/>
+              </svg>
+            </span>
+          </button>
+          <a href="https://github.com/yoonseyoung/oh-my-til" class="hero-btn" target="_blank" rel="noopener">
+            <span>GitHub</span>
+            <svg class="btn-icon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M5.5 14.5L14.5 5.5" stroke="black" stroke-width="1.25" stroke-linecap="round"/>
+              <path d="M8 5.5H14.5V12" stroke="black" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+
+      <div class="hero-illustration fade-in" style="animation-delay:0.35s">
+        <img src="png/hero_section_1.png" alt="/research /til">
+        <img src="png/hero_section_2.png" alt="">
+        <img src="png/hero_section_3.png" alt="">
+        <img src="png/hero_section_4.png" alt="">
+      </div>
+
+      <!-- Background decorations -->
+      <img class="hero-bg-deco" src="png/magnifying_glass.png" alt=""
+           style="width:100px; bottom:80px; left:60px;">
+      <img class="hero-bg-deco" src="png/bulb.png" alt=""
+           style="width:110px; top:52px; right:160px;">
+      <img class="hero-bg-deco" src="png/claude.png" alt=""
+           style="width:90px; top:120px; left:180px; opacity:0.3;">
+    </section>
+  </div>
+
+  <!-- Features Section -->
+  <div class="features-wrapper">
+    <section class="features">
+      <div class="features-header">
+        <div class="features-emoji scroll-fade">💪</div>
+        <h2 class="features-title"><span class="scroll-fade-letter" style="transition-delay:0.080s">T</span><span class="scroll-fade-letter" style="transition-delay:0.115s">h</span><span class="scroll-fade-letter" style="transition-delay:0.150s">e</span> <span class="scroll-fade-letter" style="transition-delay:0.185s">u</span><span class="scroll-fade-letter" style="transition-delay:0.220s">l</span><span class="scroll-fade-letter" style="transition-delay:0.255s">-</span><span class="scroll-fade-letter" style="transition-delay:0.290s">t</span><span class="scroll-fade-letter" style="transition-delay:0.325s">i</span><span class="scroll-fade-letter" style="transition-delay:0.360s">l</span><span class="scroll-fade-letter" style="transition-delay:0.395s">-</span><span class="scroll-fade-letter" style="transition-delay:0.430s">m</span><span class="scroll-fade-letter" style="transition-delay:0.465s">a</span><span class="scroll-fade-letter" style="transition-delay:0.500s">t</span><span class="scroll-fade-letter" style="transition-delay:0.535s">e</span> <span class="scroll-fade-letter" style="transition-delay:0.570s">G</span><span class="scroll-fade-letter" style="transition-delay:0.605s">u</span><span class="scroll-fade-letter" style="transition-delay:0.640s">i</span><span class="scroll-fade-letter" style="transition-delay:0.675s">d</span><span class="scroll-fade-letter" style="transition-delay:0.710s">e</span> <span class="scroll-fade-letter" style="transition-delay:0.745s">t</span><span class="scroll-fade-letter" style="transition-delay:0.780s">o</span> <span class="scroll-fade-letter" style="transition-delay:0.815s">L</span><span class="scroll-fade-letter" style="transition-delay:0.850s">e</span><span class="scroll-fade-letter" style="transition-delay:0.885s">a</span><span class="scroll-fade-letter" style="transition-delay:0.920s">r</span><span class="scroll-fade-letter" style="transition-delay:0.955s">n</span><span class="scroll-fade-letter" style="transition-delay:0.990s">i</span><span class="scroll-fade-letter" style="transition-delay:1.025s">n</span><span class="scroll-fade-letter" style="transition-delay:1.060s">g</span></h2>
+      </div>
+
+      <div class="features-grid">
+        <!-- Row 1 -->
+        <div class="features-row">
+          <div class="feature-card">
+            <div class="feature-icon">
+              <img src="png/logo.png" alt="">
+            </div>
+            <div class="feature-text">
+              <div class="feature-title">Embedded Terminal</div>
+              <div class="feature-desc">Claude Code terminal in Obsidian sidebar. Or use standalone CLI — no Obsidian required.</div>
+            </div>
+          </div>
+
+          <div class="divider-v"></div>
+
+          <div class="feature-card">
+            <div class="feature-icon">
+              <img src="png/logo.png" alt="">
+            </div>
+            <div class="feature-text">
+              <div class="feature-title">Built-in MCP Server</div>
+              <div class="feature-desc">Claude Code accesses your vault directly via HTTP. Context-aware research and learning.</div>
+            </div>
+          </div>
+
+          <div class="divider-v"></div>
+
+          <div class="feature-card">
+            <div class="feature-icon">
+              <img src="png/logo.png" alt="">
+            </div>
+            <div class="feature-text">
+              <div class="feature-title">Learning Dashboard</div>
+              <div class="feature-desc">TIL statistics, category breakdown, streaks, and heatmap at a glance.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Horizontal divider (spans rightmost 2 columns) -->
+        <div class="divider-h"></div>
+
+        <!-- Row 2 -->
+        <div class="features-row">
+          <div class="feature-card">
+            <div class="feature-icon">
+              <img src="png/logo.png" alt="">
+            </div>
+            <div class="feature-text">
+              <div class="feature-title">Spaced Repetition (SRS)</div>
+              <div class="feature-desc">SM-2 algorithm schedules TIL reviews. Anki-style grading with&nbsp;/til-review.</div>
+            </div>
+          </div>
+
+          <div class="divider-v"></div>
+
+          <div class="feature-card">
+            <div class="feature-icon">
+              <img src="png/logo.png" alt="">
+            </div>
+            <div class="feature-text">
+              <div class="feature-title">Smart Link Detection</div>
+              <div class="feature-desc">Markdown links in the terminal are clickable. CJK-aware width calculation.</div>
+            </div>
+          </div>
+
+          <div class="divider-v"></div>
+
+          <div class="feature-card">
+            <div class="feature-icon">
+              <img src="png/logo.png" alt="">
+            </div>
+            <div class="feature-text">
+              <div class="feature-title">Backlog System</div>
+              <div class="feature-desc">Research creates backlogs. Track what to learn next with progress tracking.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // Frame animation — instant swap in one JS tick → same repaint, no gap/stutter
+    (function () {
+      const frames = [...document.querySelectorAll('.hero-illustration img')];
+      let idx = 0;
+      frames[0].style.opacity = '1';
+      setInterval(() => {
+        frames[idx].style.opacity = '0';
+        idx = (idx + 1) % frames.length;
+        frames[idx].style.opacity = '1';
+      }, 160);
+    })();
+
+
+    // Scroll fade-in via IntersectionObserver
+    (function () {
+      const opts = { rootMargin: '0px 0px -120px 0px', threshold: 0 };
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (!e.isIntersecting) return;
+          // trigger individual scroll-fade-letter spans inside
+          e.target.querySelectorAll('.scroll-fade-letter').forEach(el => el.classList.add('visible'));
+          e.target.classList.add('visible');
+          io.unobserve(e.target);
+        });
+      }, opts);
+      document.querySelectorAll('.scroll-fade, .features-header').forEach(el => io.observe(el));
+    })();
+
+
+    // Language tooltip
+    (function () {
+      const tooltip = document.getElementById('langTooltip');
+      setTimeout(() => tooltip.classList.add('visible'), 500);
+
+      document.querySelector('.navbar-logo').addEventListener('click', function (e) {
+        e.preventDefault();
+        tooltip.classList.toggle('visible');
+      });
+    })();
+
+    function handleLang(switchToKo) {
+      const tooltip = document.getElementById('langTooltip');
+      tooltip.classList.remove('visible');
+      // placeholder: add actual language switch logic here
+    }
+
+    function copyCommand(btn) {
+      navigator.clipboard.writeText('npx oh-my-til init ~/my-til').then(() => {
+        const copyText = btn.querySelector('.btn-copy-text');
+        const original = copyText.textContent;
+        copyText.textContent = 'copied!';
+        setTimeout(() => { copyText.textContent = original; }, 1500);
+      });
+    }
+  </script>
+</body>
+</html>
