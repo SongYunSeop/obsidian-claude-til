@@ -1,6 +1,6 @@
 ---
 name: til
-description: "Today I Learned — research a topic, learn interactively, then save as TIL markdown"
+description: "Today I Learned — research a topic, learn interactively, then save as TIL markdown. Use when the user wants to learn about a topic, says 'teach me', 'what is X', 'deep dive into X', or asks to study something and save it as a TIL note."
 argument-hint: "<topic> [category]"
 plugin-version: "__PLUGIN_VERSION__"
 ---
@@ -43,5 +43,5 @@ Follow `/save` skill rules to save. In follow-up mode, merge into the existing f
 
 ## Rules
 
-- Links: `[display name](til/{category}/{slug}.md)` — no `[[wiki links]]`
-- Use placeholder values for sensitive information (example.com, your-api-key)
+- Links: `[display name](til/{category}/{slug}.md)` — no `[[wiki links]]` (links must work in static sites and non-Obsidian editors)
+- Use placeholder values for sensitive information (example.com, your-api-key) to avoid leaking real credentials

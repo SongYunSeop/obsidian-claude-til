@@ -1,0 +1,22 @@
+[
+  {"query": "React hooks 학습 로드맵 만들어줘, 뭘 먼저 배워야 하는지", "should_trigger": true},
+  {"query": "kubernetes 관련해서 뭘 배워야 할지 정리해줘, 백로그로", "should_trigger": true},
+  {"query": "create a study plan for learning GraphQL from scratch", "should_trigger": true},
+  {"query": "machine learning 커리큘럼 좀 짜줘", "should_trigger": true},
+  {"query": "Docker 학습 계획 세워줘, 선수 지식부터 고급까지", "should_trigger": true},
+  {"query": "what should I learn about TypeScript? organize it as a backlog", "should_trigger": true},
+  {"query": "AWS 서비스 학습 순서 정리해줘", "should_trigger": true},
+  {"query": "Rust 배우려면 뭐부터 해야 해? 학습 백로그 만들어줘", "should_trigger": true},
+  {"query": "plan a learning path for system design interviews", "should_trigger": true},
+  {"query": "CSS 애니메이션 공부할 거 리스트업해줘, backlog으로", "should_trigger": true},
+  {"query": "typescript generics 배워줘, 설명해주고 TIL로 저장", "should_trigger": false},
+  {"query": "내 학습 백로그 보여줘", "should_trigger": false},
+  {"query": "이번 주 학습 통계", "should_trigger": false},
+  {"query": "방금 배운 거 저장해줘", "should_trigger": false},
+  {"query": "quiz me on React hooks", "should_trigger": false},
+  {"query": "research the latest trends in AI for my blog post", "should_trigger": false},
+  {"query": "plan my sprint tasks for next week", "should_trigger": false},
+  {"query": "create a project roadmap for our new feature", "should_trigger": false},
+  {"query": "investigate why the CI pipeline is failing", "should_trigger": false},
+  {"query": "analyze the competition for our product launch", "should_trigger": false}
+]

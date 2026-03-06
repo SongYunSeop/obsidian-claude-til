@@ -1,0 +1,22 @@
+[
+  {"query": "방금 배운 내용 TIL로 저장해줘", "should_trigger": true},
+  {"query": "save this as a TIL note", "should_trigger": true},
+  {"query": "이 대화 내용 정리해서 til/react/hooks.md에 저장해줘", "should_trigger": true},
+  {"query": "write up what I just learned about Docker and save it", "should_trigger": true},
+  {"query": "document this conversation as a learning note", "should_trigger": true},
+  {"query": "지금까지 배운 거 노트로 만들어줘, TIL 형식으로", "should_trigger": true},
+  {"query": "이거 학습 기록으로 남기자", "should_trigger": true},
+  {"query": "can you persist this learning session as a TIL markdown file?", "should_trigger": true},
+  {"query": "이 내용 정리해서 저장, typescript 카테고리로", "should_trigger": true},
+  {"query": "save my notes on PostgreSQL indexing as a TIL", "should_trigger": true},
+  {"query": "typescript generics 배워줘", "should_trigger": false},
+  {"query": "React hooks 학습 로드맵 만들어줘", "should_trigger": false},
+  {"query": "내 학습 백로그 보여줘", "should_trigger": false},
+  {"query": "이번 주 학습 통계", "should_trigger": false},
+  {"query": "quiz me on what I learned yesterday", "should_trigger": false},
+  {"query": "write a unit test for the UserService class", "should_trigger": false},
+  {"query": "save this file to disk", "should_trigger": false},
+  {"query": "git commit these changes", "should_trigger": false},
+  {"query": "save my progress in the game", "should_trigger": false},
+  {"query": "export this data as CSV", "should_trigger": false}
+]

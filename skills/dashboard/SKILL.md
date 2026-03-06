@@ -1,6 +1,6 @@
 ---
 name: dashboard
-description: "Learning dashboard — stats, activity heatmap, categories, backlog progress"
+description: "Learning dashboard — stats, activity heatmap, categories, backlog progress. Use when the user asks 'my stats', 'how much have I learned', 'show my streak', 'learning summary', or wants an overview of their TIL activity."
 disable-model-invocation: true
 plugin-version: "__PLUGIN_VERSION__"
 ---

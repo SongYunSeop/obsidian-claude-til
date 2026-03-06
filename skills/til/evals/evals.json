@@ -1,0 +1,41 @@
+{
+  "skill_name": "til",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "typescript generics 배워줘",
+      "expected_output": "Researches TypeScript generics, explains interactively, then offers to save as TIL",
+      "files": [],
+      "expectations": [
+        "Uses til_get_context or til_list to check existing TILs",
+        "Researches the topic before explaining",
+        "Enters interactive learning mode",
+        "Only saves when user explicitly requests it"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "React Server Components가 뭔지 알려줘, TIL로 정리하고 싶어",
+      "expected_output": "Researches RSC, teaches interactively, saves as TIL when requested",
+      "files": [],
+      "expectations": [
+        "Detects 'TIL로 정리' as intent to save",
+        "Researches React Server Components via web search",
+        "Provides interactive explanation with examples",
+        "Follows /save skill rules when saving"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "flexbox 심화 학습 — 기존에 기본편 TIL이 있어",
+      "expected_output": "Checks existing TIL, offers to expand it with advanced content",
+      "files": [],
+      "expectations": [
+        "Checks for existing flexbox TIL via til_list or Read",
+        "Offers to expand existing TIL rather than creating duplicate",
+        "Focuses on advanced content not covered in existing note",
+        "Uses follow-up mode if expanding"
+      ]
+    }
+  ]
+}

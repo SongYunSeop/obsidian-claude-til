@@ -1,0 +1,22 @@
+[
+  {"query": "typescript generics에 대해 배우고 싶어, TIL로 남겨두자", "should_trigger": true},
+  {"query": "teach me about React hooks and save it as a TIL note please", "should_trigger": true},
+  {"query": "flexbox 심화 학습 좀 해줘", "should_trigger": true},
+  {"query": "what is the difference between TCP and UDP? I want to deep dive and take notes", "should_trigger": true},
+  {"query": "GraphQL subscription에 대해 공부하자, til로 정리해줘", "should_trigger": true},
+  {"query": "kubernetes pod lifecycle 알려줘, 학습 노트로 저장할거야", "should_trigger": true},
+  {"query": "CSS grid 가르쳐줘", "should_trigger": true},
+  {"query": "딥러닝 backpropagation 개념 정리해서 TIL로 만들어줘", "should_trigger": true},
+  {"query": "rust ownership이 뭔지 배우고 싶은데 설명해주고 정리해줘", "should_trigger": true},
+  {"query": "OAuth 2.0 study session — save what I learn", "should_trigger": true},
+  {"query": "React hooks 학습 로드맵 만들어줘, 뭘 먼저 배워야 하는지", "should_trigger": false},
+  {"query": "kubernetes 관련 학습 백로그 정리해줘", "should_trigger": false},
+  {"query": "내 학습 진행 상황 보여줘", "should_trigger": false},
+  {"query": "오늘 복습할 TIL 있어?", "should_trigger": false},
+  {"query": "이번 주 학습 통계 좀 보여줘", "should_trigger": false},
+  {"query": "방금 대화 내용 TIL로 저장해줘", "should_trigger": false},
+  {"query": "fix the bug in my auth middleware, the JWT token validation is failing", "should_trigger": false},
+  {"query": "이 코드 리팩토링 해줘, 중복이 너무 많아", "should_trigger": false},
+  {"query": "what is the weather in Seoul today", "should_trigger": false},
+  {"query": "write a Python script that converts CSV to JSON", "should_trigger": false}
+]

@@ -1,6 +1,6 @@
 ---
 name: backlog
-description: "View learning backlog and show progress"
+description: "View learning backlog and show progress. Use when the user asks 'what's left to learn', 'show my progress', 'learning todo', or wants to check remaining topics in their study plan."
 argument-hint: "[category]"
 disable-model-invocation: true
 plugin-version: "__PLUGIN_VERSION__"

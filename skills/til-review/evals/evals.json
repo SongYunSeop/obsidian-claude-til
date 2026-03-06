@@ -1,0 +1,41 @@
+{
+  "skill_name": "til-review",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "오늘 복습할 거 있어?",
+      "expected_output": "Loads due review cards and starts SRS session",
+      "files": [],
+      "expectations": [
+        "Calls til_review_list with include_content: true",
+        "Shows card count and offers mode selection",
+        "Generates questions from card content",
+        "Records grades via til_review_update"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "quiz me on my React TILs",
+      "expected_output": "Starts review session filtered to React category",
+      "files": [],
+      "expectations": [
+        "Passes category='react' to til_review_list",
+        "Generates questions specific to React content",
+        "Respects max 20 cards per session limit",
+        "Shows completion stats at the end"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "test my knowledge — I want the detailed grading mode",
+      "expected_output": "Starts review with 4-grade detailed mode",
+      "files": [],
+      "expectations": [
+        "Detects preference for detailed mode from prompt",
+        "Uses Again/Hard/Good/Easy grading scale",
+        "Maps grades correctly: Again=1, Hard=3, Good=4, Easy=5",
+        "Shows next review date after each card"
+      ]
+    }
+  ]
+}

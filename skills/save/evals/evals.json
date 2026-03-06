@@ -1,0 +1,41 @@
+{
+  "skill_name": "save",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "방금 배운 거 TIL로 저장해줘",
+      "expected_output": "Identifies topic from conversation context, saves TIL file, updates Daily/MOC/backlog",
+      "files": [],
+      "expectations": [
+        "Identifies topic and category from conversation context",
+        "Uses til_save_note MCP tool with proper frontmatter",
+        "Updates Daily note and TIL MOC",
+        "Shows document review step before committing"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "이 내용 typescript/generics 로 정리해줘, 태그는 typescript, basics로",
+      "expected_output": "Saves to til/typescript/generics.md with specified tags",
+      "files": [],
+      "expectations": [
+        "Uses specified category and slug",
+        "Includes 'til' in tags along with user-specified tags",
+        "Generates proper frontmatter with aliases",
+        "Commits with conventional format"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "save this learning conversation as a TIL note about CSS Grid",
+      "expected_output": "Saves CSS Grid TIL with content from conversation",
+      "files": [],
+      "expectations": [
+        "Auto-detects 'css' as category",
+        "Checks for existing CSS Grid TIL before saving",
+        "Offers SRS review registration in Step 6",
+        "Creates git commit without pushing"
+      ]
+    }
+  ]
+}

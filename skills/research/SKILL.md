@@ -1,6 +1,6 @@
 ---
 name: research
-description: "Research a topic to identify key concepts and terms, then organize as a backlog"
+description: "Research a topic to identify key concepts and terms, then organize as a learning backlog. Use when the user wants a learning roadmap, study plan, curriculum, or asks 'what should I learn about X' — focuses on planning what to learn, not learning itself."
 argument-hint: "<topic> [category]"
 plugin-version: "__PLUGIN_VERSION__"
 ---
@@ -38,26 +38,7 @@ Topic research → Identify concepts and dependencies → Save backlog file.
 
 ## Backlog Template
 
-```markdown
----
-tags: [backlog, {category}]
-aliases: ["Backlog - {topic}"]
-updated: YYYY-MM-DD
-sources:
-  slug-a: [https://url-1]
----
-
-# {topic} Learning Backlog
-
-## Prerequisites
-- [ ] [Concept A](til/{category}/{slug-a}.md) - description
-
-## Core Concepts
-- [ ] [Concept C](til/{category}/{slug-c}.md) - description
-
-## Advanced
-- [ ] [Concept E](til/{category}/{slug-e}.md) - description
-```
+Read `references/templates.md` for the exact backlog template and field descriptions.
 
 ## Arguments
 
@@ -66,5 +47,5 @@ sources:
 
 ## Rules
 
-- One-line description per item, split into multiple files if over 20 items
+- One-line description per item, split into multiple files if over 20 items (long backlogs hurt readability and cause scroll fatigue)
 - Links: `[display name](til/{category}/{slug}.md)`

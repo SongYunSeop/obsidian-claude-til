@@ -1,6 +1,6 @@
 ---
 name: til-review
-description: "SRS-based TIL review session (spaced repetition)"
+description: "SRS-based TIL review session (spaced repetition). Use when the user says 'quiz me', 'review what I learned', 'flashcard session', 'test my knowledge', or wants to do spaced repetition review of their TIL notes."
 argument-hint: "[category]"
 plugin-version: "__PLUGIN_VERSION__"
 ---

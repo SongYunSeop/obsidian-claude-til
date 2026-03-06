@@ -1,0 +1,41 @@
+{
+  "skill_name": "research",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "React hooks 학습 로드맵 만들어줘, 뭘 먼저 배워야 하는지",
+      "expected_output": "Researches React hooks ecosystem, creates ordered backlog with dependencies",
+      "files": [],
+      "expectations": [
+        "Checks existing TILs via til_list to avoid duplicates",
+        "Identifies prerequisites and dependency order",
+        "Creates backlog with Prerequisites/Core/Advanced sections",
+        "Gathers user feedback before saving"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "kubernetes 학습 계획 세워줘, 백로그로 정리해줘",
+      "expected_output": "Creates structured Kubernetes learning backlog",
+      "files": [],
+      "expectations": [
+        "Researches Kubernetes concepts via web search",
+        "Breaks down into subtopics with one-line descriptions",
+        "Saves to til/kubernetes/backlog.md",
+        "Commits with conventional format"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "what should I learn about GraphQL? create a study plan",
+      "expected_output": "Creates GraphQL learning backlog with dependency analysis",
+      "files": [],
+      "expectations": [
+        "Auto-detects 'graphql' as category",
+        "Analyzes dependencies between subtopics",
+        "Merges with existing backlog if present",
+        "Adds backlog link to TIL MOC"
+      ]
+    }
+  ]
+}

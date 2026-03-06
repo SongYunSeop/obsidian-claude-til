@@ -1,6 +1,6 @@
 ---
 name: save
-description: "Save learning content as a TIL file and batch-update Daily notes, MOC, and backlog"
+description: "Save learning content as a TIL file and batch-update Daily notes, MOC, and backlog. Use when the user says 'save this', 'write up what I learned', 'document this as a TIL', or wants to persist a learning conversation as a note."
 argument-hint: "[topic] [category]"
 plugin-version: "__PLUGIN_VERSION__"
 ---
@@ -49,24 +49,13 @@ til_save_note(category, slug, title, content, tags, date, fmCategory, aliases, a
 
 ### TIL Body Template
 
-```markdown
-# Title
-
-> [!tldr] One-line summary
-
-## Key Concepts
-## Examples
-## References
-- [Title](URL)
-## Related Notes
-- [TIL](til/{category}/{slug}.md)
-```
+Read `references/templates.md` for the exact TIL body, Daily note, and MOC templates.
 
 - Links: `[display name](til/{category}/{slug}.md)` — no `[[wiki links]]`
 
 ## Step 4: Update Related Files
 
-Update the following 3 files **directly** in sequence (no subagents):
+Update the following 3 files **directly** in sequence (no subagents — parallel edits can race and corrupt shared files like MOC):
 
 1. Daily note (`./Daily/YYYY-MM-DD.md`): Add TIL link by category (create if not exists)
 2. TIL MOC (`./til/TIL MOC.md`): Add item to category section (create if not exists)
@@ -91,8 +80,8 @@ If user agrees, call `til_review_update` (action: "review", grade: 4) to create 
 
 - frontmatter required: date, category, tags, aliases (fill in any missing fields before saving)
 - tags must include "til" (used to filter TILs on the static site)
-- No `[[wiki links]]` — use `[display name](path)` format only
+- No `[[wiki links]]` — use `[display name](path)` format only (links must work in static sites and non-Obsidian editors)
 - Always update Daily/MOC/backlog after saving the TIL
 - Use callouts: `> [!tldr]`, `> [!example]`, `> [!warning]`, `> [!tip]`
 - Visualize complex concepts with Mermaid diagrams (max 1 per TIL)
-- Use placeholder values for sensitive information
+- Use placeholder values for sensitive information (avoid leaking real credentials)

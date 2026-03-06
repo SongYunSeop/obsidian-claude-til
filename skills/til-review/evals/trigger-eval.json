@@ -1,0 +1,22 @@
+[
+  {"query": "오늘 복습할 TIL 있어?", "should_trigger": true},
+  {"query": "quiz me on what I learned this week", "should_trigger": true},
+  {"query": "flashcard session 시작해줘", "should_trigger": true},
+  {"query": "test my knowledge on the TILs I've written", "should_trigger": true},
+  {"query": "spaced repetition review 하자", "should_trigger": true},
+  {"query": "내가 배운 거 복습 좀 하자", "should_trigger": true},
+  {"query": "review my React notes using SRS", "should_trigger": true},
+  {"query": "do I have any review cards due today?", "should_trigger": true},
+  {"query": "간격 반복 복습 시작", "should_trigger": true},
+  {"query": "let's do a quick review of my TIL notes", "should_trigger": true},
+  {"query": "typescript generics 배워줘", "should_trigger": false},
+  {"query": "내 학습 백로그 보여줘", "should_trigger": false},
+  {"query": "이번 달 학습 통계 보여줘", "should_trigger": false},
+  {"query": "방금 배운 거 저장해줘", "should_trigger": false},
+  {"query": "React hooks 학습 로드맵 만들어줘", "should_trigger": false},
+  {"query": "review this pull request for me", "should_trigger": false},
+  {"query": "review the code in src/main.ts", "should_trigger": false},
+  {"query": "퀴즈 앱 만들어줘", "should_trigger": false},
+  {"query": "summarize this article for me", "should_trigger": false},
+  {"query": "help me study for my math exam", "should_trigger": false}
+]
