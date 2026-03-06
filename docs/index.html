@@ -3,328 +3,1624 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Oh My TIL — AI-Powered Learning Workflow</title>
-  <meta name="description" content="Claude Code plugin for TIL learning workflow. Works as a standalone CLI or Obsidian plugin with embedded terminal.">
-  <meta property="og:title" content="Oh My TIL — AI-Powered Learning Workflow">
-  <meta property="og:description" content="Claude Code plugin for TIL learning workflow. Standalone CLI or Obsidian plugin.">
+  <title>Oh My TIL</title>
+  <meta name="description" content="AI-powered Today I Learned workflow. Research, learn, and build your knowledge base with Claude Code.">
   <meta property="og:type" content="website">
+  <meta property="og:title" content="Oh My TIL">
+  <meta property="og:description" content="AI-powered Today I Learned workflow. Research, learn, and build your knowledge base with Claude Code.">
   <meta property="og:url" content="https://songyunseop.github.io/oh-my-til">
-  <link rel="stylesheet" href="style.css">
+  <meta property="og:image" content="https://songyunseop.github.io/oh-my-til/png/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Oh My TIL">
+  <meta name="twitter:description" content="AI-powered Today I Learned workflow. Research, learn, and build your knowledge base with Claude Code.">
+  <meta name="twitter:image" content="https://songyunseop.github.io/oh-my-til/png/og-image.png">
+  <link rel="icon" type="image/png" href="png/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@500&family=Noto+Serif:ital,wght@0,400;0,500;0,600;1,400&family=Open+Sans:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: #F0F0F0;
+      color: #312927;
+      font-family: 'Open Sans', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ── Navbar ── */
+    .navbar {
+      width: 100%;
+      height: 66px;
+      padding: 0 28px;
+      border-bottom: 1px solid rgba(49, 41, 39, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .navbar-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 44px;
+      text-decoration: none;
+    }
+
+    .navbar-logo img {
+      height: 34px;
+      width: auto;
+    }
+
+    .navbar-logo-text {
+      font-family: 'Noto Serif', serif;
+      font-weight: 500;
+      font-size: 20px;
+      color: #312927;
+      line-height: 1.362;
+    }
+
+    .navbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 27px;
+    }
+
+    .navbar-actions a {
+      color: #312927;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+    }
+
+    .navbar-actions svg {
+      display: block;
+    }
+
+    /* ── Hero ── */
+    .hero-wrapper {
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+
+    .hero {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 140px;
+      padding: 0 100px;
+      min-height: 800px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-content {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-text {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .hero-badge {
+      font-family: 'Noto Sans', sans-serif;
+      font-weight: 500;
+      font-size: 18px;
+      color: #DE6F38;
+      line-height: 1.362;
+    }
+
+    .hero-title {
+      font-family: 'Noto Serif', serif;
+      font-weight: 600;
+      font-size: 80px;
+      color: #312927;
+      line-height: 1.362;
+    }
+
+    .hero-description {
+      font-family: 'Open Sans', sans-serif;
+      font-weight: 400;
+      font-size: 20px;
+      color: rgba(49, 41, 39, 0.76);
+      line-height: 1.5;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .hero-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background: #312927;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      font-family: 'SFMono-Regular', 'Menlo', monospace;
+      font-weight: 400;
+      font-size: 13px;
+      color: #F0F0F0;
+      text-decoration: none;
+      line-height: 1.6;
+      white-space: nowrap;
+    }
+
+    .hero-btn:hover {
+      background: #3d3533;
+    }
+
+    .btn-copy-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .btn-copy-text {
+      display: none;
+    }
+
+    .btn-icon {
+      width: 20px;
+      height: 20px;
+      display: block;
+      flex-shrink: 0;
+    }
+
+
+    /* ── Hero background decorations ── */
+    .hero-bg-deco {
+      position: absolute;
+      pointer-events: none;
+      user-select: none;
+      opacity: 0.55;
+    }
+    /* Hero illustration — frame animation */
+    .hero-illustration {
+      position: relative;
+      z-index: 1;
+      width: 320px;
+      height: 257px;
+      flex-shrink: 0;
+    }
+
+    .hero-illustration img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      opacity: 0;
+    }
+
+
+    /* ── Features ── */
+    .features-wrapper {
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+
+    .features {
+      padding: 60px 28px;
+      border-top: 1px solid rgba(49, 41, 39, 0.12);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 69px;
+    }
+
+    .features-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 9px;
+      width: 698px;
+      max-width: 100%;
+      text-align: center;
+    }
+
+    .features-emoji {
+      font-size: 45px;
+      line-height: 1.5;
+    }
+
+    .features-title {
+      font-family: 'Noto Serif', serif;
+      font-weight: 400;
+      font-size: 44px;
+      color: #2F2A2A;
+      line-height: 1.362;
+    }
+
+    .features-grid {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 34px;
+      align-self: stretch;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    .features-row {
+      display: flex;
+      align-items: center;
+      gap: 29px;
+      align-self: stretch;
+    }
+
+    .feature-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 22px;
+      flex: 1;
+    }
+
+    .feature-text {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      text-align: center;
+      width: 100%;
+    }
+
+    .feature-title {
+      font-family: 'Open Sans', sans-serif;
+      font-weight: 400;
+      font-size: 20px;
+      color: #312927;
+      line-height: 1.5;
+    }
+
+    .feature-desc {
+      font-family: 'Open Sans', sans-serif;
+      font-weight: 400;
+      font-size: 13px;
+      color: rgba(49, 41, 39, 0.82);
+      line-height: 1.5;
+    }
+
+    .divider-v {
+      width: 1px;
+      height: 80px;
+      background: #6C6C6C;
+      flex-shrink: 0;
+    }
+
+    .divider-h {
+      height: 1px;
+      background: #6C6C6C;
+      align-self: stretch;
+    }
+
+
+
+
+    /* ── Scroll fade-in ── */
+    .scroll-fade {
+      opacity: 0;
+      transform: translateY(-16px);
+      filter: blur(8px);
+      transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+                  transform 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+                  filter 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .scroll-fade.visible {
+      opacity: 1;
+      transform: translateY(0);
+      filter: blur(0px);
+    }
+    .scroll-fade:nth-child(2) { transition-delay: 0.12s; }
+
+
+    .scroll-fade-letter {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(-12px);
+      filter: blur(6px);
+      transition: opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+                  transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+                  filter 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .scroll-fade-letter.visible {
+      opacity: 1;
+      transform: translateY(0);
+      filter: blur(0px);
+    }
+
+    /* ── Hero enter animation ── */
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-16px); filter: blur(8px); }
+      to   { opacity: 1; transform: translateY(0); filter: blur(0px); }
+    }
+
+    .fade-in {
+      opacity: 0;
+      animation: fadeInDown 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .hero-title .word {
+      display: inline-block;
+      opacity: 0;
+      animation: fadeInDown 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+
+    /* ── Demo ── */
+    .demo-wrapper {
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+
+    .demo {
+      padding: 60px 28px;
+      border-top: 1px solid rgba(49, 41, 39, 0.12);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 48px;
+    }
+
+    .demo-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 9px;
+      text-align: center;
+    }
+
+    .demo-emoji {
+      font-size: 45px;
+      line-height: 1.5;
+    }
+
+    .demo-title {
+      font-family: 'Noto Serif', serif;
+      font-weight: 400;
+      font-size: 44px;
+      color: #2F2A2A;
+      line-height: 1.362;
+    }
+
+    .demo-subtitle {
+      font-family: 'Open Sans', sans-serif;
+      font-weight: 400;
+      font-size: 16px;
+      color: rgba(49, 41, 39, 0.6);
+      line-height: 1.5;
+    }
+
+    /* ── Carousel ── */
+    .carousel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      width: 100%;
+      max-width: 720px;
+    }
+
+    .carousel-tabs {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .carousel-tab {
+      font-family: 'SFMono-Regular', 'Menlo', monospace;
+      font-size: 13px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(49, 41, 39, 0.15);
+      background: transparent;
+      color: rgba(49, 41, 39, 0.5);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .carousel-tab:hover {
+      border-color: rgba(49, 41, 39, 0.3);
+      color: #312927;
+    }
+
+    .carousel-tab.active {
+      background: #312927;
+      border-color: #312927;
+      color: #F0F0F0;
+    }
+
+    .carousel-progress {
+      width: 100%;
+      height: 2px;
+      background: rgba(49, 41, 39, 0.08);
+      border-radius: 1px;
+      overflow: hidden;
+    }
+
+    .carousel-progress-bar {
+      height: 100%;
+      background: #DE6F38;
+      width: 0%;
+      transition: width 0.3s linear;
+    }
+
+    /* ── Typed terminal ── */
+    .typed-terminal {
+      width: 100%;
+      background: #1E1E1E;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+    }
+
+    .typed-terminal-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 14px;
+      background: #2D2D2D;
+    }
+
+    .typed-terminal-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .typed-terminal-dot:nth-child(1) { background: #FF5F56; }
+    .typed-terminal-dot:nth-child(2) { background: #FFBD2E; }
+    .typed-terminal-dot:nth-child(3) { background: #27C93F; }
+
+    .typed-terminal-body {
+      padding: 20px 22px;
+      min-height: 500px;
+      display: flex;
+      flex-direction: column;
+      font-family: 'SFMono-Regular', 'Menlo', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      overflow-x: auto;
+    }
+
+    .typed-line {
+      display: flex;
+      white-space: nowrap;
+    }
+
+    .typed-prompt {
+      color: #27C93F;
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+
+    .typed-cmd {
+      color: #F0F0F0;
+    }
+
+    .typed-cursor {
+      display: inline-block;
+      width: 2px;
+      height: 16px;
+      background: #F0F0F0;
+      margin-left: 1px;
+      vertical-align: text-bottom;
+      animation: blink 0.8s step-end infinite;
+    }
+
+    .typed-output {
+      color: rgba(240, 240, 240, 0.55);
+      font-size: 13px;
+      white-space: pre-wrap;
+      overflow: hidden;
+    }
+
+    .typed-output .highlight {
+      color: #FFBD2E;
+    }
+
+    .typed-output .success {
+      color: #27C93F;
+    }
+
+    .typed-output .accent {
+      color: #DE6F38;
+    }
+
+    @keyframes blink {
+      50% { opacity: 0; }
+    }
+
+    /* ── Workflow ── */
+    .workflow-wrapper {
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+
+    .workflow {
+      padding: 60px 28px;
+      border-top: 1px solid rgba(49, 41, 39, 0.12);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 48px;
+    }
+
+    .workflow-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 9px;
+      text-align: center;
+    }
+
+    .workflow-emoji {
+      font-size: 45px;
+      line-height: 1.5;
+    }
+
+    .workflow-title {
+      font-family: 'Noto Serif', serif;
+      font-weight: 400;
+      font-size: 44px;
+      color: #2F2A2A;
+      line-height: 1.362;
+    }
+
+    .workflow-subtitle {
+      font-family: 'Open Sans', sans-serif;
+      font-weight: 400;
+      font-size: 16px;
+      color: rgba(49, 41, 39, 0.6);
+      line-height: 1.5;
+    }
+
+    .workflow-steps {
+      display: flex;
+      align-items: flex-start;
+      gap: 0;
+      align-self: stretch;
+      justify-content: center;
+    }
+
+    .workflow-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      flex: 0 1 200px;
+      text-align: center;
+    }
+
+    .workflow-step-num {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #312927;
+      color: #F0F0F0;
+      font-family: 'Noto Serif', serif;
+      font-weight: 500;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .workflow-step-content {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .workflow-step-cmd {
+      font-family: 'SFMono-Regular', 'Menlo', monospace;
+      font-size: 15px;
+      color: #DE6F38;
+      font-weight: 500;
+    }
+
+    .workflow-step-desc {
+      font-family: 'Open Sans', sans-serif;
+      font-weight: 400;
+      font-size: 13px;
+      color: rgba(49, 41, 39, 0.7);
+      line-height: 1.5;
+    }
+
+    .workflow-arrow {
+      display: flex;
+      align-items: center;
+      padding-top: 8px;
+      color: rgba(49, 41, 39, 0.25);
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .workflow-cycle {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 24px;
+      background: rgba(49, 41, 39, 0.04);
+      border-radius: 16px;
+      border: 1px solid rgba(49, 41, 39, 0.08);
+    }
+
+    .workflow-cycle-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .workflow-cycle-text {
+      font-family: 'Open Sans', sans-serif;
+      font-weight: 400;
+      font-size: 14px;
+      color: rgba(49, 41, 39, 0.7);
+      line-height: 1.5;
+    }
+
+    .workflow-cycle-text code {
+      font-family: 'SFMono-Regular', 'Menlo', monospace;
+      font-size: 13px;
+      color: #DE6F38;
+      background: rgba(222, 111, 56, 0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    /* ── Install ── */
+    .install-wrapper {
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+
+    .install {
+      padding: 60px 28px;
+      border-top: 1px solid rgba(49, 41, 39, 0.12);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 48px;
+    }
+
+    .install-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 9px;
+      text-align: center;
+    }
+
+    .install-emoji {
+      font-size: 45px;
+      line-height: 1.5;
+    }
+
+    .install-title {
+      font-family: 'Noto Serif', serif;
+      font-weight: 400;
+      font-size: 44px;
+      color: #2F2A2A;
+      line-height: 1.362;
+    }
+
+    .install-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      max-width: 600px;
+      width: 100%;
+    }
+
+    .install-card {
+      background: #FBFBFB;
+      border-radius: 16px;
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .install-card-title {
+      font-family: 'Noto Serif', serif;
+      font-weight: 500;
+      font-size: 22px;
+      color: #312927;
+      line-height: 1.362;
+    }
+
+    .install-card-desc {
+      font-family: 'Open Sans', sans-serif;
+      font-weight: 400;
+      font-size: 14px;
+      color: rgba(49, 41, 39, 0.65);
+      line-height: 1.5;
+    }
+
+    .install-code {
+      background: #312927;
+      border-radius: 10px;
+      padding: 16px;
+      overflow-x: auto;
+    }
+
+    .install-code pre {
+      margin: 0;
+      font-family: 'SFMono-Regular', 'Menlo', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #F0F0F0;
+    }
+
+    .install-code .c-comment {
+      color: rgba(240, 240, 240, 0.4);
+    }
+
+    .install-copy-hint {
+      position: absolute;
+      top: 12px;
+      right: 14px;
+      font-family: 'Open Sans', sans-serif;
+      font-size: 11px;
+      color: rgba(240, 240, 240, 0.35);
+      transition: color 0.15s ease;
+      pointer-events: none;
+    }
+
+    .install-code:hover .install-copy-hint {
+      color: rgba(240, 240, 240, 0.6);
+    }
+
+    .install-prereq {
+      font-family: 'Open Sans', sans-serif;
+      font-weight: 400;
+      font-size: 14px;
+      color: rgba(49, 41, 39, 0.55);
+      text-align: center;
+    }
+
+    .install-prereq a {
+      color: #DE6F38;
+      text-decoration: none;
+    }
+
+    .install-prereq a:hover {
+      text-decoration: underline;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 40px 28px;
+      border-top: 1px solid rgba(49, 41, 39, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .footer-logo {
+      height: 24px;
+      width: auto;
+    }
+
+    .footer-name {
+      font-family: 'Noto Serif', serif;
+      font-weight: 500;
+      font-size: 15px;
+      color: #312927;
+    }
+
+    .footer-sep {
+      color: rgba(49, 41, 39, 0.24);
+      font-size: 14px;
+    }
+
+    .footer-copy {
+      font-family: 'Open Sans', sans-serif;
+      font-weight: 400;
+      font-size: 13px;
+      color: rgba(49, 41, 39, 0.48);
+    }
+
+    .footer-links {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .footer-link {
+      font-family: 'Open Sans', sans-serif;
+      font-weight: 400;
+      font-size: 13px;
+      color: rgba(49, 41, 39, 0.6);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+
+    .footer-link:hover {
+      color: #312927;
+    }
+
+    /* ── Responsive (≤ 810px) ── */
+    @media (max-width: 810px) {
+      .navbar {
+        padding: 0 16px;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: 1fr 100px;
+        grid-template-rows: auto auto;
+        gap: 24px 8px;
+        padding: 40px 16px;
+        min-height: auto;
+      }
+
+      .hero-title {
+        font-size: 52px;
+      }
+
+      .hero-description {
+        font-size: 16px;
+      }
+
+      .hero-content {
+        display: contents;
+      }
+
+      .hero-text {
+        grid-column: 1;
+        grid-row: 1;
+      }
+
+      .hero-illustration {
+        grid-column: 2;
+        grid-row: 1;
+        width: 100px;
+        height: auto;
+        aspect-ratio: 320 / 257;
+        align-self: center;
+      }
+
+      .hero-actions {
+        grid-column: 1 / -1;
+        grid-row: 2;
+      }
+
+      .hero-bg-deco {
+        display: none;
+      }
+
+      .hero-btn {
+        font-size: 11px;
+        padding: 10px 12px;
+      }
+
+      .hero-btn span:first-child {
+        white-space: pre-line;
+        text-align: left;
+      }
+
+      .features {
+        padding: 40px 20px;
+        gap: 40px;
+      }
+
+      .features-title {
+        font-size: 32px;
+      }
+
+      .features-row {
+        flex-direction: column;
+        gap: 32px;
+        max-width: 320px;
+        margin: 0 auto;
+      }
+
+      .divider-v {
+        display: none;
+      }
+
+      .divider-h {
+        display: none;
+      }
+
+      .demo-title,
+      .workflow-title,
+      .install-title {
+        font-size: 32px;
+      }
+
+      .carousel-tabs {
+        gap: 4px;
+      }
+
+      .carousel-tab {
+        font-size: 12px;
+        padding: 5px 10px;
+      }
+
+      .workflow-steps {
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .workflow-arrow {
+        transform: rotate(90deg);
+        padding-top: 0;
+      }
+
+      .workflow-step {
+        flex: none;
+        width: 100%;
+        max-width: 280px;
+      }
+
+      .workflow-cycle {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .typed-terminal-body {
+        font-size: 12px;
+        min-height: 420px;
+        padding: 16px 14px;
+      }
+
+      .typed-output {
+        font-size: 11px;
+      }
+
+      .footer {
+        flex-direction: column;
+        gap: 16px;
+        padding: 32px 16px;
+        text-align: center;
+      }
+
+      .footer-links {
+        gap: 16px;
+      }
+    }
+
+    /* ── Responsive (≤ 480px) ── */
+    @media (max-width: 480px) {
+      .hero-title {
+        font-size: 40px;
+      }
+
+      .hero-actions {
+        flex-direction: column;
+        width: 100%;
+      }
+
+      .hero-btn {
+        width: 100%;
+        justify-content: center;
+        font-size: 11px;
+      }
+
+      .demo {
+        padding: 40px 16px;
+      }
+
+      .demo-subtitle {
+        font-size: 14px;
+      }
+
+      .typed-terminal-body {
+        font-size: 11px;
+        min-height: 380px;
+        padding: 12px 10px;
+      }
+
+      .typed-output {
+        font-size: 10px;
+      }
+
+      .install-card {
+        padding: 20px 16px;
+      }
+
+      .install-code pre {
+        font-size: 11px;
+      }
+
+      .workflow {
+        padding: 40px 16px;
+      }
+    }
+
+  </style>
 </head>
 <body>
 
-  <!-- Nav -->
-  <nav class="nav">
-    <div class="nav-inner">
-      <a href="#" class="nav-brand">Oh My TIL</a>
-      <div class="nav-links">
-        <a href="#features">Features</a>
-        <a href="#demo">Demo</a>
-        <a href="#workflow">Workflow</a>
-        <a href="#install">Install</a>
-        <a href="ko/" class="nav-lang">KO</a>
-        <a href="https://github.com/SongYunSeop/oh-my-til" class="nav-github" target="_blank" rel="noopener">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+  <!-- Navbar -->
+  <header>
+    <nav class="navbar">
+      <a href="#" class="navbar-logo">
+        <img src="png/logo.png" alt="Oh My TIL logo">
+        <span class="navbar-logo-text">oh my til</span>
+      </a>
+      <div class="navbar-actions">
+        <a href="https://github.com/SongYunSeop/oh-my-til" aria-label="GitHub">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M16 3C8.82 3 3 8.82 3 16c0 5.75 3.73 10.62 8.9 12.34.65.12.89-.28.89-.62v-2.17c-3.62.79-4.38-1.74-4.38-1.74-.59-1.5-1.44-1.9-1.44-1.9-1.18-.8.09-.79.09-.79 1.3.09 1.99 1.34 1.99 1.34 1.16 1.98 3.04 1.41 3.78 1.08.12-.84.45-1.41.82-1.74-2.89-.33-5.93-1.44-5.93-6.43 0-1.42.51-2.58 1.34-3.49-.13-.33-.58-1.65.13-3.44 0 0 1.09-.35 3.58 1.34a12.46 12.46 0 013.26-.44c1.1.01 2.21.15 3.25.44 2.48-1.69 3.57-1.34 3.57-1.34.71 1.79.26 3.11.13 3.44.84.91 1.34 2.07 1.34 3.49 0 5-3.05 6.1-5.95 6.42.47.4.88 1.19.88 2.4v3.56c0 .34.23.75.89.62C25.28 26.62 29 21.75 29 16c0-7.18-5.82-13-13-13z" fill="#312927"/>
+          </svg>
         </a>
       </div>
-    </div>
-  </nav>
+    </nav>
+  </header>
 
-  <!-- Hero -->
-  <section class="hero">
-    <div class="container">
-      <div class="hero-badge">v1.1.1 &mdash; Open Source</div>
-      <h1>Oh My TIL</h1>
-      <p class="hero-tagline">AI-powered <strong>Today I Learned</strong> workflow.<br>Research, learn, and build your knowledge base with Claude Code.</p>
-      <div class="hero-actions">
-        <div class="hero-install" onclick="copyInstall(this)" role="button" tabindex="0">
-          <code>claude plugin install oh-my-til</code>
-          <span class="copy-hint">Click to copy</span>
+  <!-- Hero Section -->
+  <div class="hero-wrapper">
+    <section class="hero">
+      <div class="hero-content">
+        <div class="hero-text">
+          <div>
+            <p class="hero-badge fade-in" style="animation-delay:0s">v1.1.1 — Open Source</p>
+            <h1 class="hero-title"><span class="word" style="animation-delay:0.18s">o</span><span class="word" style="animation-delay:0.25s">h</span> <span class="word" style="animation-delay:0.32s">m</span><span class="word" style="animation-delay:0.39s">y</span> <span class="word" style="animation-delay:0.46s">t</span><span class="word" style="animation-delay:0.53s">i</span><span class="word" style="animation-delay:0.60s">l</span></h1>
+          </div>
+          <p class="hero-description fade-in" style="animation-delay:0.62s">
+            AI-powered&nbsp;Today I Learned&nbsp;workflow.<br>
+            Research, learn, and build your knowledge base with Claude Code.
+          </p>
         </div>
-        <a href="https://github.com/SongYunSeop/oh-my-til" class="btn btn-secondary" target="_blank" rel="noopener">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-          GitHub
-        </a>
+        <div class="hero-actions fade-in" style="animation-delay:0.78s">
+          <button class="hero-btn" onclick="copyCommand(this)">
+            <span style="white-space:pre-line; text-align:left;">claude plugin marketplace add SongYunSeop/oh-my-til
+claude plugin install oh-my-til --scope project</span>
+            <span class="btn-copy-group">
+              <span class="btn-copy-text">click to copy</span>
+              <svg class="btn-icon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="7.5" y="7.5" width="9" height="9" rx="1.5" stroke="#F0F0F0" stroke-width="1.25"/>
+                <path d="M5 12.5H4.5A1.5 1.5 0 013 11V4.5A1.5 1.5 0 014.5 3H11A1.5 1.5 0 0112.5 4.5V5" stroke="#F0F0F0" stroke-width="1.25" stroke-linecap="round"/>
+              </svg>
+            </span>
+          </button>
+        </div>
       </div>
-    </div>
-  </section>
 
-  <!-- Features -->
-  <section class="features" id="features">
-    <div class="container">
-      <h2>Everything you need to learn effectively</h2>
+      <div class="hero-illustration fade-in" style="animation-delay:0.35s">
+        <img src="png/hero_section_1.png" alt="/research /til">
+        <img src="png/hero_section_2.png" alt="">
+        <img src="png/hero_section_3.png" alt="">
+        <img src="png/hero_section_4.png" alt="">
+      </div>
+
+      <!-- Background decorations -->
+      <img class="hero-bg-deco" src="png/magnifying_glass.png" alt=""
+           style="width:100px; bottom:80px; left:60px;">
+      <img class="hero-bg-deco" src="png/bulb.png" alt=""
+           style="width:110px; top:52px; right:160px;">
+      <img class="hero-bg-deco" src="png/claude.png" alt=""
+           style="width:90px; top:120px; left:180px; opacity:0.3;">
+    </section>
+  </div>
+
+  <!-- Features Section -->
+  <div class="features-wrapper">
+    <section class="features">
+      <div class="features-header">
+        <div class="features-emoji scroll-fade">💪</div>
+        <h2 class="features-title"><span class="scroll-fade-letter" style="transition-delay:0.080s">T</span><span class="scroll-fade-letter" style="transition-delay:0.115s">h</span><span class="scroll-fade-letter" style="transition-delay:0.150s">e</span> <span class="scroll-fade-letter" style="transition-delay:0.185s">u</span><span class="scroll-fade-letter" style="transition-delay:0.220s">l</span><span class="scroll-fade-letter" style="transition-delay:0.255s">-</span><span class="scroll-fade-letter" style="transition-delay:0.290s">t</span><span class="scroll-fade-letter" style="transition-delay:0.325s">i</span><span class="scroll-fade-letter" style="transition-delay:0.360s">l</span><span class="scroll-fade-letter" style="transition-delay:0.395s">-</span><span class="scroll-fade-letter" style="transition-delay:0.430s">m</span><span class="scroll-fade-letter" style="transition-delay:0.465s">a</span><span class="scroll-fade-letter" style="transition-delay:0.500s">t</span><span class="scroll-fade-letter" style="transition-delay:0.535s">e</span> <span class="scroll-fade-letter" style="transition-delay:0.570s">G</span><span class="scroll-fade-letter" style="transition-delay:0.605s">u</span><span class="scroll-fade-letter" style="transition-delay:0.640s">i</span><span class="scroll-fade-letter" style="transition-delay:0.675s">d</span><span class="scroll-fade-letter" style="transition-delay:0.710s">e</span> <span class="scroll-fade-letter" style="transition-delay:0.745s">t</span><span class="scroll-fade-letter" style="transition-delay:0.780s">o</span> <span class="scroll-fade-letter" style="transition-delay:0.815s">L</span><span class="scroll-fade-letter" style="transition-delay:0.850s">e</span><span class="scroll-fade-letter" style="transition-delay:0.885s">a</span><span class="scroll-fade-letter" style="transition-delay:0.920s">r</span><span class="scroll-fade-letter" style="transition-delay:0.955s">n</span><span class="scroll-fade-letter" style="transition-delay:0.990s">i</span><span class="scroll-fade-letter" style="transition-delay:1.025s">n</span><span class="scroll-fade-letter" style="transition-delay:1.060s">g</span></h2>
+      </div>
+
       <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-icon">&#x1F4BB;</div>
-          <h3>Embedded Terminal</h3>
-          <p>Claude Code terminal in Obsidian sidebar. Or use standalone CLI &mdash; no Obsidian required.</p>
+        <!-- Row 1 -->
+        <div class="features-row">
+          <div class="feature-card">
+            <div class="feature-text">
+              <div class="feature-title">Embedded Terminal</div>
+              <div class="feature-desc">Claude Code terminal in Obsidian sidebar. Or use standalone CLI — no Obsidian required.</div>
+            </div>
+          </div>
+
+          <div class="divider-v"></div>
+
+          <div class="feature-card">
+            <div class="feature-text">
+              <div class="feature-title">Built-in MCP Server</div>
+              <div class="feature-desc">Claude Code accesses your vault directly via HTTP. Context-aware research and learning.</div>
+            </div>
+          </div>
+
+          <div class="divider-v"></div>
+
+          <div class="feature-card">
+            <div class="feature-text">
+              <div class="feature-title">Learning Dashboard</div>
+              <div class="feature-desc">TIL statistics, category breakdown, streaks, and heatmap at a glance.</div>
+            </div>
+          </div>
         </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#x1F50C;</div>
-          <h3>Built-in MCP Server</h3>
-          <p>Claude Code accesses your vault directly via HTTP. Context-aware research and learning.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#x1F4CA;</div>
-          <h3>Learning Dashboard</h3>
-          <p>TIL statistics, category breakdown, streaks, and heatmap at a glance.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#x1F501;</div>
-          <h3>Spaced Repetition (SRS)</h3>
-          <p>SM-2 algorithm schedules TIL reviews. Anki-style grading with <code>/til-review</code>.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#x26A1;</div>
-          <h3>Auto-installed Skills</h3>
-          <p><code>/til</code>, <code>/research</code>, <code>/backlog</code>, <code>/save</code>, <code>/til-review</code>, <code>/dashboard</code> &mdash; ready out of the box.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#x1F517;</div>
-          <h3>Smart Link Detection</h3>
-          <p>Markdown links in the terminal are clickable. CJK-aware width calculation.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#x1F4C2;</div>
-          <h3>Backlog System</h3>
-          <p>Research creates backlogs. Track what to learn next with progress tracking.</p>
+
+        <!-- Horizontal divider -->
+        <div class="divider-h"></div>
+
+        <!-- Row 2 -->
+        <div class="features-row">
+          <div class="feature-card">
+            <div class="feature-text">
+              <div class="feature-title">Spaced Repetition (SRS)</div>
+              <div class="feature-desc">SM-2 algorithm schedules TIL reviews. Anki-style grading with&nbsp;/til-review.</div>
+            </div>
+          </div>
+
+          <div class="divider-v"></div>
+
+          <div class="feature-card">
+            <div class="feature-text">
+              <div class="feature-title">Smart Link Detection</div>
+              <div class="feature-desc">Markdown links in the terminal are clickable. CJK-aware width calculation.</div>
+            </div>
+          </div>
+
+          <div class="divider-v"></div>
+
+          <div class="feature-card">
+            <div class="feature-text">
+              <div class="feature-title">Backlog System</div>
+              <div class="feature-desc">Research creates backlogs. Track what to learn next with progress tracking.</div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
+  </div>
 
-  <!-- Demo -->
-  <section class="demo" id="demo">
-    <div class="container">
-      <h2>See it in action</h2>
-      <p class="demo-subtitle">Claude Code researches topics, guides interactive learning, and saves structured TIL notes.</p>
+  <!-- Demo Section -->
+  <div class="demo-wrapper">
+    <section class="demo" id="demo">
+      <div class="demo-header scroll-fade">
+        <div class="demo-emoji">🎬</div>
+        <h2 class="demo-title">See it in action</h2>
+        <p class="demo-subtitle">Claude Code researches topics, guides interactive learning, and saves structured TIL notes.</p>
+      </div>
 
-      <div class="demo-row-label">Terminal Skills</div>
-      <div class="demo-grid demo-grid-3">
-        <div class="demo-item">
-          <div class="demo-label">/til &mdash; Interactive Learning</div>
-          <img src="screenshots/terminal-til.png" alt="Oh My TIL — /til interactive learning session" loading="lazy">
+      <div class="carousel scroll-fade" id="carousel">
+        <div class="carousel-tabs" id="carouselTabs">
+          <button class="carousel-tab active" data-idx="0">/research</button>
+          <button class="carousel-tab" data-idx="1">/til</button>
+          <button class="carousel-tab" data-idx="2">/til-review</button>
+          <button class="carousel-tab" data-idx="3">/backlog</button>
+          <button class="carousel-tab" data-idx="4">/dashboard</button>
         </div>
-        <div class="demo-item">
-          <div class="demo-label">/research &mdash; Backlog Generation</div>
-          <img src="screenshots/terminal-research.png" alt="Oh My TIL — /research backlog generation" loading="lazy">
+        <div class="typed-terminal" id="typedTerminal">
+          <div class="typed-terminal-bar">
+            <div class="typed-terminal-dot"></div>
+            <div class="typed-terminal-dot"></div>
+            <div class="typed-terminal-dot"></div>
+          </div>
+          <div class="typed-terminal-body" id="typedBody">
+            <div class="typed-line">
+              <span class="typed-prompt">❯</span>
+              <span class="typed-cmd" id="typedCmd"></span>
+              <span class="typed-cursor" id="typedCursor"></span>
+            </div>
+            <div class="typed-output" id="typedOutput"></div>
+          </div>
         </div>
-        <div class="demo-item">
-          <div class="demo-label">/backlog &mdash; Progress Tracking</div>
-          <img src="screenshots/terminal-backlog.png" alt="Oh My TIL — /backlog progress tracking" loading="lazy">
+        <div class="carousel-progress">
+          <div class="carousel-progress-bar" id="carouselProgress"></div>
         </div>
       </div>
 
-      <div class="demo-row-label">Obsidian Integration</div>
-      <div class="demo-grid demo-grid-2">
-        <div class="demo-item">
-          <div class="demo-label">Dashboard &mdash; Stats, Heatmap, Categories</div>
-          <img src="screenshots/dashboard.png" alt="Oh My TIL — Learning Dashboard in Obsidian" loading="lazy">
-        </div>
-        <div class="demo-item">
-          <div class="demo-label">Split View &mdash; Note + Terminal</div>
-          <img src="screenshots/splitview.png" alt="Oh My TIL — Split view with note and terminal" loading="lazy">
-        </div>
+    </section>
+  </div>
+
+  <!-- Workflow Section -->
+  <div class="workflow-wrapper">
+    <section class="workflow" id="workflow">
+      <div class="workflow-header scroll-fade">
+        <div class="workflow-emoji">🔄</div>
+        <h2 class="workflow-title">The Learning Loop</h2>
+        <p class="workflow-subtitle">Two ways in, one continuous cycle.</p>
       </div>
-    </div>
-  </section>
 
-  <!-- Learning Loop -->
-  <section class="loop" id="workflow">
-    <div class="container">
-      <h2>The Learning Loop</h2>
-      <p class="loop-subtitle">Two ways in, one continuous cycle.</p>
-
-      <div class="loop-flow">
-        <!-- Entry -->
-        <div class="flow-row">
-          <div class="flow-node flow-node-accent">
-            <code>claude</code>
-            <p>Start Claude Code</p>
+      <div class="workflow-steps scroll-fade">
+        <div class="workflow-step">
+          <div class="workflow-step-num">1</div>
+          <div class="workflow-step-content">
+            <div class="workflow-step-cmd">/research topic</div>
+            <div class="workflow-step-desc">Create a structured learning backlog from any topic</div>
           </div>
         </div>
-
-        <!-- Branch connectors -->
-        <div class="flow-branch-lines">
-          <div class="flow-branch-stem"></div>
-          <div class="flow-branch-bar"></div>
-          <div class="flow-branch-arm-l"></div>
-          <div class="flow-branch-arm-r"></div>
-        </div>
-
-        <!-- Two entry paths -->
-        <div class="flow-branch">
-          <div class="flow-branch-item">
-            <div class="flow-branch-label">Quick start</div>
-            <div class="flow-node">
-              <code>/til topic</code>
-              <p>Research + learn + save<br>in one session</p>
-            </div>
-          </div>
-          <div class="flow-branch-item">
-            <div class="flow-branch-label">Deep dive</div>
-            <div class="flow-node">
-              <code>/research topic</code>
-              <p>Create structured<br>learning backlog</p>
-            </div>
+        <div class="workflow-arrow">→</div>
+        <div class="workflow-step">
+          <div class="workflow-step-num">2</div>
+          <div class="workflow-step-content">
+            <div class="workflow-step-cmd">/til topic</div>
+            <div class="workflow-step-desc">Research, learn interactively, and save a TIL note</div>
           </div>
         </div>
-
-        <!-- Merge connectors -->
-        <div class="flow-merge-lines">
-          <div class="flow-merge-arm-l"></div>
-          <div class="flow-merge-arm-r"></div>
-          <div class="flow-merge-bar"></div>
-          <div class="flow-merge-stem"></div>
-        </div>
-
-        <!-- Knowledge Base -->
-        <div class="flow-row">
-          <div class="flow-node flow-node-green">
-            <div class="flow-node-emoji">&#x1F4DA;</div>
-            <p><strong>Knowledge Base</strong><br>TIL notes &bull; Daily notes &bull; MOC</p>
+        <div class="workflow-arrow">→</div>
+        <div class="workflow-step">
+          <div class="workflow-step-num">3</div>
+          <div class="workflow-step-content">
+            <div class="workflow-step-cmd">/til-review</div>
+            <div class="workflow-step-desc">Spaced repetition review with SM-2 scheduling</div>
           </div>
         </div>
-
-        <div class="flow-arrow">&#x25BC;</div>
-
-        <!-- Review cycle -->
-        <div class="flow-cycle">
-          <div class="flow-cycle-label">Review cycle &mdash; spaced repetition (SM-2)</div>
-          <div class="flow-cycle-row">
-            <div class="flow-node">
-              <code>/til-review</code>
-              <p>Due cards for today<br>Anki-style grading</p>
-            </div>
-            <div class="flow-cycle-arrow">&#x2192;</div>
-            <div class="flow-node flow-node-green">
-              <div class="flow-node-emoji">&#x1F4C8;</div>
-              <p>SM-2 reschedule<br>Next review date set</p>
-            </div>
-          </div>
-          <div class="flow-cycle-back">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M3.51 15A9 9 0 0 0 21 12 9 9 0 0 0 5.64 5.64L1 10"/></svg>
-            Next review when scheduled
-          </div>
-        </div>
-
-        <div class="flow-arrow">&#x25BC;</div>
-
-        <!-- Backlog cycle -->
-        <div class="flow-cycle">
-          <div class="flow-cycle-label">Backlog cycle &mdash; repeat until done</div>
-          <div class="flow-cycle-row">
-            <div class="flow-node">
-              <code>/backlog</code>
-              <p>Review progress<br>Pick next topic</p>
-            </div>
-            <div class="flow-cycle-arrow">&#x2192;</div>
-            <div class="flow-node">
-              <code>/til topic</code>
-              <p>Learn the topic<br>interactively</p>
-            </div>
-            <div class="flow-cycle-arrow">&#x2192;</div>
-            <div class="flow-node flow-node-green">
-              <div class="flow-node-emoji">&#x2705;</div>
-              <p>Save TIL<br>Check off backlog</p>
-            </div>
-          </div>
-          <div class="flow-cycle-back">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M3.51 15A9 9 0 0 0 21 12 9 9 0 0 0 5.64 5.64L1 10"/></svg>
-            Next topic from backlog
+        <div class="workflow-arrow">→</div>
+        <div class="workflow-step">
+          <div class="workflow-step-num">4</div>
+          <div class="workflow-step-content">
+            <div class="workflow-step-cmd">/backlog</div>
+            <div class="workflow-step-desc">Track progress and pick the next topic</div>
           </div>
         </div>
       </div>
 
-    </div>
-  </section>
+      <div class="workflow-cycle scroll-fade">
+        <div class="workflow-cycle-icon">♻️</div>
+        <div class="workflow-cycle-text">
+          The cycle repeats: <code>/backlog</code> feeds into <code>/til</code>, completed TILs get scheduled for <code>/til-review</code>, and <code>/research</code> grows your backlog.
+        </div>
+      </div>
+    </section>
+  </div>
 
-  <!-- Install -->
-  <section class="install" id="install">
-    <div class="container">
-      <h2>Get started in seconds</h2>
-      <div class="install-options">
+  <!-- Install Section -->
+  <div class="install-wrapper">
+    <section class="install" id="install">
+      <div class="install-header scroll-fade">
+        <div class="install-emoji">🚀</div>
+        <h2 class="install-title">Get started in seconds</h2>
+      </div>
+
+      <div class="install-cards scroll-fade">
         <div class="install-card">
-          <h3>Claude Code Plugin</h3>
-          <p>Skills, MCP server, and hooks auto-registered. Recommended.</p>
-          <div class="code-block">
-            <pre><code><span class="c-comment"># Add marketplace &amp; install plugin</span>
-claude plugin marketplace add https://github.com/SongYunSeop/oh-my-til.git --scope project
-claude plugin install oh-my-til@oh-my-til --scope project</code></pre>
+          <div class="install-card-title">Claude Code Plugin</div>
+          <div class="install-card-desc">Skills, MCP server, and hooks auto-registered.</div>
+          <div class="install-code" onclick="copyInstall(this, 'claude plugin marketplace add SongYunSeop/oh-my-til && claude plugin install oh-my-til --scope project')" style="cursor:pointer; position:relative;">
+            <pre><code><span class="c-comment"># Run in your TIL vault directory</span>
+claude plugin marketplace add SongYunSeop/oh-my-til
+
+<span class="c-comment"># Install plugin</span>
+claude plugin install oh-my-til --scope project</code></pre>
+            <span class="install-copy-hint">click to copy</span>
           </div>
         </div>
         <div class="install-card">
-          <h3>Standalone CLI</h3>
-          <p>No Obsidian needed. Just Node.js and Claude Code.</p>
-          <div class="code-block">
-            <pre><code><span class="c-comment"># Initialize</span>
-npx oh-my-til init ~/my-til
+          <div class="install-card-title">Obsidian Integration</div>
+          <div class="install-card-desc">Embedded terminal + file watcher + dashboard. Run inside Claude Code after plugin install.</div>
+          <div class="install-code" onclick="copyInstall(this, '/setup-obsidian')" style="cursor:pointer; position:relative;">
+            <pre><code><span class="c-comment"># Inside Claude Code</span>
+/setup-obsidian</code></pre>
+            <span class="install-copy-hint">click to copy</span>
+          </div>
+        </div>
+      </div>
 
-<span class="c-comment"># Start learning</span>
-cd ~/my-til && claude</code></pre>
-          </div>
-        </div>
-        <div class="install-card">
-          <h3>Obsidian Plugin</h3>
-          <p>Embedded terminal + file watcher + dashboard.</p>
-          <div class="code-block">
-            <pre><code><span class="c-comment"># Auto-installs plugin</span>
-npx oh-my-til init ~/vault</code></pre>
-          </div>
-        </div>
+      <div class="install-prereq scroll-fade">
+        <strong>Prerequisites:</strong> <a href="https://nodejs.org" target="_blank" rel="noopener">Node.js</a> 18+ · <a href="https://docs.anthropic.com/en/docs/claude-code" target="_blank" rel="noopener">Claude Code CLI</a>
       </div>
-      <div class="install-prereq">
-        <strong>Prerequisites:</strong> <a href="https://nodejs.org" target="_blank" rel="noopener">Node.js</a> 18+ &bull; <a href="https://docs.anthropic.com/en/docs/claude-code" target="_blank" rel="noopener">Claude Code CLI</a>
-      </div>
-    </div>
-  </section>
+    </section>
+  </div>
 
   <!-- Footer -->
-  <footer>
-    <div class="container">
-      <div class="footer-links">
-        <a href="https://github.com/SongYunSeop/oh-my-til" target="_blank" rel="noopener">GitHub</a>
-        <a href="https://github.com/SongYunSeop/oh-my-til/releases" target="_blank" rel="noopener">Releases</a>
-        <a href="https://github.com/SongYunSeop/oh-my-til/issues" target="_blank" rel="noopener">Issues</a>
-      </div>
-      <p class="footer-copy">MIT License &copy; 2026 <a href="https://github.com/SongYunSeop" target="_blank" rel="noopener">SongYunSeop</a></p>
+  <footer class="footer">
+    <div class="footer-left">
+      <img class="footer-logo" src="png/logo.png" alt="">
+      <span class="footer-name">oh my til</span>
+      <span class="footer-sep">·</span>
+      <span class="footer-copy">&copy; 2026 SongYunSeop</span>
+      <span class="footer-sep">·</span>
+      <span class="footer-copy">MIT License</span>
+    </div>
+    <div class="footer-links">
+      <a href="https://github.com/SongYunSeop/oh-my-til" class="footer-link" target="_blank" rel="noopener">GitHub</a>
     </div>
   </footer>
 
-  <!-- Lightbox -->
-  <div class="lightbox" id="lightbox">
-    <img src="" alt="">
-  </div>
-
   <script>
-    function copyInstall(el) {
-      const text = 'claude plugin install oh-my-til';
+    // Frame animation — instant swap in one JS tick → same repaint, no gap/stutter
+    (function () {
+      const frames = [...document.querySelectorAll('.hero-illustration img')];
+      let idx = 0;
+      frames[0].style.opacity = '1';
+      setInterval(() => {
+        frames[idx].style.opacity = '0';
+        idx = (idx + 1) % frames.length;
+        frames[idx].style.opacity = '1';
+      }, 160);
+    })();
+
+
+    // Scroll fade-in via IntersectionObserver
+    (function () {
+      const opts = { rootMargin: '0px 0px -120px 0px', threshold: 0 };
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (!e.isIntersecting) return;
+          // trigger individual scroll-fade-letter spans inside
+          e.target.querySelectorAll('.scroll-fade-letter').forEach(el => el.classList.add('visible'));
+          e.target.classList.add('visible');
+          io.unobserve(e.target);
+        });
+      }, opts);
+      document.querySelectorAll('.scroll-fade, .features-header').forEach(el => io.observe(el));
+    })();
+
+
+
+    // Carousel typed terminal
+    (function () {
+      const demos = [
+        {
+          cmd: '/research react server components',
+          output: [
+            'Checking existing TILs... found 2 related notes.',
+            'Researching subtopics and dependencies...',
+            '',
+            '## Fundamentals (0/3)',
+            '- ( ) <span class="accent">Server vs Client Components</span>',
+            '- ( ) <span class="accent">use client / use server directives</span>',
+            '- ( ) <span class="accent">When to use which component type</span>',
+            '',
+            '## Data & Rendering (0/3)',
+            '- ( ) <span class="accent">Server-side data fetching</span>',
+            '- ( ) <span class="accent">Streaming and Suspense</span>',
+            '- ( ) <span class="accent">Caching strategies</span>',
+            '',
+            '## Advanced (0/2)',
+            '- ( ) <span class="accent">Composition patterns</span>',
+            '- ( ) <span class="accent">Migration from client-only apps</span>',
+            '',
+            '<span class="success">✓</span> Saved to <span class="accent">til/react/backlog.md</span> (8 items)',
+          ]
+        },
+        {
+          cmd: '/til typescript generics',
+          output: [
+            'Checking existing TILs... no match found.',
+            'Researching <span class="highlight">TypeScript Generics</span> via web search...',
+            '',
+            'Generics let you write reusable, type-safe code.',
+            'Think of <span class="highlight">&lt;T&gt;</span> as a "type variable".',
+            '',
+            'What do you already know about generics?',
+            'I\'ll tailor the session to your level.',
+            '',
+            '<span class="highlight">&gt; I know basic Array&lt;T&gt; but not constraints</span>',
+            '',
+            'Great! Let\'s build on that. Try writing a function',
+            'that only accepts objects with a <span class="accent">.length</span> property:',
+            '',
+            '```ts',
+            'function logLength<span class="accent">&lt;T extends { length: number }&gt;</span>',
+            '  (arg: T): void { ... }',
+            '```',
+            '',
+            'Why does <span class="accent">extends</span> work here? What would',
+            'happen if you pass a <span class="highlight">number</span> instead?',
+          ]
+        },
+        {
+          cmd: '/til-review',
+          output: [
+            '<span class="highlight">3 cards</span> due for review today.',
+            '',
+            'Select mode:',
+            '  1. Simple mode (Again / Good)',
+            '  2. Detailed mode (Again / Hard / Good / Easy)',
+            '',
+            '────────────────────────────────────',
+            '',
+            '<span class="accent">[1/3]</span> <span class="highlight">TypeScript — Type vs Interface</span>',
+            '  Repetition: 3  |  EF: 2.5  |  Overdue: 1 day',
+            '',
+            'Q: When would you choose <span class="highlight">type</span> over <span class="highlight">interface</span>?',
+            '   Give an example where only type works.',
+            '',
+            '> <span class="success">Good (Remembered)</span> / Again (Forgot)',
+          ]
+        },
+        {
+          cmd: '/backlog',
+          output: [
+            '<span class="accent">react</span>        <span class="success">███</span><span class="highlight">░░░░░░░</span>  3/8   37%   2 days ago',
+            '<span class="accent">typescript</span>   <span class="success">█████</span><span class="highlight">░░░░░</span>  4/8   50%   today',
+            '<span class="accent">css</span>          <span class="success">██████████</span>  5/5  100%   1 week ago',
+            '<span class="accent">node</span>         <span class="success">██</span><span class="highlight">░░░░░░░░</span>  1/5   20%   3 days ago',
+            '<span class="accent">docker</span>       <span class="highlight">░░░░░░░░░░</span>  0/6    0%   —',
+            '',
+            'Total: <span class="highlight">13/32</span> items completed across 5 categories.',
+            '',
+            '<span class="accent">/backlog react</span> →',
+            '',
+            '## Fundamentals (3/3) <span class="success">✓ complete</span>',
+            '  (x) <span class="success">Server vs Client Components</span>',
+            '  (x) <span class="success">use client / use server directives</span>',
+            '  (x) <span class="success">When to use which component type</span>',
+            '',
+            '## Data & Rendering (0/3)',
+            '  ( ) Server-side data fetching',
+            '  ( ) Streaming and Suspense',
+            '  ( ) Caching strategies',
+          ]
+        },
+        {
+          cmd: '/dashboard',
+          output: [
+            '## Summary',
+            '  📝 Total TILs: <span class="highlight">47</span>     📂 Categories: <span class="highlight">8</span>',
+            '  📅 This Week:  <span class="highlight">3</span>      🔥 Streak: <span class="success">12 days</span>',
+            '',
+            '## Activity (24 weeks)',
+            '  <span class="success">▁▂▃▁▅▇▃▂▅▃▇▅▂▃▅▇▃▅▂▇▅▃▁▅</span>',
+            '',
+            '## Categories',
+            '  <span class="accent">typescript</span>   12 TILs   last: today',
+            '  <span class="accent">react</span>         9 TILs   last: yesterday',
+            '  <span class="accent">css</span>           8 TILs   last: 3 days ago',
+            '  <span class="accent">node</span>          7 TILs   last: 5 days ago',
+            '  <span class="accent">docker</span>        5 TILs   last: 1 week ago',
+            '',
+            '## Backlog Progress',
+            '  <span class="accent">css</span>          <span class="success">██████████</span> 100%',
+            '  <span class="accent">typescript</span>   <span class="success">█████</span><span class="highlight">░░░░░</span>  50%',
+            '  <span class="accent">react</span>        <span class="success">███</span><span class="highlight">░░░░░░░</span>  37%',
+          ]
+        },
+      ];
+
+      const cmdEl = document.getElementById('typedCmd');
+      const outputEl = document.getElementById('typedOutput');
+      const cursorEl = document.getElementById('typedCursor');
+      const carousel = document.getElementById('carousel');
+      const progressBar = document.getElementById('carouselProgress');
+      const tabs = [...document.querySelectorAll('.carousel-tab')];
+      let demoIdx = 0;
+      let started = false;
+      let animating = false;
+      let autoTimer = null;
+
+      function updateTabs() {
+        tabs.forEach((t, i) => t.classList.toggle('active', i === demoIdx));
+      }
+
+      function typeCmd(text, cb) {
+        let i = 0;
+        function t() {
+          if (!animating) return;
+          cmdEl.textContent = text.slice(0, ++i);
+          if (i >= text.length) { cb(); return; }
+          setTimeout(t, 55 + Math.random() * 35);
+        }
+        t();
+      }
+
+      function showOutput(lines, cb) {
+        cursorEl.style.display = 'none';
+        let i = 0;
+        function next() {
+          if (!animating) return;
+          if (i >= lines.length) { cb(); return; }
+          outputEl.innerHTML += (i > 0 ? '\n' : '') + lines[i];
+          i++;
+          setTimeout(next, 100);
+        }
+        next();
+      }
+
+      function startProgress(duration) {
+        progressBar.style.transition = 'none';
+        progressBar.style.width = '0%';
+        requestAnimationFrame(() => {
+          progressBar.style.transition = 'width ' + duration + 'ms linear';
+          progressBar.style.width = '100%';
+        });
+      }
+
+      function runDemo() {
+        animating = true;
+        updateTabs();
+        cmdEl.textContent = '';
+        outputEl.innerHTML = '';
+        cursorEl.style.display = '';
+
+        const demo = demos[demoIdx];
+        const typeDuration = demo.cmd.length * 70;
+        const outputDuration = demo.output.length * 100;
+        const totalDuration = typeDuration + 300 + outputDuration + 3000;
+        startProgress(totalDuration);
+
+        typeCmd(demo.cmd, () => {
+          setTimeout(() => {
+            showOutput(demo.output, () => {
+              autoTimer = setTimeout(() => {
+                goTo((demoIdx + 1) % demos.length);
+              }, 3000);
+            });
+          }, 300);
+        });
+      }
+
+      function goTo(idx) {
+        animating = false;
+        clearTimeout(autoTimer);
+        demoIdx = idx;
+        setTimeout(runDemo, 200);
+      }
+
+      // Tab clicks
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          goTo(parseInt(tab.dataset.idx));
+        });
+      });
+
+      // Start when scrolled into view
+      const io = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && !started) {
+          started = true;
+          setTimeout(runDemo, 600);
+          io.disconnect();
+        }
+      }, { threshold: 0.3 });
+      io.observe(carousel);
+    })();
+
+    function copyInstall(el, text) {
       navigator.clipboard.writeText(text).then(() => {
-        const hint = el.querySelector('.copy-hint');
-        hint.textContent = 'Copied!';
-        setTimeout(() => { hint.textContent = 'Click to copy'; }, 2000);
+        const hint = el.querySelector('.install-copy-hint');
+        const original = hint.textContent;
+        hint.textContent = 'copied!';
+        hint.style.color = 'rgba(39, 201, 63, 0.8)';
+        setTimeout(() => {
+          hint.textContent = original;
+          hint.style.color = '';
+        }, 1500);
       });
     }
 
-    // Lightbox
-    const lightbox = document.getElementById('lightbox');
-    const lightboxImg = lightbox.querySelector('img');
-
-    document.querySelectorAll('.demo-item img').forEach(img => {
-      img.addEventListener('click', () => {
-        lightboxImg.src = img.src;
-        lightboxImg.alt = img.alt;
-        lightbox.classList.add('active');
+    function copyCommand(btn) {
+      navigator.clipboard.writeText('claude plugin marketplace add SongYunSeop/oh-my-til && claude plugin install oh-my-til --scope project').then(() => {
+        const copyText = btn.querySelector('.btn-copy-text');
+        const icon = btn.querySelector('.btn-icon');
+        if (copyText) {
+          const original = copyText.textContent;
+          copyText.textContent = 'copied!';
+          setTimeout(() => { copyText.textContent = original; }, 1500);
+        }
+        if (icon) {
+          const originalHTML = icon.innerHTML;
+          icon.innerHTML = '<path d="M4 10.5L8 14.5L16 5.5" stroke="#27C93F" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>';
+          setTimeout(() => { icon.innerHTML = originalHTML; }, 1500);
+        }
       });
-    });
-
-    lightbox.addEventListener('click', () => {
-      lightbox.classList.remove('active');
-    });
-
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') lightbox.classList.remove('active');
-    });
+    }
   </script>
 </body>
 </html>
