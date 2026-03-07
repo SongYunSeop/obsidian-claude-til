@@ -5,6 +5,9 @@ import { TILSettingTab, DEFAULT_SETTINGS } from "./settings";
 import type { TILSettings } from "./settings";
 import { TILWatcher } from "./watcher";
 import { parseBacklogItems, extractTopicFromPath } from "../core/backlog";
+import { ensurePath } from "../core/env";
+
+const electronRequire = (window as unknown as { require: NodeJS.Require }).require;
 
 export default class TILPlugin extends Plugin {
 	settings: TILSettings = DEFAULT_SETTINGS;
@@ -36,6 +39,14 @@ export default class TILPlugin extends Plugin {
 			name: "Open Learning Dashboard",
 			callback: () => {
 				this.openDashboard();
+			},
+		});
+
+		this.addCommand({
+			id: "update-plugin",
+			name: "Update Plugin",
+			callback: () => {
+				this.updatePlugin();
 			},
 		});
 
@@ -170,6 +181,45 @@ export default class TILPlugin extends Plugin {
 			return rightLeaf.view as TerminalView;
 		}
 		return null;
+	}
+
+	private async updatePlugin(): Promise<void> {
+		const { exec } = electronRequire("child_process") as typeof import("child_process");
+
+		// Vault root path (where claude plugin is installed)
+		const adapter = this.app.vault.adapter as { basePath?: string };
+		const vaultPath = adapter.basePath;
+		if (!vaultPath) {
+			new Notice("❌ Oh My TIL: vault path를 찾을 수 없습니다.");
+			return;
+		}
+
+		const notice = new Notice("⏳ Oh My TIL: 업데이트 중...", 0);
+
+		const env = {
+			...process.env,
+			PATH: ensurePath(process.env.PATH),
+		};
+
+		exec(
+			"claude plugin update oh-my-til@oh-my-til --scope project",
+			{ cwd: vaultPath, env },
+			(err, stdout, stderr) => {
+				notice.hide();
+				if (err) {
+					console.error("[oh-my-til] update error:", stderr || err.message);
+					new Notice(
+						`❌ Oh My TIL: 업데이트 실패\n${stderr?.trim() || err.message}`,
+						8000,
+					);
+					return;
+				}
+				new Notice(
+					"✅ Oh My TIL: 업데이트 완료!\nObsidian을 재시작하거나 플러그인을 리로드하세요.",
+					8000,
+				);
+			},
+		);
 	}
 
 	private async openDashboard(): Promise<void> {
