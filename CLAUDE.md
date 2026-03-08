@@ -6,7 +6,7 @@ A Claude Code-based TIL learning workflow plugin. Can be run as a standalone CLI
 
 Core flow: Command palette → Open terminal → Run `/til`, `/backlog`, `/research`, `/save`, `/til-review`, `/dashboard`, `/omt-setup` skills directly in Claude Code → Open newly detected files in editor
 
-Obsidian's role is limited to "terminal embedding + file watching + skill deployment + MCP server + dashboard". Workflow control belongs to Claude Code. For standalone use, install skills/rules with `npx oh-my-til init` and start the MCP server with `npx oh-my-til serve`.
+Obsidian's role is limited to "terminal embedding + file watching + skill deployment + MCP server + dashboard". Workflow control belongs to Claude Code. For standalone use, install the Claude Code plugin and register the MCP server with `npx oh-my-til mcp`.
 
 ## Project Philosophy
 
@@ -58,16 +58,13 @@ src/
 │   └── obsidian-adapter.ts   ← Obsidian App based
 ├── mcp/                      ← MCP server (port-dependent, Obsidian-agnostic)
 │   ├── context.ts            ← learning context tools (topic matching, category extraction)
-│   ├── server.ts             ← HTTP server + Streamable HTTP transport
 │   └── tools.ts              ← MCP tool definitions (uses FileStorage + MetadataProvider)
 ├── backlog.ts               ← re-export from core/backlog
 ├── migrate-links.ts         ← re-export from core/migrate-links
 ├── settings.ts              ← re-export from obsidian/settings
-├── skills.ts                ← re-export from plugin-install
 ├── types.d.ts               ← module declarations (*.md)
-├── plugin-install.ts         ← plugin asset auto-install/update (skills, agents, CLAUDE.md section) (shared)
 ├── cli/                      ← standalone CLI entry point
-│   ├── index.ts              ← npx oh-my-til init / serve / mcp / deploy
+│   ├── index.ts              ← npx oh-my-til mcp / install-obsidian / deploy
 │   └── obsidian-install.ts   ← Obsidian plugin auto-install (Electron detection, node-pty rebuild)
 └── obsidian/                 ← Obsidian platform adapter
     ├── main.ts               ← TILPlugin entry point (terminal view + dashboard + watcher + skill install)
@@ -104,7 +101,6 @@ __tests__/
 ├── srs.test.ts           ← SRS spaced repetition (SM-2 algorithm, frontmatter parse/update, card filter/stats) tests
 ├── mcp-tools.test.ts     ← MCP tool filtering/aggregation logic tests
 ├── context.test.ts       ← learning context pure function tests
-├── mcp-server.test.ts    ← MCP server HTTP routing/CORS/lifecycle tests
 ├── main-logic.test.ts    ← plugin core logic (watcher sync, settings validation)
 ├── backlog.test.ts       ← backlog parsing/path extraction tests
 ├── markdown-link-provider.test.ts ← markdown link detection + CJK cell width + OSC 8 pure function tests
@@ -137,14 +133,11 @@ npm run deploy -- --refresh-skills <vault-path>  # includes force reinstall of s
 ### Standalone CLI (running without Obsidian)
 
 ```bash
-npx oh-my-til init ~/my-til                     # create directory + install skills/rules/CLAUDE.md (auto-installs plugin if .obsidian detected)
-npx oh-my-til init ~/my-til --no-obsidian       # skip Obsidian plugin installation
-npx oh-my-til serve ~/my-til                    # run MCP server standalone (HTTP)
-npx oh-my-til serve ~/my-til --port 3000 --til-path my-til
 npx oh-my-til mcp ~/my-til                      # MCP server stdio mode (Claude Desktop, etc.)
 npx oh-my-til deploy ~/my-til                   # generate TIL static site (_site/)
 npx oh-my-til deploy ~/my-til --out docs --title "My TIL" --github https://github.com/user
-ELECTRON_VERSION=37.10.2 npx oh-my-til init ~/vault  # manually specify Electron version
+npx oh-my-til install-obsidian ~/vault           # install Obsidian plugin only
+ELECTRON_VERSION=37.10.2 npx oh-my-til install-obsidian ~/vault  # manually specify Electron version
 ```
 
 ## Rules

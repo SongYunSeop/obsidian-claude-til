@@ -50,16 +50,9 @@ Skills are namespaced: `/oh-my-til:til`, `/oh-my-til:research`, `/oh-my-til:back
 
 ### Option B: Standalone CLI (without Obsidian)
 
-No git clone needed. Just `npx`.
-
 **Prerequisites:** [Node.js](https://nodejs.org) 18+ / [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) (`claude`)
 
-1. **Initialize** — creates the directory (if needed) and installs skills, rules, and CLAUDE.md config. If an Obsidian vault is detected (`.obsidian/` exists), the plugin is auto-installed too:
-
-   ```bash
-   npx oh-my-til init ~/my-til
-   npx oh-my-til init ~/my-til --no-obsidian  # Skip Obsidian plugin installation
-   ```
+1. **Install the Claude Code plugin** (Option A above) — skills and MCP server are auto-registered.
 
 2. **Start Claude Code** and use `/til`, `/research`, `/backlog` skills right away:
 
@@ -68,18 +61,11 @@ No git clone needed. Just `npx`.
    claude
    ```
 
-3. **(Optional) Start MCP server** — lets Claude Code query your TIL files:
+3. **(Optional) Register MCP server** — lets Claude Code query your TIL files (stdio mode, works with Claude Desktop):
 
    ```bash
-   # HTTP mode — runs a persistent server
-   npx oh-my-til serve ~/my-til
-   claude mcp add --transport http oh-my-til http://localhost:22360/mcp
-
-   # stdio mode — spawned on demand (no server needed, works with Claude Desktop)
    claude mcp add oh-my-til -- npx oh-my-til mcp ~/my-til
    ```
-
-> **Tip:** You can also run `npx oh-my-til init` without a path to initialize the current directory.
 
 ### Option C: Obsidian Plugin
 
@@ -87,16 +73,16 @@ No git clone needed. Just `npx`.
 
 #### Using npx (Recommended)
 
-Run `init` inside your Obsidian vault — the plugin is installed automatically:
+Install the Obsidian plugin directly:
 
 ```bash
-npx oh-my-til init /path/to/your/vault
+npx oh-my-til install-obsidian /path/to/your/vault
 ```
 
 Electron version is auto-detected on macOS. To override:
 
 ```bash
-ELECTRON_VERSION=37.10.2 npx oh-my-til init /path/to/your/vault
+ELECTRON_VERSION=37.10.2 npx oh-my-til install-obsidian /path/to/your/vault
 ```
 
 > To find your Electron version, open Obsidian's Developer Tools (Ctrl+Shift+I) and run `process.versions.electron`.
@@ -202,11 +188,9 @@ src/
 │   └── obsidian-adapter.ts  # Obsidian App based
 ├── mcp/                     # MCP server (port-dependent, Obsidian-free)
 │   ├── context.ts           # Learning context tools (topic matching, category extraction)
-│   ├── server.ts            # HTTP server + Streamable HTTP transport
 │   └── tools.ts             # MCP tool definitions (FileStorage + MetadataProvider)
-├── plugin-install.ts        # Plugin asset auto-install/update (skills, agents, CLAUDE.md section)
 ├── cli/                     # Standalone CLI entry point
-│   ├── index.ts             # npx oh-my-til init / serve / mcp / install-obsidian / deploy
+│   ├── index.ts             # npx oh-my-til mcp / install-obsidian / deploy
 │   └── obsidian-install.ts  # Auto-install Obsidian plugin (Electron detection, node-pty rebuild)
 └── obsidian/                # Obsidian platform adapter
     ├── main.ts              # Plugin entry point

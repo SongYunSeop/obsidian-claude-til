@@ -50,16 +50,9 @@ claude plugin install oh-my-til@oh-my-til --scope project
 
 ### 방법 B: 독립 CLI (Obsidian 없이)
 
-git clone 없이 `npx`만으로 바로 시작할 수 있습니다.
-
 **요구 사항:** [Node.js](https://nodejs.org) 18 이상 / [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) (`claude`)
 
-1. **초기화** — 디렉토리를 생성(필요 시)하고 스킬, 규칙, CLAUDE.md 설정을 설치합니다. Obsidian vault가 감지되면(`.obsidian/` 존재) 플러그인도 자동 설치됩니다:
-
-   ```bash
-   npx oh-my-til init ~/my-til
-   npx oh-my-til init ~/my-til --no-obsidian  # Obsidian 플러그인 설치 건너뛰기
-   ```
+1. **Claude Code 플러그인 설치** (방법 A 참고) — 스킬과 MCP 서버가 자동 등록됩니다.
 
 2. **Claude Code 시작** — `/til`, `/research`, `/backlog` 스킬을 바로 사용할 수 있습니다:
 
@@ -68,18 +61,11 @@ git clone 없이 `npx`만으로 바로 시작할 수 있습니다.
    claude
    ```
 
-3. **(선택) MCP 서버 시작** — Claude Code가 TIL 파일을 조회할 수 있게 합니다:
+3. **(선택) MCP 서버 등록** — Claude Code가 TIL 파일을 조회할 수 있게 합니다 (stdio 모드, Claude Desktop 호환):
 
    ```bash
-   # HTTP 모드 — 상주 서버 실행
-   npx oh-my-til serve ~/my-til
-   claude mcp add --transport http oh-my-til http://localhost:22360/mcp
-
-   # stdio 모드 — 필요 시 자동 실행 (서버 불필요, Claude Desktop 호환)
    claude mcp add oh-my-til -- npx oh-my-til mcp ~/my-til
    ```
-
-> **팁:** 경로 없이 `npx oh-my-til init`을 실행하면 현재 디렉토리에 설치됩니다.
 
 ### 방법 C: Obsidian 플러그인
 
@@ -87,16 +73,16 @@ git clone 없이 `npx`만으로 바로 시작할 수 있습니다.
 
 #### npx로 설치 (권장)
 
-Obsidian vault 안에서 `init`을 실행하면 플러그인이 자동 설치됩니다:
+Obsidian 플러그인을 직접 설치합니다:
 
 ```bash
-npx oh-my-til init /path/to/your/vault
+npx oh-my-til install-obsidian /path/to/your/vault
 ```
 
 macOS에서는 Electron 버전이 자동 감지됩니다. 수동 지정:
 
 ```bash
-ELECTRON_VERSION=37.10.2 npx oh-my-til init /path/to/your/vault
+ELECTRON_VERSION=37.10.2 npx oh-my-til install-obsidian /path/to/your/vault
 ```
 
 > Electron 버전 확인: Obsidian 개발자 도구(Ctrl+Shift+I)에서 `process.versions.electron` 실행
@@ -202,11 +188,9 @@ src/
 │   └── obsidian-adapter.ts  # Obsidian App 기반
 ├── mcp/                     # MCP 서버 (포트 의존, Obsidian 무관)
 │   ├── context.ts           # 학습 컨텍스트 도구 (topic 매칭, 카테고리 추출)
-│   ├── server.ts            # HTTP 서버 + Streamable HTTP 트랜스포트
 │   └── tools.ts             # MCP 도구 정의 (FileStorage + MetadataProvider 사용)
-├── plugin-install.ts        # 플러그인 에셋 자동 설치/업데이트 (skills, agents, CLAUDE.md 섹션)
 ├── cli/                     # 독립 CLI 진입점
-│   ├── index.ts             # npx oh-my-til init / serve / mcp / install-obsidian / deploy
+│   ├── index.ts             # npx oh-my-til mcp / install-obsidian / deploy
 │   └── obsidian-install.ts  # Obsidian 플러그인 자동 설치 (Electron 감지, node-pty 재빌드)
 └── obsidian/                # Obsidian 플랫폼 어댑터
     ├── main.ts              # 플러그인 진입점

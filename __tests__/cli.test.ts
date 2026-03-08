@@ -1,10 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { execSync } from "child_process";
 import { parseArgs, expandTilde } from "../src/core/cli";
 import * as os from "os";
 import * as path from "path";
-
-const ROOT = path.resolve(__dirname, "..");
 
 describe("parseArgs", () => {
 	it("separates positional arguments and options", () => {
@@ -99,25 +96,3 @@ describe("expandTilde", () => {
 	});
 });
 
-describe("TIL_VAULT_PATH environment variable", () => {
-	it("uses TIL_VAULT_PATH as basePath when set", () => {
-		// When no path argument is given to init command, uses TIL_VAULT_PATH
-		// init creates the directory if it doesn't exist, so use /tmp subdirectory
-		const vaultPath = "/tmp/test-til-vault-env";
-		const result = execSync(
-			`node dist/cli.js init 2>&1 || true`,
-			{ cwd: ROOT, encoding: "utf-8", env: { ...process.env, TIL_VAULT_PATH: vaultPath } },
-		);
-		expect(result).toContain(vaultPath);
-	});
-
-	it("explicit path argument takes precedence over TIL_VAULT_PATH", () => {
-		const explicitPath = "/tmp/test-til-explicit";
-		const result = execSync(
-			`node dist/cli.js init ${explicitPath} 2>&1 || true`,
-			{ cwd: ROOT, encoding: "utf-8", env: { ...process.env, TIL_VAULT_PATH: "/tmp/should-not-use" } },
-		);
-		expect(result).toContain(explicitPath);
-		expect(result).not.toContain("should-not-use");
-	});
-});
