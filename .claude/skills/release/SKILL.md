@@ -2,7 +2,6 @@
 description: "Create a new release. Version bump → test → build → tag → GitHub Release"
 argument-hint: "[patch|minor|major]"
 allowed-tools: Read, Edit, Bash(npm *), Bash(git *), Bash(gh *)
-disable-model-invocation: true
 ---
 
 # Create GitHub Release
@@ -18,8 +17,8 @@ If no argument is given, apply a `patch` bump.
 ## Pre-flight Validation
 
 1. Verify the working tree is clean (`git status --porcelain`). Abort if there are uncommitted changes.
-2. Verify the current branch is `main`. Abort otherwise.
-3. Verify `main` is in sync with `origin/main` (`git fetch origin && git diff main origin/main --quiet`). Notify the user and abort if there are differences.
+2. Verify the current branch is `develop`. If on `main`, switch to `develop`. Abort if on any other branch.
+3. Verify `develop` is in sync with `origin/develop` (`git fetch origin && git diff develop origin/develop --quiet`). Notify the user and abort if there are differences.
 4. Verify the `gh` CLI is installed. Abort if not found.
 
 ## Version Determination
@@ -54,16 +53,22 @@ Validate that documentation is up to date before bumping the version:
    - `versions.json` → add new version entry (read minAppVersion from manifest.json)
    - (`plugin-version` in `skills/` is auto-substituted via the `__PLUGIN_VERSION__` placeholder)
 5. Sync landing page version: run `npm run sync-version` (updates hero-badge version in `docs/index.html`, `docs/ko/index.html`)
-6. Commit changes: `🔖 chore: release v{version}`
-7. Create tag: `git tag v{version}`
-8. Push: `git push origin main --tags`
-9. Write release notes (see template below)
-10. Publish to npm:
+6. Commit changes on `develop`: `🔖 chore: release v{version}`
+7. Merge `develop` into `main`:
+   ```bash
+   git checkout main
+   git merge --no-ff develop -m "🔀 chore: merge develop into main for v{version}"
+   ```
+8. Create tag on `main`: `git tag v{version}`
+9. Push both branches and tag: `git push origin main develop --tags`
+10. Switch back to `develop`: `git checkout develop`
+11. Write release notes (see template below)
+12. Publish to npm:
     ```
     npm publish
     ```
     Note: `prepublishOnly` script runs `npm run build` automatically before publishing.
-11. Create GitHub Release:
+13. Create GitHub Release:
     ```
     gh release create v{version} main.js manifest.json styles.css --title "v{version}" --notes "{release notes}"
     ```
