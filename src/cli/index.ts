@@ -1,4 +1,4 @@
-import { runConfigCommand } from "./global-config";
+import { runConfigCommand, getConfig } from "./global-config";
 import { FsStorage, FsMetadata } from "../adapters/fs-adapter";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -29,6 +29,7 @@ function printUsage(): void {
 	console.log(`oh-my-til v${VERSION}
 
 Usage:
+  oh-my-til init [<path>]              Save vault path to global config
   oh-my-til mcp [<path>] [options]     Start MCP server (stdio)
   oh-my-til install-obsidian [<path>]   Install Obsidian desktop plugin only
   oh-my-til deploy [<path>] [options]  Generate static site from TIL files
@@ -79,8 +80,12 @@ async function main(): Promise<void> {
 	const parsed = parseArgs(args.slice(1));
 	const rawPath = parsed.positional[0];
 	const envPath = process.env["TIL_VAULT_PATH"];
+	const globalConfigVault = getConfig().vault;
 	const basePath = path.resolve(
-		rawPath ? expandTilde(rawPath) : envPath ? expandTilde(envPath) : process.cwd(),
+		rawPath ? expandTilde(rawPath)
+		: envPath ? expandTilde(envPath)
+		: globalConfigVault ? globalConfigVault
+		: process.cwd(),
 	);
 	const tilPath = parsed.options["til-path"] ?? "til";
 
@@ -284,6 +289,15 @@ async function main(): Promise<void> {
 		console.log(`Output: ${path.resolve(basePath, outDir)}/`);
 	} else if (command === "config") {
 		runConfigCommand(args.slice(1));
+	} else if (command === "init") {
+		const { readConfig, writeConfig } = await import("./global-config");
+		const vaultPath = args[1] ? expandTilde(args[1]) : path.resolve(process.cwd());
+		const config = readConfig();
+		config.vault = vaultPath;
+		writeConfig(config);
+		console.log(`✓ Vault path saved: ${vaultPath}`);
+		console.log(`  Config: ~/.config/oh-my-til/config.json`);
+		console.log(`  You can now run 'omt mcp' without specifying a path.`);
 	} else {
 		console.error(`Unknown command: ${command}`);
 		printUsage();
