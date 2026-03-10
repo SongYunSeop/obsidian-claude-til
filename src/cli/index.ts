@@ -297,7 +297,7 @@ async function main(): Promise<void> {
 		writeConfig(config);
 		console.log(`✓ Vault path saved: ${vaultPath}`);
 		console.log(`  Config: ~/.config/oh-my-til/config.json`);
-		console.log(`  You can now run 'omt mcp' without specifying a path.`);
+		console.log(`  You can now run 'oh-my-til mcp' without specifying a path.`);
 	} else {
 		console.error(`Unknown command: ${command}`);
 		printUsage();
