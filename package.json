@@ -22,6 +22,7 @@
     "deploy": "bash scripts/deploy.sh",
     "check": "vitest run && node esbuild.config.mjs production && tsc --noEmit",
     "test": "vitest run",
+    "test:e2e": "vitest run --config vitest.e2e.config.ts",
     "migrate-links": "npx tsx scripts/migrate-links.ts",
     "sync-version": "node scripts/sync-version.mjs",
     "prepublishOnly": "npm run build"
