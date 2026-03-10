@@ -5,6 +5,7 @@ export default defineConfig({
 	test: {
 		globals: true,
 		environment: "node",
+		exclude: ["__tests__/e2e/**", "node_modules/**"],
 		coverage: {
 			provider: "v8",
 			include: ["src/**"],
