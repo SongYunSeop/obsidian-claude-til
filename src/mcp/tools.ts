@@ -153,7 +153,7 @@ export function registerTools(server: McpServer, storage: FileStorage, metadata:
 				const texts = await Promise.all(batch.map((f) => storage.readFile(f.path)));
 				for (let j = 0; j < batch.length; j++) {
 					const text = texts[j];
-					if (text !== null && text.toLowerCase().includes(lowerTopic)) {
+					if (text != null && text.toLowerCase().includes(lowerTopic)) {
 						contentMatches.push(batch[j]!.path);
 					}
 					if (pathMatches.length + contentMatches.length >= 20) break;

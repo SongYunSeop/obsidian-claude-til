@@ -1,3 +1,4 @@
+import { runConfigCommand } from "./global-config";
 import { FsStorage, FsMetadata } from "../adapters/fs-adapter";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -31,7 +32,15 @@ Usage:
   oh-my-til mcp [<path>] [options]     Start MCP server (stdio)
   oh-my-til install-obsidian [<path>]   Install Obsidian desktop plugin only
   oh-my-til deploy [<path>] [options]  Generate static site from TIL files
+  oh-my-til config get                 Show current global config
+  oh-my-til config set <key> <value>   Set a config value
   oh-my-til version                    Print version
+
+Config keys:
+  vault              TIL vault path (e.g. ~/my-til)
+  ai.provider        AI provider: anthropic | openai | ollama
+  ai.model           AI model name
+  ai.apiKey          AI API key (stored with chmod 600)
 
 Options (mcp):
   --til-path <path>  TIL folder path (default: til)
@@ -273,6 +282,8 @@ async function main(): Promise<void> {
 
 		console.log(`Generated ${generated} TIL pages + ${categoryMap.size} category indexes + profile`);
 		console.log(`Output: ${path.resolve(basePath, outDir)}/`);
+	} else if (command === "config") {
+		runConfigCommand(args.slice(1));
 	} else {
 		console.error(`Unknown command: ${command}`);
 		printUsage();
