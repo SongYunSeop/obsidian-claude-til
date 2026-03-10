@@ -82,7 +82,7 @@ export function runConfigCommand(args: string[]): void {
 		}
 
 		if (Object.keys(display).length === 0) {
-			console.log("No config set. Use `omt config set <key> <value>`");
+			console.log("No config set. Use `oh-my-til config set <key> <value>`");
 		} else {
 			console.log(JSON.stringify(display, null, 2));
 		}
@@ -94,7 +94,7 @@ export function runConfigCommand(args: string[]): void {
 		const value = args[2];
 
 		if (!key || value === undefined) {
-			console.error("Usage: omt config set <key> <value>");
+			console.error("Usage: oh-my-til config set <key> <value>");
 			console.error("Keys: vault, ai.provider, ai.model, ai.apiKey");
 			process.exit(1);
 		}
