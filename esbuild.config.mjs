@@ -31,6 +31,8 @@ const context = await esbuild.context({
 		"@lezer/highlight",
 		"@lezer/lr",
 		"node-pty",
+		"term.js",
+		"pty.js",
 		...builtins,
 	],
 	format: "cjs",

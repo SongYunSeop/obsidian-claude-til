@@ -1,4 +1,4 @@
-import { runConfigCommand } from "./global-config";
+import { runConfigCommand, getConfig } from "./global-config";
 import { FsStorage, FsMetadata } from "../adapters/fs-adapter";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -21,6 +21,7 @@ import {
 import type { ProfileConfig, CategoryTilGroup, CategoryPageData, RecentTilEntry } from "../core/profile";
 import * as path from "path";
 import * as fs from "fs";
+import { runReviewCommand } from "./review";
 
 declare const __CLI_VERSION__: string;
 const VERSION = typeof __CLI_VERSION__ !== "undefined" ? __CLI_VERSION__ : "0.0.0";
@@ -30,6 +31,7 @@ function printUsage(): void {
 
 Usage:
   oh-my-til mcp [<path>] [options]     Start MCP server (stdio)
+  oh-my-til review [<path>] [options]  Start interactive review TUI
   oh-my-til install-obsidian [<path>]   Install Obsidian desktop plugin only
   oh-my-til deploy [<path>] [options]  Generate static site from TIL files
   oh-my-til config get                 Show current global config
@@ -79,12 +81,15 @@ async function main(): Promise<void> {
 	const parsed = parseArgs(args.slice(1));
 	const rawPath = parsed.positional[0];
 	const envPath = process.env["TIL_VAULT_PATH"];
+	const configVault = getConfig().vault;
 	const basePath = path.resolve(
-		rawPath ? expandTilde(rawPath) : envPath ? expandTilde(envPath) : process.cwd(),
+		rawPath ? expandTilde(rawPath) : envPath ? expandTilde(envPath) : configVault ? configVault : process.cwd(),
 	);
 	const tilPath = parsed.options["til-path"] ?? "til";
 
-	if (command === "mcp") {
+	if (command === "review") {
+		await runReviewCommand(basePath, tilPath);
+	} else 	if (command === "mcp") {
 		const storage = new FsStorage(basePath);
 		const metadata = new FsMetadata(basePath);
 		const mcpServer = new McpServer({
