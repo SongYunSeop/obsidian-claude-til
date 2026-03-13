@@ -15,6 +15,7 @@
   ],
   "scripts": {
     "dev": "node esbuild.config.mjs",
+    "review": "node dist/cli.js review",
     "build": "node esbuild.config.mjs production && node esbuild.cli.mjs",
     "build:obsidian": "node esbuild.config.mjs production",
     "build:cli": "node esbuild.cli.mjs",

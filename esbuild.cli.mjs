@@ -7,7 +7,7 @@ const pkg = JSON.parse(fs.readFileSync("package.json", "utf-8"));
 await esbuild.build({
 	entryPoints: ["src/cli/index.ts"],
 	bundle: true,
-	external: [...builtins, "term.js", "pty.js"],
+	external: [...builtins, "term.js", "pty.js", "blessed"],
 	format: "cjs",
 	target: "es2020",
 	platform: "node",
